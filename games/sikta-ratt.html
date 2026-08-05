@@ -196,6 +196,7 @@
     transform-origin: 0 50%;
     pointer-events: none;
     display: none;
+    z-index: 10;
   }
 
   .target {
@@ -316,7 +317,7 @@
     <div class="grid-floor"></div>
     <div class="hero-title">
       <h1>SIKTA RÄTT</h1>
-      <a class="back-link" href="../index.html">&larr; HELA SPELKATALOGEN</a>
+      <a class="back-link" href="https://claude.ai/code/artifact/d9ad5487-60ae-49eb-b36c-35f047d9e37b">&larr; HELA SPELKATALOGEN</a>
     </div>
   </div>
 
@@ -329,9 +330,9 @@
   </div>
 
   <div class="board-wrap">
+    <div class="band" id="band"></div>
     <div id="board">
       <div class="anchor" id="anchor"></div>
-      <div class="band" id="band"></div>
       <div class="target" id="target"></div>
 
       <div class="overlay" id="startOverlay">
@@ -452,14 +453,16 @@
     };
   }
 
+  const BOARD_BORDER = 3;
+
   function updateBand(px, py) {
     const dx = px - ANCHOR.x, dy = py - ANCHOR.y;
     const dist = Math.min(MAX_PULL, Math.hypot(dx, dy));
     const angle = Math.atan2(dy, dx);
     bandEl.style.display = 'block';
     bandEl.style.width = dist + 'px';
-    bandEl.style.left = ANCHOR.x + 'px';
-    bandEl.style.top = ANCHOR.y + 'px';
+    bandEl.style.left = (ANCHOR.x + BOARD_BORDER) + 'px';
+    bandEl.style.top = (ANCHOR.y + BOARD_BORDER) + 'px';
     bandEl.style.transform = 'rotate(' + angle + 'rad)';
   }
 

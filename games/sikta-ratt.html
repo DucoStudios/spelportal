@@ -315,9 +315,30 @@
     text-align: center;
     max-width: 406px;
   }
+
+  .fixed-back {
+    position: fixed;
+    top: max(10px, env(safe-area-inset-top));
+    left: max(10px, env(safe-area-inset-left));
+    z-index: 999;
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(15, 10, 30, 0.68);
+    border: 2px solid rgba(255,255,255,0.28);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 1.15rem;
+    text-decoration: none;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  }
+  .fixed-back:active { transform: scale(0.92); }
 </style>
 </head>
 <body>
+<a class="fixed-back" href="../index.html" aria-label="Tillbaka till spelkatalogen">&larr;</a>
+
 
 
 <div class="page">
@@ -326,7 +347,7 @@
     <div class="grid-floor"></div>
     <div class="hero-title">
       <h1>SIKTA RÄTT</h1>
-      <a class="back-link" href="https://claude.ai/code/artifact/d9ad5487-60ae-49eb-b36c-35f047d9e37b">&larr; HELA SPELKATALOGEN</a>
+      <a class="back-link" href="../index.html">&larr; HELA SPELKATALOGEN</a>
     </div>
   </div>
 

@@ -1,9 +1,4 @@
-<!doctype html>
-<html lang="sv">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Familjens spelportal</title>
+<title>Superhjälte-språnget</title>
 <style>
   @font-face {
     font-family: 'Bungee';
@@ -17,242 +12,412 @@
     font-weight: 300 800;
     font-display: swap;
   }
-
   :root {
-    --bg: #170F2E;
-    --bg2: #241A44;
-    --panel: #2C1F52;
-    --grid-line: #4A3480;
-    --pink: #FF2E93;
-    --orange: #FF7A3D;
-    --yellow: #FFD23F;
-    --cyan: #2FE6D6;
-    --purple: #8B5CF6;
-    --ink: #FFF6FB;
-    --ink-soft: #C9B6E8;
-    --ink-faint: #9481BE;
-    --outline: #120A24;
+    --bg: #170F2E; --bg2: #241A44; --panel: #2C1F52; --grid-line: #4A3480;
+    --pink: #FF2E93; --orange: #FF7A3D; --yellow: #FFD23F; --cyan: #2FE6D6; --purple: #8B5CF6;
+    --ink: #FFF6FB; --ink-soft: #C9B6E8; --ink-faint: #9481BE; --outline: #120A24;
   }
-
   * { box-sizing: border-box; }
   body { margin: 0; }
-
   .page {
-    background: var(--bg);
-    color: var(--ink);
+    background: var(--bg); color: var(--ink);
     font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    min-height: 100vh;
-    padding-bottom: 3.5rem;
+    min-height: 100%; padding: 0 1.1rem 3.5rem;
+    display: flex; flex-direction: column; align-items: center; overflow-x: hidden;
   }
-
-  .hero {
-    position: relative;
-    width: 100%;
-    height: 240px;
-    overflow: hidden;
+  .hero-band {
+    position: relative; width: 100%; max-width: 460px; height: 148px; overflow: hidden;
+    border-radius: 0 0 18px 18px; margin-bottom: 1.1rem;
     background: linear-gradient(180deg, #2A1750 0%, #170F2E 85%);
   }
   .sun {
-    position: absolute;
-    left: 50%;
-    top: 128px;
-    width: 210px;
-    height: 210px;
-    transform: translate(-50%, 0);
+    position: absolute; left: 50%; top: 80px; width: 140px; height: 140px; transform: translate(-50%, 0);
     border-radius: 50%;
-    background: linear-gradient(180deg, var(--yellow) 0%, var(--orange) 40%, var(--pink) 75%, var(--purple) 100%);
-    box-shadow: 0 0 90px 10px color-mix(in srgb, var(--pink) 40%, transparent);
+    background: linear-gradient(180deg, var(--cyan) 0%, var(--yellow) 55%, var(--orange) 100%);
+    box-shadow: 0 0 60px 4px color-mix(in srgb, var(--yellow) 40%, transparent);
   }
   .sun::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      var(--bg) 0px, var(--bg) 5px,
-      transparent 5px, transparent 12px
-    );
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent 44%, black 44%);
-    mask-image: linear-gradient(to bottom, transparent 0%, transparent 44%, black 44%);
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(var(--bg) 0px, var(--bg) 4px, transparent 4px, transparent 9px);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent 46%, black 46%);
+    mask-image: linear-gradient(to bottom, transparent 0%, transparent 46%, black 46%);
   }
   .grid-floor {
-    position: absolute;
-    left: -25%;
-    right: -25%;
-    bottom: 0;
-    height: 130px;
+    position: absolute; left: -20%; right: -20%; bottom: 0; height: 80px;
     background-image:
-      repeating-linear-gradient(90deg, var(--grid-line) 0 2px, transparent 2px 34px),
-      repeating-linear-gradient(0deg, var(--grid-line) 0 2px, transparent 2px 22px);
-    transform: perspective(220px) rotateX(58deg);
-    transform-origin: bottom;
-    opacity: 0.85;
+      repeating-linear-gradient(90deg, var(--grid-line) 0 2px, transparent 2px 30px),
+      repeating-linear-gradient(0deg, var(--grid-line) 0 2px, transparent 2px 18px);
+    transform: perspective(160px) rotateX(58deg); transform-origin: bottom; opacity: 0.85;
   }
-  .hero-inner {
-    position: relative;
-    z-index: 2;
-    text-align: center;
-    padding-top: 2.1rem;
-  }
+  .hero-title { position: relative; z-index: 2; text-align: center; padding-top: 1.1rem; }
   h1 {
-    font-family: 'Bungee', 'Arial Black', sans-serif;
-    font-weight: 400;
-    font-size: clamp(2rem, 7vw, 3rem);
-    line-height: 1;
-    margin: 0;
-    color: var(--ink);
-    text-shadow: 4px 4px 0 var(--outline);
-    letter-spacing: 0.01em;
+    font-family: 'Bungee', 'Arial Black', sans-serif; font-weight: 400; font-size: 1.9rem; line-height: 1;
+    margin: 0; color: var(--ink); text-shadow: 3px 3px 0 var(--outline);
   }
-  .tagline {
-    margin: 0.7rem auto 0;
-    max-width: 420px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--ink-soft);
-    padding: 0 1rem;
+  .back-link {
+    position: relative; z-index: 2; display: block; text-align: center; margin-top: 0.5rem;
+    font-size: 0.72rem; font-weight: 600; color: var(--cyan); text-decoration: none;
   }
+  .back-link:hover { color: var(--ink); }
+  .sub { color: var(--ink-soft); font-size: 0.88rem; font-weight: 600; margin: 0 0 1.1rem; text-align: center; max-width: 380px; }
 
-  main {
-    max-width: 920px;
-    margin: 0 auto;
-    padding: 1.6rem 1.2rem 0;
+  .hud { display: flex; justify-content: space-between; width: 100%; max-width: 406px; margin-bottom: 0.7rem; }
+  .hud-chip {
+    background: var(--panel); border: 2px solid var(--outline); border-radius: 8px;
+    padding: 0.35rem 0.7rem; box-shadow: 3px 3px 0 var(--outline); text-align: center; min-width: 64px;
   }
+  .hud-chip .label { font-family: 'Bungee', sans-serif; font-size: 0.5rem; letter-spacing: 0.06em; color: var(--cyan); display: block; }
+  .hud-chip .value { font-family: 'Open Sans', sans-serif; font-weight: 800; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 
-  .legend {
-    display: flex;
-    justify-content: center;
-    gap: 1.2rem;
-    flex-wrap: wrap;
-    margin-bottom: 1.6rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
+  .board-wrap { position: relative; }
+  #board {
+    position: relative; width: 406px; height: 406px; max-width: 92vw; max-height: 92vw;
+    background: linear-gradient(180deg, #2C1F52 0%, #1B1338 100%);
+    border: 3px solid var(--outline); border-radius: 14px; box-shadow: 6px 6px 0 var(--outline);
+    overflow: hidden; touch-action: none;
   }
-  .legend span { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--ink-soft); }
-  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
-  .dot.sticky { background: var(--cyan); }
-  .dot.uppbyggligt { background: var(--pink); }
+  #world { position: absolute; top: 0; left: 0; height: 100%; }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 1rem;
-  }
-
-  .card {
-    display: flex;
-    flex-direction: column;
+  .platform {
+    position: absolute;
     background: var(--panel);
-    border: 3px solid var(--outline);
-    border-radius: 14px;
-    box-shadow: 5px 5px 0 var(--outline);
-    text-decoration: none;
-    color: var(--ink);
-    overflow: hidden;
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    border-top: 4px solid var(--cyan);
+    box-shadow: inset 0 -6px 0 var(--outline);
   }
-  .card:hover, .card:focus-visible {
-    transform: translate(-2px, -2px);
-    box-shadow: 7px 7px 0 var(--outline);
+  .pit-glow {
+    position: absolute; bottom: 0; height: 100%;
+    background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--pink) 25%, transparent) 100%);
   }
-  .card:active {
-    transform: translate(3px, 3px);
-    box-shadow: 1px 1px 0 var(--outline);
-  }
-  .card-art {
-    height: 96px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.6rem;
-    border-bottom: 3px solid var(--outline);
-  }
-  .card-body { padding: 0.7rem 0.75rem 0.85rem; display: flex; flex-direction: column; gap: 0.3rem; flex: 1; }
-  .card-title {
-    font-family: 'Bungee', sans-serif;
-    font-size: 0.78rem;
-    line-height: 1.2;
-    color: var(--ink);
-  }
-  .card-desc { font-size: 0.68rem; color: var(--ink-soft); line-height: 1.35; flex: 1; }
-  .card-tag {
-    align-self: flex-start;
-    font-size: 0.56rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    padding: 0.15rem 0.4rem;
-    border-radius: 4px;
-    border: 1.5px solid var(--outline);
-  }
-  .card-tag.sticky { background: var(--cyan); color: var(--outline); }
-  .card-tag.uppbyggligt { background: var(--pink); color: var(--outline); }
 
-  .card.locked {
-    opacity: 0.45;
-    pointer-events: none;
+  .star {
+    position: absolute; width: 22px; height: 22px; font-size: 1.15rem;
+    display: flex; align-items: center; justify-content: center;
+    animation: starBob 1.4s ease-in-out infinite;
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--yellow) 70%, transparent));
   }
-  .card.locked .card-title::after { content: ' — SNART'; }
+  @keyframes starBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  .star.collected { opacity: 0; transform: scale(2); transition: opacity 0.3s ease, transform 0.3s ease; }
 
-  footer {
-    max-width: 920px;
-    margin: 2.5rem auto 0;
-    padding: 0 1.2rem;
-    text-align: center;
-    font-size: 0.72rem;
-    color: var(--ink-faint);
+  .flag { position: absolute; width: 30px; height: 60px; font-size: 2.1rem; display: flex; align-items: flex-end; justify-content: center; }
+
+  .player { position: absolute; width: 30px; height: 40px; }
+  .p-cape {
+    position: absolute; left: -3px; top: 4px; width: 0; height: 0;
+    border-top: 5px solid transparent; border-bottom: 16px solid transparent;
+    border-right: 12px solid var(--pink);
+    transition: transform 0.1s ease;
   }
+  .p-head { position: absolute; left: 6px; top: 0; width: 18px; height: 18px; border-radius: 50%; background: var(--ink); border: 2px solid var(--outline); }
+  .p-body { position: absolute; left: 8px; top: 16px; width: 14px; height: 16px; border-radius: 4px; background: var(--cyan); border: 2px solid var(--outline); }
+  .p-leg { position: absolute; top: 30px; width: 5px; height: 10px; background: var(--outline); border-radius: 2px; transform-origin: top center; }
+  .p-leg.l { left: 8px; }
+  .p-leg.r { left: 17px; }
+  .player.running .p-leg.l { animation: legL 0.3s linear infinite; }
+  .player.running .p-leg.r { animation: legR 0.3s linear infinite; }
+  @keyframes legL { 0%,100% { transform: rotate(24deg); } 50% { transform: rotate(-24deg); } }
+  @keyframes legR { 0%,100% { transform: rotate(-24deg); } 50% { transform: rotate(24deg); } }
+  .player.facing-left { transform: scaleX(-1); }
+  .player.jumping .p-body { transform: scaleY(1.1); }
+
+  .overlay {
+    position: absolute; inset: 0; background: color-mix(in srgb, var(--bg2) 92%, transparent);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.8rem; text-align: center; padding: 1.4rem; z-index: 5;
+  }
+  .overlay.hidden { display: none; }
+  .overlay h2 { font-family: 'Bungee', sans-serif; font-weight: 400; font-size: 1.3rem; margin: 0; color: var(--yellow); text-shadow: 2px 2px 0 var(--outline); }
+  .overlay p { max-width: 300px; font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); margin: 0; }
+  .overlay .result { font-family: 'Bungee', sans-serif; font-size: 2rem; color: var(--pink); text-shadow: 3px 3px 0 var(--outline); margin: 0.1rem 0; }
+
+  button.cta {
+    font-family: 'Open Sans', sans-serif; font-size: 0.88rem; font-weight: 800; text-transform: uppercase;
+    background: var(--yellow); color: var(--outline); border: 3px solid var(--outline); border-radius: 8px;
+    box-shadow: 4px 4px 0 var(--outline); padding: 0.6rem 1.4rem; cursor: pointer;
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+  }
+  button.cta:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
+
+  .touch-controls { display: flex; justify-content: space-between; width: 100%; max-width: 406px; margin-top: 0.8rem; }
+  .touch-controls .side { display: flex; gap: 0.5rem; }
+  .tbtn {
+    width: 52px; height: 52px; border-radius: 10px; border: 2px solid var(--outline);
+    background: var(--panel); color: var(--ink); font-size: 1.3rem; box-shadow: 3px 3px 0 var(--outline);
+    display: flex; align-items: center; justify-content: center; user-select: none; touch-action: none;
+  }
+  .tbtn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--outline); }
+  .next-hint { margin-top: 1.1rem; font-size: 0.75rem; font-weight: 600; color: var(--ink-faint); text-align: center; max-width: 406px; }
 </style>
-</head>
-<body>
+
 <div class="page">
-  <div class="hero">
+  <div class="hero-band">
     <div class="sun"></div>
     <div class="grid-floor"></div>
-    <div class="hero-inner">
-      <h1>FAMILJENS SPELPORTAL</h1>
-      <p class="tagline">Spel man väljer själv istället för Netflix. Ingen reklam. Spela en runda, spela igen, eller välj ett annat.</p>
+    <div class="hero-title">
+      <h1>SUPERHJÄLTE-SPRÅNGET</h1>
+      <a class="back-link" href="../index.html">&larr; HELA SPELKATALOGEN</a>
     </div>
   </div>
 
-  <main>
-    <div class="legend">
-      <span><i class="dot sticky"></i>STICKY — ren spelmekanik</span>
-      <span><i class="dot uppbyggligt"></i>UPPBYGGLIGT — principen bär spelet</span>
+  <p class="sub">Piltangenter eller A/D för att springa, upp/mellanslag för att hoppa. Modkraften bär dig över gapen.</p>
+
+  <div class="hud">
+    <div class="hud-chip"><span class="label">STJÄRNOR</span><span class="value" id="starVal">0/6</span></div>
+    <div class="hud-chip"><span class="label">TID</span><span class="value" id="timeVal">0.0</span></div>
+  </div>
+
+  <div class="board-wrap">
+    <div id="board">
+      <div id="world"></div>
+      <div class="overlay" id="startOverlay">
+        <h2>REDO ATT HOPPA?</h2>
+        <p>Nå flaggan. Plocka stjärnor på vägen. Ramlar du i ett hål börjar du bara om igen.</p>
+        <button class="cta" id="startBtn">Kör igång</button>
+      </div>
+      <div class="overlay hidden" id="endOverlay">
+        <h2>MÅL!</h2>
+        <div class="result" id="finalTime">0.0s</div>
+        <p id="finalStars"></p>
+        <button class="cta" id="restartBtn">Spela igen</button>
+      </div>
     </div>
+  </div>
 
-    <div class="grid" id="grid"></div>
-  </main>
+  <div class="touch-controls">
+    <div class="side">
+      <div class="tbtn" id="btnLeft">◀</div>
+      <div class="tbtn" id="btnRight">▶</div>
+    </div>
+    <div class="tbtn" id="btnJump">⤒</div>
+  </div>
 
-  <footer>Byggd av familjen. Nya spel läggs till löpande.</footer>
+  <p class="next-hint">Nästa i byggordningen: Bokstavsbilen.</p>
 </div>
 
 <script>
-  const GAMES = [
-    { href: 'games/ordspraks-pusslet.html', icon: '🧩', title: 'Ordspråks-pusslet', desc: 'Match-3 mot klockan — varje rad avslöjar nästa ord i ett ordspråk.', tag: 'sticky' },
-    { href: 'games/sex-burkar-sortern.html', icon: '💰', title: 'Sex burkar-sortern', desc: 'Sortera fallande mynt rätt innan de når botten.', tag: 'uppbyggligt' },
-    { href: 'games/gap-monstren.html', icon: '💭', title: 'Gap-monstren', desc: 'Smäll jämförelsetankar innan de sjunker undan.', tag: 'sticky' },
-    { href: 'games/saftstand-erbjudandet.html', icon: '🍋', title: 'Saftstånd-erbjudandet', desc: 'Läs kundens behov, välj rätt erbjudande.', tag: 'uppbyggligt' },
-    { href: 'games/sikta-ratt.html', icon: '🎯', title: 'Sikta rätt', desc: 'Slangbella-fysik mot en rörlig måltavla.', tag: 'sticky' },
-    { href: 'games/bibelhjalten.html', icon: '📖', title: 'Bibelhjälten', desc: 'David och Goljat — dina val styr berättelsen.', tag: 'uppbyggligt' },
-    { href: 'games/superhjalte-spranget.html', icon: '🦸', title: 'Superhjälte-språnget', desc: 'Riktig hopp-fysik, plocka stjärnor, nå flaggan.', tag: 'sticky' },
-    { href: '#', icon: '🚗', title: 'Bokstavsbilen', desc: 'Endless runner för de yngsta, kommer snart.', tag: 'sticky', locked: true },
-    { href: '#', icon: '🎁', title: 'Gåvokedjan', desc: 'Förvaltarskap som rörpussel, kommer snart.', tag: 'uppbyggligt', locked: true }
+(function () {
+  const VIEW_W = 406, VIEW_H = 406;
+  const GROUND_Y = 360;
+  const GRAVITY = 1900, JUMP_V = -640, MOVE_SPEED = 190;
+
+  const PLATFORMS = [
+    { x: 0, w: 260, y: GROUND_Y, h: 46 },
+    { x: 340, w: 220, y: GROUND_Y, h: 46 },
+    { x: 420, w: 90, y: 296, h: 16 },
+    { x: 640, w: 160, y: GROUND_Y, h: 46 },
+    { x: 880, w: 260, y: GROUND_Y, h: 46 },
+    { x: 950, w: 90, y: 276, h: 16 },
+    { x: 1220, w: 180, y: GROUND_Y, h: 46 },
+    { x: 1270, w: 90, y: 256, h: 16 },
+    { x: 1480, w: 340, y: GROUND_Y, h: 46 }
+  ];
+  const WORLD_W = 1820;
+
+  const STARS = [
+    { x: 150, y: 322 }, { x: 460, y: 262 }, { x: 700, y: 322 },
+    { x: 990, y: 242 }, { x: 1310, y: 222 }, { x: 1620, y: 322 }
   ];
 
-  const grid = document.getElementById('grid');
-  GAMES.forEach(g => {
-    const a = document.createElement('a');
-    a.className = 'card' + (g.locked ? ' locked' : '');
-    a.href = g.href;
-    a.innerHTML =
-      '<div class="card-art">' + g.icon + '</div>' +
-      '<div class="card-body">' +
-        '<div class="card-title">' + g.title + '</div>' +
-        '<div class="card-desc">' + g.desc + '</div>' +
-        '<span class="card-tag ' + g.tag + '">' + g.tag.toUpperCase() + '</span>' +
-      '</div>';
-    grid.appendChild(a);
+  const FLAG = { x: 1770, y: GROUND_Y - 60 };
+  const START_POS = { x: 40, y: GROUND_Y - 40 };
+
+  const boardEl = document.getElementById('board');
+  const worldEl = document.getElementById('world');
+  const starVal = document.getElementById('starVal');
+  const timeVal = document.getElementById('timeVal');
+  const startOverlay = document.getElementById('startOverlay');
+  const endOverlay = document.getElementById('endOverlay');
+  const startBtn = document.getElementById('startBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  const finalTime = document.getElementById('finalTime');
+  const finalStars = document.getElementById('finalStars');
+
+  worldEl.style.width = WORLD_W + 'px';
+
+  PLATFORMS.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'platform';
+    el.style.left = p.x + 'px';
+    el.style.top = p.y + 'px';
+    el.style.width = p.w + 'px';
+    el.style.height = p.h + 'px';
+    worldEl.appendChild(el);
   });
+
+  const starEls = STARS.map(s => {
+    const el = document.createElement('div');
+    el.className = 'star';
+    el.textContent = '⭐';
+    el.style.left = s.x + 'px';
+    el.style.top = s.y + 'px';
+    worldEl.appendChild(el);
+    return { ...s, el, collected: false };
+  });
+
+  const flagEl = document.createElement('div');
+  flagEl.className = 'flag';
+  flagEl.textContent = '🏁';
+  flagEl.style.left = FLAG.x + 'px';
+  flagEl.style.top = FLAG.y + 'px';
+  worldEl.appendChild(flagEl);
+
+  const playerEl = document.createElement('div');
+  playerEl.className = 'player';
+  playerEl.innerHTML = '<div class="p-cape"></div><div class="p-head"></div><div class="p-body"></div><div class="p-leg l"></div><div class="p-leg r"></div>';
+  worldEl.appendChild(playerEl);
+
+  let running = false;
+  let player = { x: START_POS.x, y: START_POS.y, vx: 0, vy: 0, w: 24, h: 40, grounded: false, facing: 1 };
+  let starsCollected = 0;
+  let elapsed = 0;
+  let keys = { left: false, right: false, jump: false };
+  let rafHandle = null;
+  let lastTs = 0;
+
+  let audioCtx = null;
+  function ctx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+  function tone(freq, start, dur, type, peak) {
+    const c = ctx();
+    const osc = c.createOscillator(); const gain = c.createGain();
+    osc.type = type || 'sine'; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, c.currentTime + start);
+    gain.gain.linearRampToValueAtTime(peak || 0.12, c.currentTime + start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + start + dur);
+    osc.connect(gain).connect(c.destination);
+    osc.start(c.currentTime + start); osc.stop(c.currentTime + start + dur + 0.02);
+  }
+  function playStar() { tone(720, 0, 0.1, 'triangle'); tone(960, 0.06, 0.14, 'triangle'); }
+  function playFall() { tone(260, 0, 0.1, 'sawtooth', 0.08); tone(160, 0.07, 0.16, 'sawtooth', 0.06); }
+  function playFanfare() { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.22, 'triangle')); }
+
+  window.addEventListener('keydown', e => {
+    if (['ArrowLeft', 'a', 'A'].includes(e.key)) keys.left = true;
+    if (['ArrowRight', 'd', 'D'].includes(e.key)) keys.right = true;
+    if (['ArrowUp', 'w', 'W', ' '].includes(e.key)) { keys.jump = true; e.preventDefault(); }
+  });
+  window.addEventListener('keyup', e => {
+    if (['ArrowLeft', 'a', 'A'].includes(e.key)) keys.left = false;
+    if (['ArrowRight', 'd', 'D'].includes(e.key)) keys.right = false;
+    if (['ArrowUp', 'w', 'W', ' '].includes(e.key)) keys.jump = false;
+  });
+  function bindTouch(id, prop) {
+    const el = document.getElementById(id);
+    el.addEventListener('pointerdown', e => { keys[prop] = true; e.preventDefault(); });
+    el.addEventListener('pointerup', () => { keys[prop] = false; });
+    el.addEventListener('pointerleave', () => { keys[prop] = false; });
+  }
+  bindTouch('btnLeft', 'left');
+  bindTouch('btnRight', 'right');
+  bindTouch('btnJump', 'jump');
+
+  function aabbOverlap(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  }
+
+  function resolveCollisions(axis) {
+    const box = { x: player.x, y: player.y, w: player.w, h: player.h };
+    for (const p of PLATFORMS) {
+      if (!aabbOverlap(box, p)) continue;
+      if (axis === 'x') {
+        if (player.vx > 0) player.x = p.x - player.w;
+        else if (player.vx < 0) player.x = p.x + p.w;
+        player.vx = 0;
+      } else {
+        if (player.vy > 0) { player.y = p.y - player.h; player.vy = 0; player.grounded = true; }
+        else if (player.vy < 0) { player.y = p.y + p.h; player.vy = 0; }
+      }
+      box.x = player.x; box.y = player.y;
+    }
+  }
+
+  function update(dt) {
+    elapsed += dt;
+    timeVal.textContent = elapsed.toFixed(1);
+
+    let moving = false;
+    if (keys.left) { player.vx = -MOVE_SPEED; player.facing = -1; moving = true; }
+    else if (keys.right) { player.vx = MOVE_SPEED; player.facing = 1; moving = true; }
+    else player.vx = 0;
+
+    if (keys.jump && player.grounded) {
+      player.vy = JUMP_V;
+      player.grounded = false;
+    }
+
+    player.vy += GRAVITY * dt;
+    player.grounded = false;
+
+    player.x += player.vx * dt;
+    player.x = Math.max(0, Math.min(WORLD_W - player.w, player.x));
+    resolveCollisions('x');
+
+    player.y += player.vy * dt;
+    resolveCollisions('y');
+
+    if (player.y > VIEW_H + 40) {
+      playFall();
+      player.x = START_POS.x; player.y = START_POS.y; player.vx = 0; player.vy = 0;
+    }
+
+    starEls.forEach(s => {
+      if (s.collected) return;
+      const dx = (player.x + player.w / 2) - (s.x + 11);
+      const dy = (player.y + player.h / 2) - (s.y + 11);
+      if (Math.hypot(dx, dy) < 24) {
+        s.collected = true;
+        s.el.classList.add('collected');
+        starsCollected++;
+        starVal.textContent = starsCollected + '/6';
+        playStar();
+      }
+    });
+
+    if (player.x + player.w > FLAG.x && player.y + player.h > FLAG.y) {
+      finishRun();
+      return;
+    }
+
+    playerEl.classList.toggle('running', moving && player.grounded);
+    playerEl.classList.toggle('jumping', !player.grounded);
+    playerEl.classList.toggle('facing-left', player.facing < 0);
+    playerEl.style.left = player.x + 'px';
+    playerEl.style.top = player.y + 'px';
+
+    const camX = Math.max(0, Math.min(WORLD_W - VIEW_W, player.x - VIEW_W * 0.4));
+    worldEl.style.transform = 'translateX(' + (-camX) + 'px)';
+  }
+
+  function loop(ts) {
+    if (!running) return;
+    const dt = Math.min(0.032, (ts - lastTs) / 1000 || 0);
+    lastTs = ts;
+    update(dt);
+    rafHandle = requestAnimationFrame(loop);
+  }
+
+  function finishRun() {
+    running = false;
+    cancelAnimationFrame(rafHandle);
+    playFanfare();
+    finalTime.textContent = elapsed.toFixed(1) + 's';
+    finalStars.textContent = starsCollected + ' av 6 stjärnor plockade';
+    endOverlay.classList.remove('hidden');
+  }
+
+  function startRun() {
+    running = true;
+    player = { x: START_POS.x, y: START_POS.y, vx: 0, vy: 0, w: 24, h: 40, grounded: false, facing: 1 };
+    starsCollected = 0;
+    elapsed = 0;
+    starVal.textContent = '0/6';
+    timeVal.textContent = '0.0';
+    starEls.forEach(s => { s.collected = false; s.el.classList.remove('collected'); });
+    startOverlay.classList.add('hidden');
+    endOverlay.classList.add('hidden');
+    lastTs = performance.now();
+    rafHandle = requestAnimationFrame(loop);
+  }
+
+  startBtn.addEventListener('click', startRun);
+  restartBtn.addEventListener('click', startRun);
+})();
 </script>
-</body>
-</html>

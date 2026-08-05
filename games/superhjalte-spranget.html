@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Superhjälte-språnget</title>
 <style>
   @font-face {
@@ -23,15 +23,16 @@
     --ink: #FFF6FB; --ink-soft: #C9B6E8; --ink-faint: #9481BE; --outline: #120A24;
   }
   * { box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   body { margin: 0; }
   .page {
     background: var(--bg); color: var(--ink);
     font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    min-height: 100%; padding: 0 1.1rem 3.5rem;
+    height: 100vh; height: 100dvh; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 0 1.1rem 3.5rem;
     display: flex; flex-direction: column; align-items: center; overflow-x: hidden;
   }
   .hero-band {
-    position: relative; width: 100%; max-width: 460px; height: 148px; overflow: hidden;
+    position: relative; width: 100%; max-width: 460px; height: clamp(96px, 20vh, 148px); overflow: hidden;
     border-radius: 0 0 18px 18px; margin-bottom: 1.1rem;
     background: linear-gradient(180deg, #2A1750 0%, #170F2E 85%);
   }
@@ -153,7 +154,7 @@
   .next-hint { margin-top: 1.1rem; font-size: 0.75rem; font-weight: 600; color: var(--ink-faint); text-align: center; max-width: 406px; }
 </style>
 </head>
-<body style="overscroll-behavior-y: contain;">
+<body>
 
 
 <div class="page">

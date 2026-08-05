@@ -1,0 +1,465 @@
+<title>Sex burkar-sortern</title>
+<style>
+  :root {
+    --bg: #EEF0E6;
+    --bg-raised: #F8F9F2;
+    --ink: #23271F;
+    --ink-soft: #565C4C;
+    --ink-faint: #868C76;
+    --rule: #CCCFBA;
+    --gold: #96691F;
+    --green: #3F5D42;
+    --clay: #9C4530;
+    --coin: #D9A441;
+  }
+  :root[data-theme="dark"] {
+    --bg: #161B15;
+    --bg-raised: #1E241C;
+    --ink: #E9E7DA;
+    --ink-soft: #ADB29D;
+    --ink-faint: #757B67;
+    --rule: #333B2E;
+    --gold: #D3A24D;
+    --green: #8CB08C;
+    --clay: #E0937A;
+    --coin: #E4B75B;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161B15;
+      --bg-raised: #1E241C;
+      --ink: #E9E7DA;
+      --ink-soft: #ADB29D;
+      --ink-faint: #757B67;
+      --rule: #333B2E;
+      --gold: #D3A24D;
+      --green: #8CB08C;
+      --clay: #E0937A;
+      --coin: #E4B75B;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+
+  .page {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100%;
+    padding: 2.5rem 1.2rem 4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .back-link {
+    align-self: flex-start;
+    max-width: 420px;
+    width: 100%;
+    margin: 0 auto 1.2rem;
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    text-decoration: none;
+  }
+  .back-link:hover { color: var(--ink-soft); }
+
+  h1 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-weight: 500;
+    font-size: 1.9rem;
+    margin: 0 0 0.3rem;
+    text-align: center;
+  }
+
+  .sub {
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    margin: 0 0 1.4rem;
+    text-align: center;
+    max-width: 420px;
+  }
+
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 406px;
+    margin-bottom: 0.9rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .hud .label {
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+  }
+  .hud .value {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 1.3rem;
+  }
+  .hud .time-low { color: var(--clay); }
+  .hud .combo { color: var(--gold); }
+
+  .board-wrap { position: relative; }
+
+  #board {
+    position: relative;
+    width: 406px;
+    height: 460px;
+    max-width: 92vw;
+    background: var(--bg-raised);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .coin {
+    position: absolute;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--coin);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--coin) 60%, black 15%);
+    transition: top linear, opacity 0.2s ease, transform 0.2s ease;
+  }
+  .coin.gone { opacity: 0; transform: scale(0.3); }
+
+  .jars {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 88px;
+    display: flex;
+    gap: 4px;
+    padding: 6px;
+    background: var(--bg);
+    border-top: 1px solid var(--rule);
+  }
+
+  .jar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    background: var(--tile-bg, var(--bg-raised));
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--ink);
+    padding: 0.2rem 0.1rem;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .jar:active { transform: scale(0.95); }
+  .jar .icon { font-size: 1.3rem; }
+  .jar .label {
+    font-size: 0.58rem;
+    letter-spacing: 0.01em;
+    text-align: center;
+    line-height: 1.1;
+    color: var(--ink-soft);
+  }
+  .jar.wrong {
+    box-shadow: 0 0 0 2px var(--clay);
+  }
+  .jar.right {
+    box-shadow: 0 0 0 2px var(--green);
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    text-align: center;
+    padding: 1.4rem;
+  }
+  .overlay.hidden { display: none; }
+  .overlay h2 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-weight: 500;
+    font-size: 1.25rem;
+    margin: 0;
+  }
+  .overlay p {
+    max-width: 300px;
+    font-size: 0.86rem;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+  .overlay .result {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 2rem;
+    color: var(--gold);
+    margin: 0.1rem 0;
+  }
+  .overlay .recap {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    max-width: 320px;
+    line-height: 1.6;
+  }
+
+  button.cta {
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: var(--green);
+    color: var(--bg-raised);
+    border: none;
+    border-radius: 4px;
+    padding: 0.6rem 1.4rem;
+    cursor: pointer;
+  }
+  button.cta:hover { opacity: 0.9; }
+
+  .next-hint {
+    margin-top: 1.2rem;
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+    text-align: center;
+    max-width: 406px;
+  }
+</style>
+
+<div class="page">
+  <a class="back-link" href="../index.html">&larr; Hela spelkatalogen</a>
+
+  <h1>Sex burkar-sortern</h1>
+  <p class="sub">Ett mynt faller åt gången. Läs vad det är till för, tryck rätt burk innan det når botten. Tempot ökar ju bättre du blir.</p>
+
+  <div class="hud">
+    <div><span class="label">Poäng</span><span class="value" id="scoreVal">0</span></div>
+    <div><span class="label">Följd</span><span class="value combo" id="comboVal">0</span></div>
+    <div><span class="label">Tid</span><span class="value" id="timeVal">90</span></div>
+  </div>
+
+  <div class="board-wrap">
+    <div id="board">
+      <div class="jars" id="jars"></div>
+      <div class="overlay" id="startOverlay">
+        <h2>Redo?</h2>
+        <p>90 sekunder. Mynten kommer snabbare ju fler du klarar rätt i följd.</p>
+        <button class="cta" id="startBtn">Starta rundan</button>
+      </div>
+      <div class="overlay hidden" id="endOverlay">
+        <h2>Tiden är ute</h2>
+        <div class="result" id="finalScore">0</div>
+        <p id="finalAccuracy"></p>
+        <p class="recap" id="recap"></p>
+        <button class="cta" id="restartBtn">Spela igen</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="next-hint">Nästa i byggordningen: Gap-monstren (sticky).</p>
+</div>
+
+<script>
+(function () {
+  const ROUND_SECONDS = 90;
+  const BOARD_W = 406, FALL_ZONE_H = 372, JAR_H = 88;
+  const START_FALL_MS = 4200, MIN_FALL_MS = 1300, FALL_STEP = 90;
+
+  const JARS = [
+    { key: 'spara', icon: '💰', label: 'Spara' },
+    { key: 'ge', icon: '🎁', label: 'Ge' },
+    { key: 'investera', icon: '📈', label: 'Investera' },
+    { key: 'lara', icon: '📚', label: 'Lära' },
+    { key: 'behover', icon: '🏠', label: 'Behövs' },
+    { key: 'roligt', icon: '🎉', label: 'Roligt' }
+  ];
+
+  const boardEl = document.getElementById('board');
+  const jarsEl = document.getElementById('jars');
+  const scoreVal = document.getElementById('scoreVal');
+  const comboVal = document.getElementById('comboVal');
+  const timeVal = document.getElementById('timeVal');
+  const startOverlay = document.getElementById('startOverlay');
+  const endOverlay = document.getElementById('endOverlay');
+  const startBtn = document.getElementById('startBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  const finalScore = document.getElementById('finalScore');
+  const finalAccuracy = document.getElementById('finalAccuracy');
+  const recapEl = document.getElementById('recap');
+
+  let running = false;
+  let score = 0, combo = 0, bestCombo = 0;
+  let correct = 0, missed = 0;
+  let timeLeft = ROUND_SECONDS;
+  let timerHandle = null;
+  let coinTimeout = null;
+  let activeCoin = null;
+  let tally = {};
+
+  JARS.forEach(j => {
+    const btn = document.createElement('button');
+    btn.className = 'jar';
+    btn.type = 'button';
+    btn.innerHTML = '<span class="icon">' + j.icon + '</span><span class="label">' + j.label + '</span>';
+    btn.addEventListener('click', () => onJarClick(j.key, btn));
+    jarsEl.appendChild(btn);
+  });
+
+  let audioCtx = null;
+  function ctx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+  function tone(freq, start, dur, type, peak) {
+    const c = ctx();
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, c.currentTime + start);
+    gain.gain.linearRampToValueAtTime(peak || 0.12, c.currentTime + start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + start + dur);
+    osc.connect(gain).connect(c.destination);
+    osc.start(c.currentTime + start);
+    osc.stop(c.currentTime + start + dur + 0.02);
+  }
+  function playSuccess(comboNow) {
+    const base = 500 + Math.min(comboNow, 10) * 40;
+    tone(base, 0, 0.12, 'triangle');
+    tone(base * 1.25, 0.06, 0.14, 'triangle');
+  }
+  function playWrong() { tone(160, 0, 0.15, 'square', 0.09); }
+  function playMiss() { tone(220, 0, 0.1, 'sawtooth', 0.07); tone(140, 0.08, 0.18, 'sawtooth', 0.06); }
+  function playFanfare() { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.22, 'triangle')); }
+
+  function updateHud() {
+    scoreVal.textContent = score;
+    comboVal.textContent = combo;
+    timeVal.textContent = timeLeft;
+    timeVal.classList.toggle('time-low', timeLeft <= 15);
+  }
+
+  function currentFallMs() {
+    return Math.max(MIN_FALL_MS, START_FALL_MS - correct * FALL_STEP);
+  }
+
+  function jarX(index) {
+    const jarWidth = (BOARD_W - 12 - 5 * 4) / 6;
+    return 6 + index * (jarWidth + 4) + jarWidth / 2;
+  }
+
+  function spawnCoin() {
+    if (!running) return;
+    const target = JARS[Math.floor(Math.random() * JARS.length)];
+    const el = document.createElement('div');
+    el.className = 'coin';
+    el.textContent = target.icon;
+    const x = 10 + Math.random() * (BOARD_W - 66);
+    el.style.left = x + 'px';
+    el.style.top = '-46px';
+    boardEl.insertBefore(el, jarsEl);
+    void el.offsetHeight;
+
+    const fallMs = currentFallMs();
+    const coin = { el, target: target.key, resolved: false, fallMs };
+    activeCoin = coin;
+
+    el.style.transitionDuration = fallMs + 'ms';
+    el.style.top = (FALL_ZONE_H - 10) + 'px';
+
+    coinTimeout = setTimeout(() => resolveCoin(coin, null), fallMs);
+  }
+
+  function resolveCoin(coin, hitKey) {
+    if (coin.resolved || coin !== activeCoin) return;
+    coin.resolved = true;
+    clearTimeout(coinTimeout);
+
+    if (hitKey === coin.target) {
+      correct++;
+      combo++;
+      bestCombo = Math.max(bestCombo, combo);
+      tally[coin.target] = (tally[coin.target] || 0) + 1;
+      score += 10 * Math.min(combo, 8);
+      playSuccess(combo);
+      coin.el.classList.add('gone');
+    } else {
+      missed++;
+      combo = 0;
+      playMiss();
+      coin.el.classList.add('gone');
+    }
+    updateHud();
+    setTimeout(() => coin.el.remove(), 250);
+    activeCoin = null;
+    if (running) setTimeout(spawnCoin, 260);
+  }
+
+  function onJarClick(key, btn) {
+    if (!running) return;
+    if (activeCoin && !activeCoin.resolved) {
+      if (key === activeCoin.target) {
+        btn.classList.add('right');
+        setTimeout(() => btn.classList.remove('right'), 200);
+        resolveCoin(activeCoin, key);
+        return;
+      }
+    }
+    btn.classList.add('wrong');
+    setTimeout(() => btn.classList.remove('wrong'), 200);
+    if (activeCoin && !activeCoin.resolved) {
+      combo = 0;
+      updateHud();
+      playWrong();
+    }
+  }
+
+  function startRound() {
+    running = true;
+    score = 0; combo = 0; bestCombo = 0; correct = 0; missed = 0;
+    tally = {};
+    timeLeft = ROUND_SECONDS;
+    updateHud();
+    startOverlay.classList.add('hidden');
+    endOverlay.classList.add('hidden');
+    boardEl.querySelectorAll('.coin').forEach(el => el.remove());
+    activeCoin = null;
+    clearInterval(timerHandle);
+    timerHandle = setInterval(() => {
+      timeLeft--;
+      updateHud();
+      if (timeLeft <= 0) {
+        clearInterval(timerHandle);
+        endRound();
+      }
+    }, 1000);
+    spawnCoin();
+  }
+
+  function endRound() {
+    running = false;
+    clearTimeout(coinTimeout);
+    if (activeCoin) { activeCoin.el.remove(); activeCoin = null; }
+    playFanfare();
+    finalScore.textContent = score;
+    const total = correct + missed;
+    const acc = total ? Math.round((correct / total) * 100) : 0;
+    finalAccuracy.textContent = correct + ' rätt av ' + total + ' (' + acc + '%), bästa följd ' + bestCombo;
+    const parts = JARS.filter(j => tally[j.key]).map(j => tally[j.key] + '× ' + j.label);
+    recapEl.textContent = parts.length ? 'Du sorterade: ' + parts.join(', ') + '.' : 'Inga mynt hann sorteras rätt den här gången.';
+    endOverlay.classList.remove('hidden');
+  }
+
+  startBtn.addEventListener('click', startRound);
+  restartBtn.addEventListener('click', startRound);
+})();
+</script>

@@ -1,0 +1,632 @@
+<title>Ordspråks-pusslet</title>
+<style>
+  :root {
+    --bg: #EEF0E6;
+    --bg-raised: #F8F9F2;
+    --ink: #23271F;
+    --ink-soft: #565C4C;
+    --ink-faint: #868C76;
+    --rule: #CCCFBA;
+    --gold: #96691F;
+    --green: #3F5D42;
+    --clay: #9C4530;
+    --tile-bg: #FFFFFF;
+  }
+  :root[data-theme="dark"] {
+    --bg: #161B15;
+    --bg-raised: #1E241C;
+    --ink: #E9E7DA;
+    --ink-soft: #ADB29D;
+    --ink-faint: #757B67;
+    --rule: #333B2E;
+    --gold: #D3A24D;
+    --green: #8CB08C;
+    --clay: #E0937A;
+    --tile-bg: #242B21;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161B15;
+      --bg-raised: #1E241C;
+      --ink: #E9E7DA;
+      --ink-soft: #ADB29D;
+      --ink-faint: #757B67;
+      --rule: #333B2E;
+      --gold: #D3A24D;
+      --green: #8CB08C;
+      --clay: #E0937A;
+      --tile-bg: #242B21;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+
+  .page {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100%;
+    padding: 2.5rem 1.2rem 4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .back-link {
+    align-self: flex-start;
+    max-width: 460px;
+    width: 100%;
+    margin: 0 auto 1.2rem;
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+  }
+  .back-link:hover { color: var(--ink-soft); }
+
+  h1 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-weight: 500;
+    font-size: 1.9rem;
+    margin: 0 0 0.3rem;
+    text-align: center;
+  }
+
+  .sub {
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    margin: 0 0 1.4rem;
+    text-align: center;
+    max-width: 420px;
+  }
+
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    width: 100%;
+    max-width: 420px;
+    margin-bottom: 0.6rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .hud .label {
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+  }
+  .hud .value {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 1.3rem;
+    color: var(--ink);
+  }
+  .hud .time-low { color: var(--clay); }
+
+  .proverb {
+    width: 100%;
+    max-width: 420px;
+    min-height: 2.6rem;
+    background: var(--bg-raised);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 0.7rem 0.9rem;
+    margin-bottom: 0.9rem;
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 1.05rem;
+    line-height: 1.5;
+    text-align: center;
+  }
+  .proverb .blank {
+    color: var(--ink-faint);
+    letter-spacing: 0.05em;
+  }
+  .proverb .revealed {
+    color: var(--gold);
+  }
+  .proverb-count {
+    font-size: 0.7rem;
+    color: var(--ink-faint);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .board-wrap {
+    position: relative;
+  }
+
+  #board {
+    position: relative;
+    width: 406px;
+    height: 406px;
+    max-width: 90vw;
+    max-height: 90vw;
+    background: var(--bg-raised);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .tile {
+    position: absolute;
+    width: 58px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    background: var(--tile-bg);
+    border-radius: 5px;
+    box-shadow: inset 0 0 0 1px var(--rule);
+    cursor: pointer;
+    user-select: none;
+    transition: top 0.28s ease, left 0.28s ease, opacity 0.2s ease, transform 0.2s ease;
+    transform: scale(0.94);
+  }
+  .tile:hover { transform: scale(1); }
+  .tile.selected {
+    box-shadow: 0 0 0 2px var(--gold);
+    transform: scale(1.02);
+  }
+  .tile.clearing {
+    opacity: 0;
+    transform: scale(0.2) rotate(12deg);
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    text-align: center;
+    padding: 1.5rem;
+    border-radius: 6px;
+  }
+  .overlay.hidden { display: none; }
+  .overlay h2 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-weight: 500;
+    font-size: 1.3rem;
+    margin: 0;
+  }
+  .overlay p {
+    max-width: 300px;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+  .overlay .result {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 2.2rem;
+    color: var(--gold);
+    margin: 0.2rem 0;
+  }
+
+  button.cta {
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: var(--green);
+    color: var(--bg-raised);
+    border: none;
+    border-radius: 4px;
+    padding: 0.65rem 1.5rem;
+    cursor: pointer;
+  }
+  button.cta:hover { opacity: 0.9; }
+
+  .flash {
+    position: absolute;
+    top: -2.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.85rem;
+    color: var(--gold);
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.3s ease, top 0.3s ease;
+    white-space: nowrap;
+  }
+  .flash.show {
+    opacity: 1;
+    top: -2.8rem;
+  }
+
+  .rules {
+    margin-top: 1.3rem;
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+    max-width: 420px;
+    text-align: center;
+  }
+</style>
+
+<div class="page">
+  <a class="back-link" href="../index.html">&larr; Hela spelkatalogen</a>
+
+  <h1>Ordspråks-pusslet</h1>
+  <p class="sub">Byt plats på två intilliggande rutor så tre eller fler av samma sort möts. Varje bortplockad rad avslöjar nästa ord i ett ordspråk.</p>
+
+  <div class="hud">
+    <div><span class="label">Poäng</span><span class="value" id="scoreVal">0</span></div>
+    <div><span class="label">Tid</span><span class="value" id="timeVal">90</span></div>
+  </div>
+
+  <div class="proverb" id="proverbEl"></div>
+  <div class="proverb-count" id="proverbCount">Ordspråk klara: 0</div>
+
+  <div class="board-wrap">
+    <div class="flash" id="flashEl"></div>
+    <div id="board">
+      <div class="overlay" id="startOverlay">
+        <h2>Redo?</h2>
+        <p>90 sekunder. Klicka en ruta, sen en granne, för att byta plats.</p>
+        <button class="cta" id="startBtn">Starta rundan</button>
+      </div>
+      <div class="overlay hidden" id="endOverlay">
+        <h2>Tiden är ute</h2>
+        <div class="result" id="finalScore">0</div>
+        <p id="finalProverbs">0 ordspråk klara</p>
+        <button class="cta" id="restartBtn">Spela igen</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="rules">🌱 frö · 🪙 mynt · 💡 idé · ❤️ hjärta · 🛡️ mod · 👑 trofasthet — sex symboler, ingen bättre eller sämre än en annan.</p>
+</div>
+
+<script>
+(function () {
+  const COLS = 7, ROWS = 7, TILE = 58;
+  const ICONS = ['🌱', '🪙', '💡', '❤️', '🛡️', '👑'];
+  const ROUND_SECONDS = 90;
+  const POINTS_PER_WORD = 30;
+  const CLEAR_DURATION = 240;
+  const FALL_DURATION = 300;
+  const SWAP_DURATION = 220;
+
+  const PROVERBS = [
+    "Vad du sår får du skörda.",
+    "Bättre en fågel i handen än tio i skogen.",
+    "Var och en är sin egen lyckas smed.",
+    "Tålamod är en dygd.",
+    "Sök så skall ni finna.",
+    "Högmod går före fall.",
+    "Ingen kan göra allt, men alla kan göra något.",
+    "Borta bra men hemma bäst.",
+    "Den som väntar på något gott väntar aldrig för länge.",
+    "Ödmjukhet väger tyngre än stolthet."
+  ];
+
+  const boardEl = document.getElementById('board');
+  const scoreVal = document.getElementById('scoreVal');
+  const timeVal = document.getElementById('timeVal');
+  const proverbEl = document.getElementById('proverbEl');
+  const proverbCount = document.getElementById('proverbCount');
+  const flashEl = document.getElementById('flashEl');
+  const startOverlay = document.getElementById('startOverlay');
+  const endOverlay = document.getElementById('endOverlay');
+  const startBtn = document.getElementById('startBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  const finalScore = document.getElementById('finalScore');
+  const finalProverbs = document.getElementById('finalProverbs');
+
+  let board = [];
+  let nextId = 1;
+  let selected = null;
+  let busy = false;
+  let running = false;
+  let score = 0;
+  let meter = 0;
+  let proverbIndex = 0;
+  let proverbsCompleted = 0;
+  let previousRevealed = 0;
+  let timeLeft = ROUND_SECONDS;
+  let timerHandle = null;
+
+  let audioCtx = null;
+  function ctx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+  function tone(freq, start, dur, type, gainPeak) {
+    const c = ctx();
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, c.currentTime + start);
+    gain.gain.linearRampToValueAtTime(gainPeak || 0.12, c.currentTime + start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + start + dur);
+    osc.connect(gain).connect(c.destination);
+    osc.start(c.currentTime + start);
+    osc.stop(c.currentTime + start + dur + 0.02);
+  }
+  function playMatchSound(combo) {
+    const base = 440 + Math.min(combo, 6) * 60;
+    tone(base, 0, 0.14, 'triangle');
+    tone(base * 1.5, 0.05, 0.14, 'triangle');
+  }
+  function playInvalidSound() {
+    tone(180, 0, 0.12, 'square', 0.08);
+  }
+  function playChime() {
+    tone(660, 0, 0.15, 'sine');
+    tone(880, 0.08, 0.2, 'sine');
+  }
+  function playFanfare() {
+    [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.22, 'triangle'));
+  }
+
+  function randomIcon() {
+    return ICONS[Math.floor(Math.random() * ICONS.length)];
+  }
+  function randomIconExcluding(exclude) {
+    const pool = ICONS.filter(i => !exclude.has(i));
+    const src = pool.length ? pool : ICONS;
+    return src[Math.floor(Math.random() * src.length)];
+  }
+
+  function setTilePos(tile, r, c) {
+    tile.r = r; tile.c = c;
+    tile.el.style.left = (c * TILE) + 'px';
+    tile.el.style.top = (r * TILE) + 'px';
+  }
+
+  function createTileEl(icon) {
+    const el = document.createElement('div');
+    el.className = 'tile';
+    el.textContent = icon;
+    el.tabIndex = 0;
+    boardEl.appendChild(el);
+    return el;
+  }
+
+  function makeInitialTile(icon, r, c) {
+    const el = createTileEl(icon);
+    const tile = { id: nextId++, icon, el, r, c };
+    el.style.left = (c * TILE) + 'px';
+    el.style.top = (r * TILE) + 'px';
+    el.addEventListener('click', () => onTileClick(tile));
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') onTileClick(tile); });
+    return tile;
+  }
+
+  function spawnTile(icon, col, spawnRow, targetRow) {
+    const el = createTileEl(icon);
+    const tile = { id: nextId++, icon, el, r: spawnRow, c: col };
+    el.style.left = (col * TILE) + 'px';
+    el.style.top = (spawnRow * TILE) + 'px';
+    void el.offsetHeight;
+    el.addEventListener('click', () => onTileClick(tile));
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') onTileClick(tile); });
+    setTilePos(tile, targetRow, col);
+    return tile;
+  }
+
+  function createInitialBoard() {
+    board = [];
+    for (let r = 0; r < ROWS; r++) {
+      board[r] = [];
+      for (let c = 0; c < COLS; c++) {
+        const exclude = new Set();
+        if (c >= 2 && board[r][c - 1].icon === board[r][c - 2].icon) exclude.add(board[r][c - 1].icon);
+        if (r >= 2 && board[r - 1][c].icon === board[r - 2][c].icon) exclude.add(board[r - 1][c].icon);
+        const icon = randomIconExcluding(exclude);
+        board[r][c] = makeInitialTile(icon, r, c);
+      }
+    }
+  }
+
+  function findMatches() {
+    const matched = new Set();
+    for (let r = 0; r < ROWS; r++) {
+      let runStart = 0;
+      for (let c = 1; c <= COLS; c++) {
+        const cur = c < COLS && board[r][c] ? board[r][c].icon : null;
+        const prev = board[r][c - 1] ? board[r][c - 1].icon : null;
+        if (cur !== prev) {
+          if (c - runStart >= 3) for (let k = runStart; k < c; k++) matched.add(r + ',' + k);
+          runStart = c;
+        }
+      }
+    }
+    for (let c = 0; c < COLS; c++) {
+      let runStart = 0;
+      for (let r = 1; r <= ROWS; r++) {
+        const cur = r < ROWS && board[r][c] ? board[r][c].icon : null;
+        const prev = board[r - 1][c] ? board[r - 1][c].icon : null;
+        if (cur !== prev) {
+          if (r - runStart >= 3) for (let k = runStart; k < r; k++) matched.add(k + ',' + c);
+          runStart = r;
+        }
+      }
+    }
+    return matched;
+  }
+
+  function applyGravityColumn(c) {
+    let pointer = ROWS - 1;
+    for (let r = ROWS - 1; r >= 0; r--) {
+      if (board[r][c]) {
+        if (r !== pointer) {
+          board[pointer][c] = board[r][c];
+          board[r][c] = null;
+          setTilePos(board[pointer][c], pointer, c);
+        }
+        pointer--;
+      }
+    }
+    let spawnOffset = 1;
+    for (let r = pointer; r >= 0; r--) {
+      const icon = randomIcon();
+      const tile = spawnTile(icon, c, -spawnOffset, r);
+      board[r][c] = tile;
+      spawnOffset++;
+    }
+  }
+
+  function updateHud() {
+    scoreVal.textContent = score;
+    timeVal.textContent = timeLeft;
+    timeVal.classList.toggle('time-low', timeLeft <= 15);
+  }
+
+  function currentWords() {
+    return PROVERBS[proverbIndex].split(' ');
+  }
+
+  function renderProverb(words, revealedCount) {
+    proverbEl.innerHTML = words.map((w, i) =>
+      i < revealedCount
+        ? '<span class="revealed">' + w + '</span>'
+        : '<span class="blank">' + '▁'.repeat(Math.max(2, w.length)) + '</span>'
+    ).join(' ');
+    proverbCount.textContent = 'Ordspråk klara: ' + proverbsCompleted;
+  }
+
+  function flash(msg) {
+    flashEl.textContent = msg;
+    flashEl.classList.add('show');
+    setTimeout(() => flashEl.classList.remove('show'), 900);
+  }
+
+  function checkProverbProgress() {
+    const words = currentWords();
+    const revealed = Math.min(words.length, Math.floor(meter / POINTS_PER_WORD));
+    renderProverb(words, revealed);
+    if (revealed >= words.length) {
+      proverbsCompleted++;
+      score += 50;
+      updateHud();
+      flash('Ordspråk klart! +50');
+      playFanfare();
+      setTimeout(() => {
+        proverbIndex = (proverbIndex + 1) % PROVERBS.length;
+        meter = 0;
+        previousRevealed = 0;
+        renderProverb(currentWords(), 0);
+      }, 900);
+    } else if (revealed > previousRevealed) {
+      playChime();
+      previousRevealed = revealed;
+    }
+  }
+
+  function resolveBoard(combo) {
+    const matched = findMatches();
+    if (matched.size === 0) { busy = false; return; }
+    playMatchSound(combo);
+    const toRemove = [];
+    matched.forEach(key => {
+      const [r, c] = key.split(',').map(Number);
+      const tile = board[r][c];
+      if (tile) {
+        tile.el.classList.add('clearing');
+        toRemove.push(tile);
+        board[r][c] = null;
+      }
+    });
+    score += toRemove.length * 10 * combo;
+    meter += toRemove.length * 10 * combo;
+    updateHud();
+    checkProverbProgress();
+    setTimeout(() => {
+      toRemove.forEach(t => t.el.remove());
+      for (let c = 0; c < COLS; c++) applyGravityColumn(c);
+      setTimeout(() => resolveBoard(combo + 1), FALL_DURATION);
+    }, CLEAR_DURATION);
+  }
+
+  function swapTiles(a, b) {
+    const ar = a.r, ac = a.c, br = b.r, bc = b.c;
+    board[ar][ac] = b; board[br][bc] = a;
+    setTilePos(a, br, bc);
+    setTilePos(b, ar, ac);
+  }
+
+  function onTileClick(tile) {
+    if (busy || !running) return;
+    if (!selected) {
+      selected = tile;
+      tile.el.classList.add('selected');
+      return;
+    }
+    if (selected === tile) {
+      tile.el.classList.remove('selected');
+      selected = null;
+      return;
+    }
+    const dr = Math.abs(selected.r - tile.r), dc = Math.abs(selected.c - tile.c);
+    if (dr + dc !== 1) {
+      selected.el.classList.remove('selected');
+      selected = tile;
+      tile.el.classList.add('selected');
+      return;
+    }
+    const a = selected, b = tile;
+    a.el.classList.remove('selected');
+    selected = null;
+    busy = true;
+    swapTiles(a, b);
+    setTimeout(() => {
+      const matched = findMatches();
+      if (matched.size > 0) {
+        resolveBoard(1);
+      } else {
+        playInvalidSound();
+        swapTiles(a, b);
+        setTimeout(() => { busy = false; }, SWAP_DURATION);
+      }
+    }, SWAP_DURATION);
+  }
+
+  function startRound() {
+    running = true;
+    busy = false;
+    selected = null;
+    score = 0;
+    meter = 0;
+    proverbIndex = Math.floor(Math.random() * PROVERBS.length);
+    proverbsCompleted = 0;
+    previousRevealed = 0;
+    timeLeft = ROUND_SECONDS;
+    updateHud();
+    renderProverb(currentWords(), 0);
+    boardEl.querySelectorAll('.tile').forEach(el => el.remove());
+    createInitialBoard();
+    startOverlay.classList.add('hidden');
+    endOverlay.classList.add('hidden');
+    clearInterval(timerHandle);
+    timerHandle = setInterval(() => {
+      timeLeft--;
+      updateHud();
+      if (timeLeft <= 0) {
+        clearInterval(timerHandle);
+        endRound();
+      }
+    }, 1000);
+  }
+
+  function endRound() {
+    running = false;
+    busy = true;
+    playFanfare();
+    finalScore.textContent = score;
+    finalProverbs.textContent = proverbsCompleted + (proverbsCompleted === 1 ? ' ordspråk klart' : ' ordspråk klara');
+    endOverlay.classList.remove('hidden');
+  }
+
+  startBtn.addEventListener('click', startRound);
+  restartBtn.addEventListener('click', startRound);
+
+  renderProverb(PROVERBS[0].split(' '), 0);
+})();
+</script>

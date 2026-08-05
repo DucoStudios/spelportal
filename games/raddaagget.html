@@ -310,9 +310,17 @@
     }
   }
 
+  const SIM_TIMEOUT_MS = 7000;
   let lastTs = 0;
+  let simStartTs = 0;
   function loop(ts) {
     if (!simActive) return;
+    if (ts - simStartTs > SIM_TIMEOUT_MS) {
+      simActive = false;
+      cancelAnimationFrame(rafHandle);
+      onCrack();
+      return;
+    }
     const dt = Math.min(0.032, (ts - lastTs) / 1000 || 0);
     lastTs = ts;
     step(dt);
@@ -361,7 +369,7 @@
   });
 
   clearBtn.addEventListener('click', () => {
-    if (simActive) return;
+    if (simActive) { simActive = false; cancelAnimationFrame(rafHandle); }
     points = [];
     polyEl.setAttribute('points', '');
     goBtn.disabled = true;
@@ -375,6 +383,7 @@
     resetBall();
     simActive = true;
     lastTs = performance.now();
+    simStartTs = lastTs;
     rafHandle = requestAnimationFrame(loop);
   });
 

@@ -25,7 +25,7 @@
   .topbar a { font-size: 0.72rem; font-weight: 700; color: var(--cyan); text-decoration: none; }
 
   #gameWrap { position: relative; width: 100%; height: calc(100% - 46px); }
-  #gameCanvas { display: block; width: 100%; height: 100%; }
+  #gameCanvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
   .crosshair {
     position: absolute; top: 50%; left: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px;
@@ -36,8 +36,9 @@
   .crosshair::after { top: 8px; left: 0; width: 18px; height: 2px; }
 
   .hotbar {
-    position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
-    display: flex; gap: 6px; z-index: 3; background: rgba(23,15,46,0.7);
+    position: absolute; bottom: 140px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-wrap: wrap; justify-content: center; max-width: 92vw;
+    gap: 6px; z-index: 3; background: rgba(23,15,46,0.7);
     padding: 6px; border-radius: 10px; border: 2px solid var(--outline);
   }
   .hotbar .slot {
@@ -69,6 +70,23 @@
     box-shadow: 4px 4px 0 var(--outline); padding: 0.65rem 1.5rem; cursor: pointer;
   }
   button.cta:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
+
+  .touch-ui { position: absolute; inset: 0; z-index: 3; pointer-events: none; display: none; }
+  .joystick {
+    position: absolute; left: 18px; bottom: 18px; width: 110px; height: 110px; border-radius: 50%;
+    background: rgba(255,255,255,0.1); border: 2px solid var(--outline); pointer-events: auto; touch-action: none;
+  }
+  .joystick-knob {
+    position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px;
+    border-radius: 50%; background: rgba(255,255,255,0.35); border: 2px solid var(--outline);
+  }
+  .action-btns { position: absolute; right: 16px; bottom: 18px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
+  .abtn {
+    width: 56px; height: 56px; border-radius: 50%; background: rgba(23,15,46,0.75); border: 2px solid var(--outline);
+    color: #fff; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; touch-action: none;
+  }
+  .abtn.break { background: rgba(255,46,147,0.6); }
+  .abtn.place { background: rgba(47,230,214,0.45); }
 </style>
 </head>
 <body style="overscroll-behavior-y: contain;">
@@ -85,10 +103,19 @@
   <div class="hint-bar" id="hintBar" style="display:none;">Vänsterklick: bryt block &nbsp;·&nbsp; Högerklick: placera block &nbsp;·&nbsp; ESC: paus</div>
   <div class="hotbar" id="hotbar" style="display:none;"></div>
 
+  <div class="touch-ui" id="touchUI">
+    <div class="joystick" id="joystick"><div class="joystick-knob" id="joystickKnob"></div></div>
+    <div class="action-btns">
+      <div class="abtn" id="btnJump">⤒</div>
+      <div class="abtn break" id="btnBreak">⛏</div>
+      <div class="abtn place" id="btnPlace">🧱</div>
+    </div>
+  </div>
+
   <div class="overlay" id="startOverlay">
     <h2>BLOCKVÄRLDEN</h2>
     <p>En egen liten voxelvärld att bygga i, inspirerad av att gräva och bygga med block.</p>
-    <p><span class="keys">WASD</span> för att gå &nbsp;·&nbsp; musen för att titta &nbsp;·&nbsp; <span class="keys">MELLANSLAG</span> för att hoppa<br>
+    <p id="startInstructions"><span class="keys">WASD</span> för att gå &nbsp;·&nbsp; musen för att titta &nbsp;·&nbsp; <span class="keys">MELLANSLAG</span> för att hoppa<br>
        Vänsterklick bryter block, högerklick placerar block från hotbaren &nbsp;·&nbsp; <span class="keys">1–8</span> väljer blocktyp</p>
     <button class="cta" id="startBtn">Klicka för att spela</button>
   </div>
@@ -111,6 +138,19 @@
   const startBtn = document.getElementById('startBtn');
   const resumeBtn = document.getElementById('resumeBtn');
   const gameWrap = document.getElementById('gameWrap');
+  const touchUI = document.getElementById('touchUI');
+  const joystickEl = document.getElementById('joystick');
+  const joystickKnob = document.getElementById('joystickKnob');
+  const btnJump = document.getElementById('btnJump');
+  const btnBreak = document.getElementById('btnBreak');
+  const btnPlace = document.getElementById('btnPlace');
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  if (isTouch) {
+    document.getElementById('startInstructions').innerHTML =
+      'Vänster ratt styr rörelsen &nbsp;·&nbsp; dra på skärmen för att titta runt<br>' +
+      '⛏ bryter block, 🧱 bygger med vald blocktyp, ⤒ hoppar &nbsp;·&nbsp; tryck en ruta i hotbaren för att välja blocktyp';
+    startBtn.textContent = 'Tryck för att spela';
+  }
 
   const W = 28, D = 28, H = 9;
   const AIR = 0;
@@ -303,8 +343,10 @@
     hotbarEl.appendChild(slot);
   });
 
+  let controlsActive = false;
+
   canvas.addEventListener('mousemove', e => {
-    if (document.pointerLockElement !== canvas) return;
+    if (!controlsActive || document.pointerLockElement !== canvas) return;
     player.yaw -= e.movementX * 0.0022;
     player.pitch -= e.movementY * 0.0022;
     player.pitch = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, player.pitch));
@@ -315,43 +357,125 @@
 
   function meshList() { return Object.values(instancedMeshes); }
 
-  canvas.addEventListener('mousedown', e => {
-    if (document.pointerLockElement !== canvas) return;
+  function breakBlock() {
+    if (!controlsActive) return;
     raycaster.setFromCamera({ x: 0, y: 0 }, camera);
     const hits = raycaster.intersectObjects(meshList());
     if (hits.length === 0) return;
     const hit = hits[0];
     const blockId = Object.keys(instancedMeshes).find(k => instancedMeshes[k] === hit.object);
     const cell = instanceLookup[blockId][hit.instanceId];
-    if (e.button === 0) {
-      world[idx(cell[0], cell[1], cell[2])] = AIR;
-      rebuildMeshes();
-    } else if (e.button === 2) {
-      const n = hit.face.normal;
-      const px = cell[0] + Math.round(n.x), py = cell[1] + Math.round(n.y), pz = cell[2] + Math.round(n.z);
-      if (inBounds(px, py, pz) && world[idx(px, py, pz)] === AIR) {
-        const distToPlayer = Math.hypot(px + 0.5 - player.x, py + 0.5 - player.y, pz + 0.5 - player.z);
-        if (distToPlayer > 0.8) {
-          world[idx(px, py, pz)] = BLOCK_TYPES[selectedSlot].id;
-          rebuildMeshes();
-        }
+    world[idx(cell[0], cell[1], cell[2])] = AIR;
+    rebuildMeshes();
+  }
+  function placeBlock() {
+    if (!controlsActive) return;
+    raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+    const hits = raycaster.intersectObjects(meshList());
+    if (hits.length === 0) return;
+    const hit = hits[0];
+    const blockId = Object.keys(instancedMeshes).find(k => instancedMeshes[k] === hit.object);
+    const cell = instanceLookup[blockId][hit.instanceId];
+    const n = hit.face.normal;
+    const px = cell[0] + Math.round(n.x), py = cell[1] + Math.round(n.y), pz = cell[2] + Math.round(n.z);
+    if (inBounds(px, py, pz) && world[idx(px, py, pz)] === AIR) {
+      const distToPlayer = Math.hypot(px + 0.5 - player.x, py + 0.5 - player.y, pz + 0.5 - player.z);
+      if (distToPlayer > 0.8) {
+        world[idx(px, py, pz)] = BLOCK_TYPES[selectedSlot].id;
+        rebuildMeshes();
       }
     }
+  }
+
+  canvas.addEventListener('mousedown', e => {
+    if (isTouch || document.pointerLockElement !== canvas) return;
+    if (e.button === 0) breakBlock();
+    else if (e.button === 2) placeBlock();
   });
   canvas.addEventListener('contextmenu', e => e.preventDefault());
 
   let running = false;
-  canvas.addEventListener('click', () => { if (running) canvas.requestPointerLock(); });
-  startBtn.addEventListener('click', () => { startGame(); canvas.requestPointerLock(); });
-  resumeBtn.addEventListener('click', () => { canvas.requestPointerLock(); });
+  canvas.addEventListener('click', () => { if (running && !isTouch) canvas.requestPointerLock(); });
+  startBtn.addEventListener('click', () => {
+    startGame();
+    if (!isTouch) canvas.requestPointerLock();
+  });
+  resumeBtn.addEventListener('click', () => {
+    if (isTouch) { pauseOverlay.classList.add('hidden'); controlsActive = true; }
+    else canvas.requestPointerLock();
+  });
 
   document.addEventListener('pointerlockchange', () => {
+    if (isTouch) return;
     if (document.pointerLockElement === canvas) {
+      controlsActive = true;
       pauseOverlay.classList.add('hidden');
     } else if (running) {
+      controlsActive = false;
       pauseOverlay.classList.remove('hidden');
     }
   });
+
+  // --- Touch controls ---
+  let joyTouchId = null, joyForward = 0, joyStrafe = 0;
+  let lookTouchId = null, lookLastX = 0, lookLastY = 0;
+
+  function updateJoystick(t) {
+    const rect = joystickEl.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+    let dx = t.clientX - cx, dy = t.clientY - cy;
+    const maxR = rect.width / 2;
+    const dist = Math.min(maxR, Math.hypot(dx, dy));
+    const angle = Math.atan2(dy, dx);
+    dx = Math.cos(angle) * dist; dy = Math.sin(angle) * dist;
+    joystickKnob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+    joyStrafe = dx / maxR;
+    joyForward = -dy / maxR;
+  }
+  joystickEl.addEventListener('touchstart', e => {
+    e.preventDefault();
+    joyTouchId = e.changedTouches[0].identifier;
+    updateJoystick(e.changedTouches[0]);
+  }, { passive: false });
+  joystickEl.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const t = Array.from(e.changedTouches).find(t => t.identifier === joyTouchId);
+    if (t) updateJoystick(t);
+  }, { passive: false });
+  window.addEventListener('touchend', e => {
+    if (Array.from(e.changedTouches).some(t => t.identifier === joyTouchId)) {
+      joyTouchId = null; joyForward = 0; joyStrafe = 0;
+      joystickKnob.style.transform = 'translate(0,0)';
+    }
+    if (Array.from(e.changedTouches).some(t => t.identifier === lookTouchId)) {
+      lookTouchId = null;
+    }
+  });
+
+  canvas.addEventListener('touchstart', e => {
+    if (!controlsActive) return;
+    const t = e.changedTouches[0];
+    lookTouchId = t.identifier;
+    lookLastX = t.clientX; lookLastY = t.clientY;
+  }, { passive: true });
+  canvas.addEventListener('touchmove', e => {
+    if (!controlsActive) return;
+    const t = Array.from(e.changedTouches).find(t => t.identifier === lookTouchId);
+    if (!t) return;
+    const dx = t.clientX - lookLastX, dy = t.clientY - lookLastY;
+    lookLastX = t.clientX; lookLastY = t.clientY;
+    player.yaw -= dx * 0.0045;
+    player.pitch -= dy * 0.0045;
+    player.pitch = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, player.pitch));
+  }, { passive: true });
+
+  let touchJump = false;
+  function bindTapButton(el, onTap) {
+    el.addEventListener('touchstart', e => { e.preventDefault(); onTap(); }, { passive: false });
+  }
+  bindTapButton(btnJump, () => { touchJump = true; setTimeout(() => { touchJump = false; }, 150); });
+  bindTapButton(btnBreak, () => breakBlock());
+  bindTapButton(btnPlace, () => placeBlock());
 
   function startGame() {
     running = true;
@@ -360,6 +484,11 @@
     crosshair.style.display = 'block';
     hintBar.style.display = 'block';
     hotbarEl.style.display = 'flex';
+    if (isTouch) {
+      controlsActive = true;
+      touchUI.style.display = 'block';
+      hintBar.textContent = 'Vänster ratt: gå · Dra på skärmen: titta · ⛏ bryt · 🧱 bygg · ⤒ hoppa';
+    }
   }
 
   let lastTs = performance.now();
@@ -367,7 +496,7 @@
     const dt = Math.min(0.05, (ts - lastTs) / 1000);
     lastTs = ts;
 
-    if (running && document.pointerLockElement === canvas) {
+    if (running && controlsActive) {
       const forward = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
       const right = new THREE.Vector3(forward.z, 0, -forward.x);
       let mx = 0, mz = 0;
@@ -375,15 +504,19 @@
       if (keys['KeyS']) { mx -= forward.x; mz -= forward.z; }
       if (keys['KeyD']) { mx += right.x; mz += right.z; }
       if (keys['KeyA']) { mx -= right.x; mz -= right.z; }
+      if (Math.abs(joyForward) > 0.05 || Math.abs(joyStrafe) > 0.05) {
+        mx += forward.x * joyForward + right.x * joyStrafe;
+        mz += forward.z * joyForward + right.z * joyStrafe;
+      }
       const len = Math.hypot(mx, mz);
-      if (len > 0.001) { mx /= len; mz /= len; }
+      if (len > 1) { mx /= len; mz /= len; }
 
       const newX = player.x + mx * MOVE_SPEED * dt;
       if (!collidesAt(newX, player.y, player.z)) player.x = newX;
       const newZ = player.z + mz * MOVE_SPEED * dt;
       if (!collidesAt(player.x, player.y, newZ)) player.z = newZ;
 
-      if (keys['Space'] && player.grounded) { player.vy = JUMP_V; player.grounded = false; }
+      if ((keys['Space'] || touchJump) && player.grounded) { player.vy = JUMP_V; player.grounded = false; }
       player.vy -= GRAVITY * dt;
       const newY = player.y + player.vy * dt;
       if (player.vy < 0 && collidesAt(player.x, newY, player.z)) {

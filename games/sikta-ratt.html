@@ -363,10 +363,10 @@
 <script>
 (function () {
   const ROUND_SECONDS = 90;
-  const ANCHOR = { x: 46, y: 350 };
+  const ANCHOR = { x: 203, y: 300 };
   const GRAVITY = 1500;
-  const POWER_SCALE = 5.6;
-  const MAX_PULL = 130;
+  const POWER_SCALE = 7.2;
+  const MAX_PULL = 100;
   const BOARD_SIZE = 406;
 
   const boardEl = document.getElementById('board');
@@ -447,7 +447,7 @@
     const progress = 1 - timeLeft / ROUND_SECONDS;
     target.radius = lerp(68, 46, progress);
     const margin = target.radius + 8;
-    target.x = margin + Math.random() * (BOARD_SIZE - margin * 2 - 130) + 130;
+    target.x = margin + Math.random() * (BOARD_SIZE - margin * 2);
     target.y = margin + Math.random() * (210 - margin);
     renderTarget();
   }

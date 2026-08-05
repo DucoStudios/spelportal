@@ -540,6 +540,7 @@
         }
         selected = null;
         render();
+        if (!move.promotion) maybeTriggerAI();
         return;
       }
       if (piece && piece.color === state.turn) { selected = { r, c }; render(); return; }

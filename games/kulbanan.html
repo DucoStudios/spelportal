@@ -43,7 +43,7 @@
   #board { position: relative; background: var(--bg2); border: 3px solid var(--outline); border-radius: 10px; box-shadow: 6px 6px 0 var(--outline); }
   .cell { position: absolute; box-sizing: border-box; border: 1px solid color-mix(in srgb, var(--grid-line) 60%, transparent); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; }
   .cell.blocker { background: repeating-linear-gradient(45deg, var(--outline), var(--outline) 4px, #2a1f45 4px, #2a1f45 8px); cursor: default; }
-  .cell.start, .cell.goal { cursor: default; }
+  .cell.start { box-shadow: inset 0 0 0 2px var(--yellow); }
   .cell .piece-icon { pointer-events: none; }
   .ball { position: absolute; width: 24px; height: 24px; border-radius: 50%; background: var(--yellow); border: 2px solid var(--outline); box-shadow: 2px 2px 0 var(--outline); transition: left 0.32s ease, top 0.32s ease; z-index: 3; }
   .goal-flag { position: absolute; font-size: 1.3rem; pointer-events: none; }
@@ -245,7 +245,6 @@
     if (testing) return;
     const lvl = LEVELS[levelIndex];
     if (grid[r][c] === 'blocker') return;
-    if (r === 0 && c === lvl.start) return;
 
     const cellEl = cellEls()[cellIndex(r, c)];
     if (activeTool === 'erase') {

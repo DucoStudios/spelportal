@@ -13,7 +13,7 @@
     --ink: #FFF6FB; --ink-soft: #C9B6E8; --ink-faint: #9481BE; --outline: #120A24;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; overflow: hidden; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; height: 100dvh; overflow: hidden; overscroll-behavior: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
   body { background: var(--bg); font-family: 'Open Sans', -apple-system, sans-serif; color: var(--ink); }
 
   .topbar {
@@ -24,7 +24,7 @@
   .topbar h1 { font-family: 'Bungee', sans-serif; font-weight: 400; font-size: 1.1rem; margin: 0; text-shadow: 2px 2px 0 var(--outline); }
   .topbar a { font-size: 0.72rem; font-weight: 700; color: var(--cyan); text-decoration: none; }
 
-  #gameWrap { position: relative; width: 100%; height: calc(100% - 46px); }
+  #gameWrap { position: relative; width: 100%; height: calc(100% - 46px); height: calc(100dvh - 46px); }
   #gameCanvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
   .crosshair {

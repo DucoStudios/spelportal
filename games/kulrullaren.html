@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Kulrullaren</title>
+<style>
+  :root {
+    --sky1: #6EC8FF; --sky2: #BEEBFF; --panel: #241A44; --outline: #120A24;
+    --pink: #FF6EC7; --orange: #FF7A3D; --yellow: #FFD23F; --cyan: #2FE6D6; --purple: #8B5CF6;
+    --ink: #FFF6FB; --ink-soft: #2A2140;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; height: 100dvh; overflow: hidden; overscroll-behavior: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--sky1); font-family: 'Open Sans', -apple-system, sans-serif; color: var(--ink); overscroll-behavior-y: contain; }
+
+  .topbar {
+    position: relative; z-index: 5; display: flex; align-items: center; justify-content: space-between;
+    padding: 0.6rem 1rem; background: linear-gradient(180deg, #2A1750 0%, #170F2E 100%);
+    border-bottom: 3px solid var(--outline);
+  }
+  .topbar h1 { font-weight: 800; font-size: 1.1rem; margin: 0; }
+  .topbar a { font-size: 0.72rem; font-weight: 700; color: var(--cyan); text-decoration: none; }
+
+  #gameWrap { position: relative; width: 100%; height: calc(100% - 46px); height: calc(100dvh - 46px); touch-action: none; }
+  #gameCanvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+  .hud { position: absolute; top: 10px; left: 10px; right: 10px; z-index: 3; display: flex; justify-content: space-between; pointer-events: none; }
+  .pill { background: rgba(23,15,46,0.75); border: 2px solid var(--outline); border-radius: 8px; padding: 0.3rem 0.6rem; font-weight: 800; font-size: 0.85rem; }
+  .pill.coins { color: var(--yellow); }
+  .pill.level { color: var(--cyan); }
+
+  .progress-wrap { position: absolute; top: 46px; left: 10px; right: 10px; z-index: 3; height: 8px; background: rgba(23,15,46,0.55); border: 2px solid var(--outline); border-radius: 6px; overflow: hidden; pointer-events: none; }
+  .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--pink), var(--yellow)); transition: width 0.1s linear; }
+
+  .toast { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); z-index: 4; background: rgba(255,46,80,0.9); border: 2px solid var(--outline); border-radius: 8px; padding: 0.4rem 0.9rem; font-weight: 800; font-size: 0.8rem; opacity: 0; transition: opacity 0.2s ease; pointer-events: none; }
+  .toast.show { opacity: 1; }
+
+  .steer-btns { position: absolute; bottom: 18px; left: 0; right: 0; z-index: 3; display: flex; justify-content: space-between; padding: 0 16px; pointer-events: none; }
+  .steer-btn { width: 62px; height: 62px; border-radius: 50%; background: rgba(23,15,46,0.55); border: 2px solid var(--outline); color: #fff; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; pointer-events: auto; touch-action: none; }
+  .steer-btn:active { background: rgba(255,210,63,0.6); }
+
+  .overlay {
+    position: absolute; inset: 0; background: color-mix(in srgb, var(--panel) 92%, transparent);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.8rem; text-align: center; padding: 1.2rem; z-index: 6; overflow-y: auto;
+  }
+  .overlay.hidden { display: none; }
+  .overlay h2 { font-weight: 900; font-size: 1.5rem; margin: 0; color: var(--yellow); text-shadow: 2px 2px 0 var(--outline); }
+  .overlay p { max-width: 340px; font-size: 0.86rem; font-weight: 600; color: #D8CDEE; margin: 0; line-height: 1.6; }
+  .stars { font-size: 1.6rem; letter-spacing: 4px; }
+  button.cta {
+    font-family: inherit; font-size: 0.9rem; font-weight: 800; text-transform: uppercase;
+    background: var(--yellow); color: var(--outline); border: 3px solid var(--outline); border-radius: 8px;
+    box-shadow: 4px 4px 0 var(--outline); padding: 0.65rem 1.5rem; cursor: pointer;
+  }
+  button.cta:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
+  button.cta.secondary { background: var(--cyan); }
+
+  .level-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 340px; }
+  .level-btn {
+    width: 62px; height: 62px; border-radius: 10px; border: 3px solid var(--outline); background: var(--pink);
+    color: var(--ink); font-weight: 900; font-size: 1.3rem; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    box-shadow: 3px 3px 0 var(--outline); cursor: pointer; gap: 2px;
+  }
+  .level-btn small { font-size: 0.6rem; }
+  .level-btn.locked { background: #4A3E6B; color: #9481BE; cursor: not-allowed; }
+  .level-btn .lvl-stars { font-size: 0.6rem; color: var(--yellow); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🎢 KULRULLAREN</h1>
+  <a href="../index.html">&larr; HELA SPELKATALOGEN</a>
+</div>
+
+<div id="gameWrap">
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="hud" id="hud" style="display:none;">
+    <div class="pill coins">🪙 <span id="coinsVal">0</span>/<span id="coinsTotal">0</span></div>
+    <div class="pill level" id="levelPill">Bana 1</div>
+  </div>
+  <div class="progress-wrap" id="progressWrap" style="display:none;">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <div class="steer-btns" id="steerBtns" style="display:none;">
+    <div class="steer-btn" id="btnLeft">◀</div>
+    <div class="steer-btn" id="btnRight">▶</div>
+  </div>
+
+  <div class="overlay" id="startOverlay">
+    <h2>KULRULLAREN</h2>
+    <p>Styr bollen längs den svängande banan. Dra med fingret, tryck på pilarna eller använd ←/→ på tangentbordet. Samla mynten och åk inte av kanten!</p>
+    <div class="level-grid" id="levelGrid"></div>
+  </div>
+
+  <div class="overlay hidden" id="fallOverlay">
+    <h2>OJ DÅ!</h2>
+    <p>Du åkte av banan. Ingen fara, du börjar om vid senaste kontrollpunkten.</p>
+    <button class="cta" id="fallRetryBtn">Fortsätt</button>
+  </div>
+
+  <div class="overlay hidden" id="winOverlay">
+    <h2>BANAN KLAR!</h2>
+    <div class="stars" id="winStars">⭐⭐⭐</div>
+    <p id="winText"></p>
+    <button class="cta" id="nextLevelBtn">Nästa bana</button>
+    <button class="cta secondary" id="backToMapBtn">Bankarta</button>
+  </div>
+</div>
+
+<script src="lib/three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  const PROGRESS_KEY = 'kulrullaren-progress-v1';
+
+  const LEVELS = [
+    { name: 'Sockerbanan',      seed: 11, points: 9,  turnDeg: 26, width: 6.6, speed: 8.5,  coinCount: 20, railColor: '#FF6EC7' },
+    { name: 'Karamellkurvan',   seed: 22, points: 11, turnDeg: 34, width: 6.0, speed: 9.5,  coinCount: 24, railColor: '#5AD0FF' },
+    { name: 'Regnbågsrampen',   seed: 33, points: 13, turnDeg: 42, width: 5.4, speed: 10.5, coinCount: 28, railColor: '#FFD23F' },
+    { name: 'Virveltornet',     seed: 44, points: 15, turnDeg: 50, width: 4.9, speed: 11.5, coinCount: 32, railColor: '#FF7A3D' },
+    { name: 'Slutrusningen',    seed: 55, points: 17, turnDeg: 58, width: 4.4, speed: 12.5, coinCount: 36, railColor: '#8B5CF6' }
+  ];
+
+  function loadProgress() {
+    try {
+      const raw = localStorage.getItem(PROGRESS_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return { unlocked: 1, stars: {} };
+  }
+  function saveProgress(p) {
+    try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); } catch (e) {}
+  }
+  let progress = loadProgress();
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function makeStripeTexture(colorA, colorB, bands) {
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 256;
+    const ctx = c.getContext('2d');
+    const h = c.height / bands;
+    for (let i = 0; i < bands; i++) {
+      ctx.fillStyle = i % 2 === 0 ? colorA : colorB;
+      ctx.fillRect(0, i * h, c.width, h);
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+  }
+
+  function makeHazardTexture() {
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 64;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#181018'; ctx.fillRect(0, 0, 64, 64);
+    ctx.fillStyle = '#FFD23F';
+    ctx.save(); ctx.translate(32, 32); ctx.rotate(Math.PI / 4); ctx.translate(-32, -32);
+    for (let x = -64; x < 128; x += 18) ctx.fillRect(x, -32, 9, 128);
+    ctx.restore();
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+  }
+
+  function makeSprinkleTexture(base) {
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = base; ctx.fillRect(0, 0, 128, 128);
+    const colors = ['#fff', '#2FE6D6', '#FFD23F', '#FF2E93', '#8B5CF6'];
+    for (let i = 0; i < 90; i++) {
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.save();
+      ctx.translate(Math.random() * 128, Math.random() * 128);
+      ctx.rotate(Math.random() * Math.PI);
+      ctx.fillRect(-3, -1, 6, 2);
+      ctx.restore();
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+  }
+
+  function makeBallTexture() {
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#FF9A4D'; ctx.fillRect(0, 0, 256, 128);
+    const dotColors = ['#fff', '#2FE6D6', '#FF2E93', '#FFD23F'];
+    for (let i = 0; i < 70; i++) {
+      ctx.fillStyle = dotColors[i % dotColors.length];
+      ctx.save();
+      ctx.translate(Math.random() * 256, Math.random() * 128);
+      ctx.rotate(Math.random() * Math.PI);
+      ctx.fillRect(-3, -1, 6, 2);
+      ctx.restore();
+    }
+    ctx.fillStyle = '#1D4ED8';
+    ctx.fillRect(96, 0, 64, 128);
+    ctx.fillStyle = '#fff';
+    for (let y = -20; y < 148; y += 34) {
+      ctx.beginPath();
+      ctx.moveTo(96, y + 20);
+      ctx.lineTo(128, y);
+      ctx.lineTo(160, y + 20);
+      ctx.lineTo(160, y + 30);
+      ctx.lineTo(128, y + 10);
+      ctx.lineTo(96, y + 30);
+      ctx.closePath();
+      ctx.fill();
+    }
+    const tex = new THREE.CanvasTexture(c);
+    return tex;
+  }
+
+  // ---- Three.js setup ----
+  const canvas = document.getElementById('gameCanvas');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x6EC8FF);
+  scene.fog = new THREE.Fog(0x6EC8FF, 40, 160);
+
+  const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 500);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x88aaff, 0.9);
+  scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+  sun.position.set(30, 60, 20);
+  scene.add(sun);
+
+  function resize() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+
+  // Scattered decorative clouds beneath the track.
+  const cloudGroup = new THREE.Group();
+  const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 });
+  for (let i = 0; i < 26; i++) {
+    const s = 3 + Math.random() * 5;
+    const geo = new THREE.SphereGeometry(s, 8, 6);
+    const m = new THREE.Mesh(geo, cloudMat);
+    m.position.set((Math.random() - 0.5) * 260, -18 - Math.random() * 22, (Math.random() - 0.2) * 260);
+    cloudGroup.add(m);
+  }
+  scene.add(cloudGroup);
+
+  // ---- Level state ----
+  let level = null;
+  let frames = [];
+  let curveLength = 0;
+  let halfWidth = 0;
+  let ballRadius = 0.85;
+  let distance = 0;
+  let lateral = 0;
+  let checkpointDistance = 0;
+  let checkpointLateral = 0;
+  let coins = [];
+  let coinsCollected = 0;
+  let levelIndex = 0;
+  let running = false;
+  let steerInput = 0; // -1..1 from keyboard/buttons
+  let dragActive = false;
+  let dragStartX = 0;
+  let dragStartLateral = 0;
+  let dragLateral = null;
+  const trackGroup = new THREE.Group();
+  scene.add(trackGroup);
+
+  let ballMesh = null;
+  const ballTexture = makeBallTexture();
+
+  function clearTrackGroup() {
+    while (trackGroup.children.length) {
+      const obj = trackGroup.children.pop();
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) obj.material.dispose();
+    }
+  }
+
+  function buildLevelPath(cfg) {
+    const rnd = mulberry32(cfg.seed);
+    const pts = [];
+    let pos = new THREE.Vector3(0, 0, 0);
+    let heading = 0;
+    let pitch = 0;
+    const segLen = 15;
+    pts.push(pos.clone());
+    for (let i = 0; i < cfg.points; i++) {
+      heading += (rnd() - 0.5) * (cfg.turnDeg * Math.PI / 180) * 2;
+      pitch += (rnd() - 0.5) * 0.10;
+      pitch = Math.max(-0.20, Math.min(0.20, pitch));
+      const dir = new THREE.Vector3(Math.sin(heading) * Math.cos(pitch), Math.sin(pitch), Math.cos(heading) * Math.cos(pitch));
+      pos = pos.clone().add(dir.multiplyScalar(segLen));
+      pts.push(pos.clone());
+    }
+    return pts;
+  }
+
+  function computeFrames(curve, sampleCount) {
+    const worldUp = new THREE.Vector3(0, 1, 0);
+    const out = [];
+    for (let i = 0; i <= sampleCount; i++) {
+      const t = i / sampleCount;
+      const point = curve.getPointAt(t);
+      const tangent = curve.getTangentAt(t).clone().normalize();
+      let right = new THREE.Vector3().crossVectors(tangent, worldUp);
+      if (right.lengthSq() < 1e-6) right = new THREE.Vector3(1, 0, 0);
+      right.normalize();
+      const up = new THREE.Vector3().crossVectors(right, tangent).normalize();
+      out.push({ t, point, tangent, right, up });
+    }
+    return out;
+  }
+
+  function buildRoadMesh(frames, hw, totalLen) {
+    const positions = [], uvs = [], indices = [];
+    for (let i = 0; i < frames.length; i++) {
+      const f = frames[i];
+      const left = f.point.clone().addScaledVector(f.right, -hw);
+      const right = f.point.clone().addScaledVector(f.right, hw);
+      positions.push(left.x, left.y, left.z, right.x, right.y, right.z);
+      const v = (totalLen * f.t) / 6;
+      uvs.push(0, v, 1, v);
+    }
+    for (let i = 0; i < frames.length - 1; i++) {
+      const a = i * 2, b = i * 2 + 1, c = i * 2 + 2, d = i * 2 + 3;
+      indices.push(a, b, c, b, d, c);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    const tex = makeStripeTexture('#EAF6FF', '#BFE3FB', 10);
+    tex.repeat.set(1, 1);
+    const mat = new THREE.MeshStandardMaterial({ map: tex, side: THREE.DoubleSide, roughness: 0.85 });
+    return new THREE.Mesh(geo, mat);
+  }
+
+  function buildRailMesh(frames, hw, sideSign, colorHex, totalLen) {
+    const pts = frames.map((f) => f.point.clone().addScaledVector(f.right, sideSign * hw).addScaledVector(f.up, 0.12));
+    const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.15);
+    const geo = new THREE.TubeGeometry(curve, Math.max(20, Math.round(totalLen / 1.5)), 0.22, 8, false);
+    const tex = makeHazardTexture();
+    tex.repeat.set(2, Math.max(4, Math.round(totalLen / 4)));
+    const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7 });
+    return new THREE.Mesh(geo, mat);
+  }
+
+  function buildArch(frames, tPos, hw, colorHex) {
+    const idx = Math.round(tPos * (frames.length - 1));
+    const f = frames[idx];
+    const r = hw * 1.55;
+    const geo = new THREE.TorusGeometry(r, r * 0.32, 14, 28);
+    const tex = makeSprinkleTexture(colorHex);
+    const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.copy(f.point).addScaledVector(f.up, r * 1.05);
+    const basis = new THREE.Matrix4().makeBasis(f.right, f.up, f.tangent);
+    mesh.quaternion.setFromRotationMatrix(basis);
+    return mesh;
+  }
+
+  function buildCoins(frames, hw, count, rnd) {
+    const list = [];
+    const coinGeo = new THREE.TorusGeometry(0.4, 0.13, 8, 16);
+    const coinMat = new THREE.MeshStandardMaterial({ color: 0xFFD23F, emissive: 0x554400, roughness: 0.3, metalness: 0.5 });
+    for (let i = 0; i < count; i++) {
+      const t = (i + 1) / (count + 1);
+      const idx = Math.min(frames.length - 1, Math.round(t * (frames.length - 1)));
+      const f = frames[idx];
+      const lat = Math.max(-hw * 0.65, Math.min(hw * 0.65, (rnd() - 0.5) * hw * 1.3));
+      const pos = f.point.clone().addScaledVector(f.right, lat).addScaledVector(f.up, 1.0);
+      const mesh = new THREE.Mesh(coinGeo, coinMat);
+      mesh.position.copy(pos);
+      trackGroup.add(mesh);
+      list.push({ pos, mesh, collected: false });
+    }
+    return list;
+  }
+
+  function buildLevel(idx) {
+    clearTrackGroup();
+    level = LEVELS[idx];
+    levelIndex = idx;
+    const rnd = mulberry32(level.seed * 3 + 1);
+    const pts = buildLevelPath(level);
+    const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.4);
+    curve.arcLengthDivisions = 400;
+    curveLength = curve.getLength();
+    const sampleCount = Math.max(160, Math.round(curveLength / 1.1));
+    frames = computeFrames(curve, sampleCount);
+    halfWidth = level.width / 2;
+
+    const road = buildRoadMesh(frames, halfWidth, curveLength);
+    trackGroup.add(road);
+    trackGroup.add(buildRailMesh(frames, halfWidth, -1, level.railColor, curveLength));
+    trackGroup.add(buildRailMesh(frames, halfWidth, 1, level.railColor, curveLength));
+
+    if (frames.length > 20) {
+      trackGroup.add(buildArch(frames, 0.32, halfWidth, level.railColor));
+      trackGroup.add(buildArch(frames, 0.68, halfWidth, '#FF6EC7'));
+    }
+
+    coins = buildCoins(frames, halfWidth, level.coinCount, rnd);
+    coinsCollected = 0;
+
+    if (!ballMesh) {
+      const ballGeo = new THREE.SphereGeometry(ballRadius, 24, 18);
+      const ballMat = new THREE.MeshStandardMaterial({ map: ballTexture, roughness: 0.4 });
+      ballMesh = new THREE.Mesh(ballGeo, ballMat);
+      scene.add(ballMesh);
+    }
+
+    distance = 0;
+    lateral = 0;
+    checkpointDistance = 0;
+    checkpointLateral = 0;
+    dragLateral = null;
+
+    document.getElementById('coinsVal').textContent = '0';
+    document.getElementById('coinsTotal').textContent = String(level.coinCount);
+    document.getElementById('levelPill').textContent = 'Bana ' + (idx + 1) + ' · ' + level.name;
+    document.getElementById('progressBar').style.width = '0%';
+  }
+
+  function frameAt(t) {
+    const f = Math.max(0, Math.min(1, t)) * (frames.length - 1);
+    const i0 = Math.floor(f), i1 = Math.min(frames.length - 1, i0 + 1);
+    const a = frames[i0], b = frames[i1];
+    const k = f - i0;
+    return {
+      point: a.point.clone().lerp(b.point, k),
+      tangent: a.tangent.clone().lerp(b.tangent, k).normalize(),
+      right: a.right.clone().lerp(b.right, k).normalize(),
+      up: a.up.clone().lerp(b.up, k).normalize()
+    };
+  }
+
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 1400);
+  }
+
+  function triggerFall() {
+    running = false;
+    document.getElementById('fallOverlay').classList.remove('hidden');
+  }
+
+  function completeLevel() {
+    running = false;
+    const pct = level.coinCount > 0 ? coinsCollected / level.coinCount : 1;
+    let stars = 1;
+    if (pct >= 0.9) stars = 3; else if (pct >= 0.5) stars = 2;
+    progress.stars[levelIndex] = Math.max(progress.stars[levelIndex] || 0, stars);
+    if (levelIndex + 1 >= progress.unlocked && levelIndex + 1 < LEVELS.length) progress.unlocked = levelIndex + 2;
+    saveProgress(progress);
+
+    document.getElementById('winStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+    document.getElementById('winText').textContent = coinsCollected + ' av ' + level.coinCount + ' mynt samlade.';
+    document.getElementById('nextLevelBtn').style.display = levelIndex + 1 < LEVELS.length ? 'inline-block' : 'none';
+    document.getElementById('winOverlay').classList.remove('hidden');
+  }
+
+  // ---- Input ----
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA') steerInput = -1;
+    if (e.code === 'ArrowRight' || e.code === 'KeyD') steerInput = 1;
+  });
+  window.addEventListener('keyup', (e) => {
+    if ((e.code === 'ArrowLeft' || e.code === 'KeyA') && steerInput < 0) steerInput = 0;
+    if ((e.code === 'ArrowRight' || e.code === 'KeyD') && steerInput > 0) steerInput = 0;
+  });
+
+  function bindHold(el, onDown, onUp) {
+    // stopPropagation sa knapptryck inte ocksa bubblar upp till gameWrap
+    // och startar en drag-styrning samtidigt, se touchstart pa wrap nedan.
+    el.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); onDown(); }, { passive: false });
+    el.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); onUp(); }, { passive: false });
+    el.addEventListener('mousedown', onDown);
+    window.addEventListener('mouseup', onUp);
+  }
+  bindHold(document.getElementById('btnLeft'), () => { steerInput = -1; }, () => { if (steerInput < 0) steerInput = 0; });
+  bindHold(document.getElementById('btnRight'), () => { steerInput = 1; }, () => { if (steerInput > 0) steerInput = 0; });
+
+  const wrap = document.getElementById('gameWrap');
+  wrap.addEventListener('touchstart', (e) => {
+    if (!running) return;
+    dragActive = true;
+    dragStartX = e.touches[0].clientX;
+    dragStartLateral = dragLateral != null ? dragLateral : lateral;
+  }, { passive: true });
+  wrap.addEventListener('touchmove', (e) => {
+    if (!running || !dragActive) return;
+    const dx = e.touches[0].clientX - dragStartX;
+    const sens = (halfWidth * 2.4) / (canvas.clientWidth * 0.85);
+    dragLateral = dragStartLateral + dx * sens;
+  }, { passive: true });
+  wrap.addEventListener('touchend', () => {
+    dragActive = false;
+    // Slappa greppet om lateral-styrningen sa tangentbord/knappar kan ta over
+    // igen efter en drag-gest, lateral ar redan synkad till samma varde.
+    dragLateral = null;
+  });
+
+  // ---- Overlays wiring ----
+  function renderLevelGrid() {
+    const grid = document.getElementById('levelGrid');
+    grid.innerHTML = '';
+    LEVELS.forEach((lvl, i) => {
+      const btn = document.createElement('div');
+      const locked = i >= progress.unlocked;
+      btn.className = 'level-btn' + (locked ? ' locked' : '');
+      const st = progress.stars[i] || 0;
+      btn.innerHTML = (locked ? '🔒' : String(i + 1)) + (locked ? '' : '<div class="lvl-stars">' + '⭐'.repeat(st) + '☆'.repeat(3 - st) + '</div>') + '<small>' + lvl.name + '</small>';
+      if (!locked) {
+        btn.addEventListener('click', () => startLevel(i));
+      }
+      grid.appendChild(btn);
+    });
+  }
+
+  function startLevel(idx) {
+    buildLevel(idx);
+    document.getElementById('startOverlay').classList.add('hidden');
+    document.getElementById('fallOverlay').classList.add('hidden');
+    document.getElementById('winOverlay').classList.add('hidden');
+    document.getElementById('hud').style.display = 'flex';
+    document.getElementById('progressWrap').style.display = 'block';
+    document.getElementById('steerBtns').style.display = 'flex';
+    running = true;
+    lastTime = performance.now();
+    requestAnimationFrame(tick);
+  }
+
+  document.getElementById('fallRetryBtn').addEventListener('click', () => {
+    distance = checkpointDistance;
+    lateral = checkpointLateral;
+    dragLateral = null;
+    document.getElementById('fallOverlay').classList.add('hidden');
+    running = true;
+    lastTime = performance.now();
+    requestAnimationFrame(tick);
+  });
+  document.getElementById('nextLevelBtn').addEventListener('click', () => startLevel(Math.min(LEVELS.length - 1, levelIndex + 1)));
+  document.getElementById('backToMapBtn').addEventListener('click', () => {
+    document.getElementById('winOverlay').classList.add('hidden');
+    document.getElementById('hud').style.display = 'none';
+    document.getElementById('progressWrap').style.display = 'none';
+    document.getElementById('steerBtns').style.display = 'none';
+    renderLevelGrid();
+    document.getElementById('startOverlay').classList.remove('hidden');
+  });
+
+  renderLevelGrid();
+  resize();
+
+  // ---- Game loop ----
+  let lastTime = performance.now();
+  function tick(ts) {
+    if (!running) return;
+    const dt = Math.min(0.05, (ts - lastTime) / 1000);
+    lastTime = ts;
+
+    const steerSpeed = halfWidth * 1.7;
+    let desired = (dragLateral != null ? dragLateral : lateral) + (dragLateral == null ? steerInput * steerSpeed * dt : 0);
+    if (dragLateral != null) desired = dragLateral;
+
+    distance += level.speed * dt;
+    const t = distance / curveLength;
+
+    if (t >= 1) { completeLevel(); return; }
+    if (t >= (checkpointDistance / curveLength) + 0.25) {
+      checkpointDistance = distance;
+      checkpointLateral = 0;
+    }
+
+    const margin = halfWidth - ballRadius * 0.55;
+    if (Math.abs(desired) > margin) {
+      triggerFall();
+      return;
+    }
+    lateral = desired;
+
+    const f = frameAt(t);
+    const ballPos = f.point.clone().addScaledVector(f.right, lateral).addScaledVector(f.up, ballRadius);
+    ballMesh.position.copy(ballPos);
+
+    const rollAxis = new THREE.Vector3().crossVectors(f.up, f.tangent).normalize();
+    const rollAngle = (level.speed * dt) / ballRadius;
+    ballMesh.rotateOnWorldAxis(rollAxis, rollAngle);
+
+    const camTarget = ballPos.clone().addScaledVector(f.tangent, -8).addScaledVector(f.up, 3.6);
+    camera.position.lerp(camTarget, Math.min(1, dt * 6));
+    const lookTarget = ballPos.clone().addScaledVector(f.tangent, 5).addScaledVector(f.up, 0.5);
+    camera.lookAt(lookTarget);
+
+    for (const coin of coins) {
+      if (coin.collected) continue;
+      if (coin.pos.distanceTo(ballPos) < ballRadius + 0.7) {
+        coin.collected = true;
+        coin.mesh.visible = false;
+        coinsCollected++;
+        document.getElementById('coinsVal').textContent = String(coinsCollected);
+      } else {
+        coin.mesh.rotation.y += dt * 2.4;
+      }
+    }
+
+    document.getElementById('progressBar').style.width = Math.min(100, t * 100) + '%';
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+})();
+</script>
+</body>
+</html>

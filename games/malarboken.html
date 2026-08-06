@@ -39,9 +39,19 @@
   .scene-tab:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--outline); }
 
   .board-wrap { position: relative; }
-  #board { width: 320px; height: 320px; max-width: 92vw; max-height: 92vw; background: var(--bg2); border: 3px solid var(--outline); border-radius: 14px; box-shadow: 6px 6px 0 var(--outline); overflow: hidden; }
+  #board { position: relative; width: 320px; height: 320px; max-width: 92vw; max-height: 92vw; background: var(--bg2); border: 3px solid var(--outline); border-radius: 14px; box-shadow: 6px 6px 0 var(--outline); overflow: hidden; touch-action: none; }
   #board svg { width: 100%; height: 100%; display: block; }
   #board svg path, #board svg rect, #board svg circle, #board svg polygon { cursor: pointer; transition: fill 0.15s ease; }
+  .paint-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: none; touch-action: none; }
+  .paint-canvas.visible { display: block; }
+  .mode-tabs { display: flex; gap: 0.5rem; margin-bottom: 0.7rem; }
+  .mode-tab {
+    font-family: 'Open Sans', sans-serif; font-weight: 800; font-size: 0.78rem;
+    background: var(--panel); color: var(--ink); border: 2px solid var(--outline); border-radius: 8px;
+    padding: 0.4rem 0.8rem; cursor: pointer; box-shadow: 3px 3px 0 var(--outline);
+  }
+  .mode-tab.active { background: var(--cyan); color: var(--outline); }
+  .mode-tab:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--outline); }
 
   .palette { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-top: 1rem; max-width: 340px; }
   .swatch { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--outline); cursor: pointer; box-shadow: 2px 2px 0 var(--outline); }
@@ -87,7 +97,7 @@
     </div>
   </div>
 
-  <p class="sub">Välj en teckning, välj en färg, klicka sedan på ett fält. Namnet läses på franska.</p>
+  <p class="sub">Välj en teckning och en färg. Fyll ett fält med ett klick, eller måla fritt med fingret.</p>
 
   <div class="status-row">
     <div class="status-chip" id="progressChip">0/9 färglagda</div>
@@ -140,7 +150,15 @@
           <polygon data-name="Flammor" points="148,198 172,198 160,245" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
         </g>
       </svg>
+      <canvas class="paint-canvas visible" id="canvas-house" width="320" height="320"></canvas>
+      <canvas class="paint-canvas" id="canvas-flower" width="320" height="320"></canvas>
+      <canvas class="paint-canvas" id="canvas-rocket" width="320" height="320"></canvas>
     </div>
+  </div>
+
+  <div class="mode-tabs" id="modeTabs">
+    <button class="mode-tab active" data-mode="fill">🪣 Fyll</button>
+    <button class="mode-tab" data-mode="paint">🖌️ Måla fritt</button>
   </div>
 
   <div class="palette" id="palette"></div>
@@ -166,14 +184,33 @@
   const nameTag = document.getElementById('nameTag');
   const clearBtn = document.getElementById('clearBtn');
   const sceneTabsEl = document.getElementById('sceneTabs');
+  const modeTabsEl = document.getElementById('modeTabs');
   const allRegions = Array.from(document.querySelectorAll('#board svg [data-name]'));
   const SCENE_LABELS = { house: 'huset', flower: 'blomman', rocket: 'raketen' };
+  const BRUSH_RADIUS = 12;
+
+  const canvases = {
+    house: document.getElementById('canvas-house'),
+    flower: document.getElementById('canvas-flower'),
+    rocket: document.getElementById('canvas-rocket')
+  };
+  const ctxs = {};
+  Object.keys(canvases).forEach(key => { ctxs[key] = canvases[key].getContext('2d'); });
 
   let currentScene = 'house';
+  let paintMode = 'fill';
   let selectedColor = COLORS[0][1];
+  let painting = false;
+  let lastPaintPos = null;
 
   function activeRegions() {
     return Array.from(document.querySelectorAll('#scene-' + currentScene + ' [data-name]'));
+  }
+  function activeCanvas() { return canvases[currentScene]; }
+  function activeCtx() { return ctxs[currentScene]; }
+
+  function applyModeToDom() {
+    Object.values(canvases).forEach(c => { c.style.pointerEvents = paintMode === 'paint' ? 'auto' : 'none'; });
   }
 
   sceneTabsEl.querySelectorAll('.scene-tab').forEach(tab => {
@@ -183,10 +220,74 @@
       document.querySelectorAll('#board svg > g').forEach(g => {
         g.style.display = g.id === 'scene-' + currentScene ? '' : 'none';
       });
+      Object.entries(canvases).forEach(([key, c]) => c.classList.toggle('visible', key === currentScene));
       nameTag.textContent = '';
       updateProgress();
     });
   });
+
+  modeTabsEl.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      paintMode = tab.dataset.mode;
+      modeTabsEl.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t === tab));
+      applyModeToDom();
+    });
+  });
+  applyModeToDom();
+
+  function canvasPos(canvas, clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left) * (canvas.width / rect.width),
+      y: (clientY - rect.top) * (canvas.height / rect.height)
+    };
+  }
+  function paintDot(x, y) {
+    const c = activeCtx();
+    c.fillStyle = selectedColor;
+    c.beginPath();
+    c.arc(x, y, BRUSH_RADIUS, 0, Math.PI * 2);
+    c.fill();
+  }
+  function paintLine(from, to) {
+    const c = activeCtx();
+    c.strokeStyle = selectedColor;
+    c.lineWidth = BRUSH_RADIUS * 2;
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    c.beginPath();
+    c.moveTo(from.x, from.y);
+    c.lineTo(to.x, to.y);
+    c.stroke();
+  }
+
+  function startPaint(e) {
+    if (paintMode !== 'paint') return;
+    painting = true;
+    const t = e.touches ? e.touches[0] : e;
+    const pos = canvasPos(activeCanvas(), t.clientX, t.clientY);
+    lastPaintPos = pos;
+    paintDot(pos.x, pos.y);
+    e.preventDefault();
+  }
+  function movePaint(e) {
+    if (!painting) return;
+    const t = e.touches ? e.touches[0] : e;
+    const pos = canvasPos(activeCanvas(), t.clientX, t.clientY);
+    paintLine(lastPaintPos, pos);
+    lastPaintPos = pos;
+    e.preventDefault();
+  }
+  function endPaint() { painting = false; lastPaintPos = null; }
+
+  Object.values(canvases).forEach(canvas => {
+    canvas.addEventListener('mousedown', startPaint);
+    canvas.addEventListener('mousemove', movePaint);
+    canvas.addEventListener('touchstart', startPaint, { passive: false });
+    canvas.addEventListener('touchmove', movePaint, { passive: false });
+  });
+  window.addEventListener('mouseup', endPaint);
+  window.addEventListener('touchend', endPaint);
 
   COLORS.forEach(([name, hex]) => {
     const sw = document.createElement('div');
@@ -229,6 +330,7 @@
 
   clearBtn.addEventListener('click', () => {
     activeRegions().forEach(r => r.setAttribute('fill', BLANK_FILL));
+    activeCtx().clearRect(0, 0, activeCanvas().width, activeCanvas().height);
     nameTag.textContent = '';
     updateProgress();
   });

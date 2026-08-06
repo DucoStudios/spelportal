@@ -630,7 +630,7 @@
 
     if (running && controlsActive) {
       const forward = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
-      const right = new THREE.Vector3(forward.z, 0, -forward.x);
+      const right = new THREE.Vector3(-forward.z, 0, forward.x);
       let mx = 0, mz = 0;
       if (keys['KeyW']) { mx += forward.x; mz += forward.z; }
       if (keys['KeyS']) { mx -= forward.x; mz -= forward.z; }

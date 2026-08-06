@@ -29,6 +29,15 @@
   .status-chip { background: var(--panel); border: 2px solid var(--outline); border-radius: 8px; padding: 0.3rem 0.7rem; box-shadow: 3px 3px 0 var(--outline); font-size: 0.78rem; font-weight: 700; }
   .name-tag { font-family: 'Bungee', sans-serif; font-size: 0.7rem; color: var(--yellow); min-height: 1rem; }
 
+  .scene-tabs { display: flex; gap: 0.5rem; margin-bottom: 0.7rem; }
+  .scene-tab {
+    font-family: 'Open Sans', sans-serif; font-weight: 800; font-size: 0.76rem;
+    background: var(--panel); color: var(--ink); border: 2px solid var(--outline); border-radius: 8px;
+    padding: 0.4rem 0.7rem; cursor: pointer; box-shadow: 3px 3px 0 var(--outline);
+  }
+  .scene-tab.active { background: var(--yellow); color: var(--outline); }
+  .scene-tab:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--outline); }
+
   .board-wrap { position: relative; }
   #board { width: 320px; height: 320px; max-width: 92vw; max-height: 92vw; background: var(--bg2); border: 3px solid var(--outline); border-radius: 14px; box-shadow: 6px 6px 0 var(--outline); overflow: hidden; }
   #board svg { width: 100%; height: 100%; display: block; }
@@ -78,25 +87,58 @@
     </div>
   </div>
 
-  <p class="sub">Välj en färg, klicka sedan på ett fält för att färglägga det. Namnet läses på franska.</p>
+  <p class="sub">Välj en teckning, välj en färg, klicka sedan på ett fält. Namnet läses på franska.</p>
 
   <div class="status-row">
     <div class="status-chip" id="progressChip">0/9 färglagda</div>
   </div>
   <div class="name-tag" id="nameTag">&nbsp;</div>
 
+  <div class="scene-tabs" id="sceneTabs">
+    <button class="scene-tab active" data-scene="house">🏠 Hus</button>
+    <button class="scene-tab" data-scene="flower">🌸 Blomma</button>
+    <button class="scene-tab" data-scene="rocket">🚀 Raket</button>
+  </div>
+
   <div class="board-wrap">
     <div id="board">
       <svg viewBox="0 0 320 320">
-        <rect id="r-ciel" data-name="Ciel" x="0" y="0" width="320" height="320" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
-        <rect id="r-herbe" data-name="Herbe" x="0" y="260" width="320" height="60" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
-        <circle id="r-soleil" data-name="Soleil" cx="262" cy="58" r="30" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
-        <circle id="r-feuillage" data-name="Feuillage" cx="48" cy="196" r="36" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
-        <rect id="r-tronc" data-name="Tronc" x="40" y="220" width="16" height="48" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
-        <polygon id="r-toit" data-name="Toit" points="60,140 160,68 260,140" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
-        <rect id="r-mur" data-name="Mur" x="80" y="140" width="160" height="120" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
-        <rect id="r-fenetre" data-name="Fenêtre" x="100" y="162" width="34" height="34" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
-        <rect id="r-porte" data-name="Porte" x="150" y="200" width="40" height="60" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+        <g id="scene-house">
+          <rect data-name="Himmel" x="0" y="0" width="320" height="320" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <rect data-name="Gräs" x="0" y="260" width="320" height="60" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <circle data-name="Sol" cx="262" cy="58" r="30" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <circle data-name="Trädkrona" cx="48" cy="196" r="36" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <rect data-name="Trädstam" x="40" y="220" width="16" height="48" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <polygon data-name="Tak" points="60,140 160,68 260,140" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <rect data-name="Vägg" x="80" y="140" width="160" height="120" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <rect data-name="Fönster" x="100" y="162" width="34" height="34" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <rect data-name="Dörr" x="150" y="200" width="40" height="60" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+        </g>
+        <g id="scene-flower" style="display:none;">
+          <rect data-name="Himmel" x="0" y="0" width="320" height="240" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <rect data-name="Jord" x="0" y="240" width="320" height="80" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <rect data-name="Stjälk" x="155" y="160" width="10" height="100" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <ellipse data-name="Blad vänster" cx="130" cy="215" rx="24" ry="13" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <ellipse data-name="Blad höger" cx="190" cy="225" rx="24" ry="13" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <circle data-name="Kronblad topp" cx="160" cy="104" r="26" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <circle data-name="Kronblad botten" cx="160" cy="176" r="26" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <circle data-name="Kronblad vänster" cx="124" cy="140" r="26" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <circle data-name="Kronblad höger" cx="196" cy="140" r="26" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <circle data-name="Blomstermitt" cx="160" cy="140" r="20" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+        </g>
+        <g id="scene-rocket" style="display:none;">
+          <rect data-name="Rymden" x="0" y="0" width="320" height="320" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <circle data-name="Planet" cx="250" cy="70" r="40" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <circle data-name="Stjärna 1" cx="50" cy="50" r="6" fill="#EDE7F6" stroke="#120A24" stroke-width="2"/>
+          <circle data-name="Stjärna 2" cx="90" cy="110" r="5" fill="#EDE7F6" stroke="#120A24" stroke-width="2"/>
+          <circle data-name="Stjärna 3" cx="235" cy="185" r="5" fill="#EDE7F6" stroke="#120A24" stroke-width="2"/>
+          <polygon data-name="Raketnos" points="140,60 180,60 160,10" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <rect data-name="Raketkropp" x="140" y="60" width="40" height="140" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <circle data-name="Fönster" cx="160" cy="110" r="14" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <polygon data-name="Vänster fena" points="140,200 140,240 110,230" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <polygon data-name="Höger fena" points="180,200 180,240 210,230" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <polygon data-name="Flammor" points="148,198 172,198 160,245" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+        </g>
       </svg>
     </div>
   </div>
@@ -123,9 +165,28 @@
   const progressChip = document.getElementById('progressChip');
   const nameTag = document.getElementById('nameTag');
   const clearBtn = document.getElementById('clearBtn');
-  const regions = Array.from(document.querySelectorAll('#board svg [data-name]'));
+  const sceneTabsEl = document.getElementById('sceneTabs');
+  const allRegions = Array.from(document.querySelectorAll('#board svg [data-name]'));
+  const SCENE_LABELS = { house: 'huset', flower: 'blomman', rocket: 'raketen' };
 
+  let currentScene = 'house';
   let selectedColor = COLORS[0][1];
+
+  function activeRegions() {
+    return Array.from(document.querySelectorAll('#scene-' + currentScene + ' [data-name]'));
+  }
+
+  sceneTabsEl.querySelectorAll('.scene-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      currentScene = tab.dataset.scene;
+      sceneTabsEl.querySelectorAll('.scene-tab').forEach(t => t.classList.toggle('active', t === tab));
+      document.querySelectorAll('#board svg > g').forEach(g => {
+        g.style.display = g.id === 'scene-' + currentScene ? '' : 'none';
+      });
+      nameTag.textContent = '';
+      updateProgress();
+    });
+  });
 
   COLORS.forEach(([name, hex]) => {
     const sw = document.createElement('div');
@@ -149,14 +210,15 @@
   }
 
   function updateProgress() {
+    const regions = activeRegions();
     const filled = regions.filter(r => r.getAttribute('fill') !== BLANK_FILL).length;
     progressChip.textContent = filled + '/' + regions.length + ' färglagda';
     if (filled === regions.length) {
-      nameTag.textContent = '🎉 Klart! Hela huset färglagt.';
+      nameTag.textContent = '🎉 Klart! Hela ' + SCENE_LABELS[currentScene] + ' färglagt.';
     }
   }
 
-  regions.forEach(r => {
+  allRegions.forEach(r => {
     r.addEventListener('click', () => {
       r.setAttribute('fill', selectedColor);
       nameTag.textContent = r.dataset.name;
@@ -166,7 +228,7 @@
   });
 
   clearBtn.addEventListener('click', () => {
-    regions.forEach(r => r.setAttribute('fill', BLANK_FILL));
+    activeRegions().forEach(r => r.setAttribute('fill', BLANK_FILL));
     nameTag.textContent = '';
     updateProgress();
   });

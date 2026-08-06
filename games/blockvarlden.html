@@ -87,6 +87,27 @@
   }
   .abtn.break { background: rgba(255,46,147,0.6); }
   .abtn.place { background: rgba(47,230,214,0.45); }
+  .abtn.help { background: rgba(255,210,63,0.5); }
+
+  .coin-hud {
+    position: absolute; top: 10px; left: 10px; z-index: 3;
+    background: rgba(23,15,46,0.75); border: 2px solid var(--outline); border-radius: 8px;
+    padding: 0.3rem 0.6rem; font-family: 'Bungee', sans-serif; font-size: 0.9rem; color: var(--yellow);
+  }
+  .interact-prompt {
+    position: absolute; bottom: 150px; left: 50%; transform: translateX(-50%); z-index: 4;
+    background: rgba(23,15,46,0.88); border: 2px solid var(--outline); border-radius: 8px;
+    padding: 0.4rem 0.8rem; font-family: 'Open Sans', sans-serif; font-size: 0.76rem; font-weight: 700;
+    color: var(--ink); text-align: center; white-space: nowrap;
+  }
+  .interact-prompt.hidden { display: none; }
+  .npc-toast {
+    position: absolute; top: 60px; left: 50%; transform: translateX(-50%); z-index: 4;
+    background: rgba(23,15,46,0.9); border: 2px solid var(--outline); border-radius: 8px;
+    padding: 0.5rem 0.9rem; font-family: 'Open Sans', sans-serif; font-size: 0.8rem; font-weight: 700;
+    color: var(--yellow); text-align: center; max-width: 80%; transition: opacity 0.3s ease;
+  }
+  .npc-toast.hidden { display: none; }
 </style>
 </head>
 <body style="overscroll-behavior-y: contain;">
@@ -102,6 +123,9 @@
   <div class="crosshair" id="crosshair" style="display:none;"></div>
   <div class="hint-bar" id="hintBar" style="display:none;">Vänsterklick: bryt block &nbsp;·&nbsp; Högerklick: placera block &nbsp;·&nbsp; ESC: paus</div>
   <div class="hotbar" id="hotbar" style="display:none;"></div>
+  <div class="coin-hud" id="coinHud" style="display:none;">🪙 <span id="coinsVal">0</span></div>
+  <div class="interact-prompt hidden" id="interactPrompt"></div>
+  <div class="npc-toast hidden" id="npcToast"></div>
 
   <div class="touch-ui" id="touchUI">
     <div class="joystick" id="joystick"><div class="joystick-knob" id="joystickKnob"></div></div>
@@ -109,6 +133,7 @@
       <div class="abtn" id="btnJump">⤒</div>
       <div class="abtn break" id="btnBreak">⛏</div>
       <div class="abtn place" id="btnPlace">🧱</div>
+      <div class="abtn help" id="btnHelp">🤝</div>
     </div>
   </div>
 
@@ -144,12 +169,20 @@
   const btnJump = document.getElementById('btnJump');
   const btnBreak = document.getElementById('btnBreak');
   const btnPlace = document.getElementById('btnPlace');
+  const btnHelp = document.getElementById('btnHelp');
+  const coinHud = document.getElementById('coinHud');
+  const coinsVal = document.getElementById('coinsVal');
+  const interactPrompt = document.getElementById('interactPrompt');
+  const npcToast = document.getElementById('npcToast');
   const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
   if (isTouch) {
     document.getElementById('startInstructions').innerHTML =
       'Vänster ratt styr rörelsen &nbsp;·&nbsp; dra på skärmen för att titta runt<br>' +
-      '⛏ bryter block, 🧱 bygger med vald blocktyp, ⤒ hoppar &nbsp;·&nbsp; tryck en ruta i hotbaren för att välja blocktyp';
+      '⛏ bryter block, 🧱 bygger med vald blocktyp, ⤒ hoppar, 🤝 hjälper &nbsp;·&nbsp; tryck en ruta i hotbaren för att välja blocktyp<br>' +
+      'Hitta gyllene skatter och hjälp vännerna du möter för mynt!';
     startBtn.textContent = 'Tryck för att spela';
+  } else {
+    document.getElementById('startInstructions').innerHTML += '<br>Hitta gyllene skatter och tryck <span class="keys">E</span> nära en vän för att hjälpa dem — båda ger mynt!';
   }
 
   const W = 28, D = 28, H = 9;
@@ -297,6 +330,47 @@
   }
   rebuildMeshes();
 
+  const TREASURE_SPOTS = [
+    { x: 6, z: 6 }, { x: 20, z: 8 }, { x: 10, z: 20 },
+    { x: 22, z: 22 }, { x: 4, z: 18 }, { x: 16, z: 4 }
+  ];
+  const treasureGeo = new THREE.OctahedronGeometry(0.32, 0);
+  const treasureMat = new THREE.MeshStandardMaterial({ color: 0xFFD23F, emissive: 0x554000, metalness: 0.4, roughness: 0.3 });
+  const treasures = TREASURE_SPOTS.map(spot => {
+    const mesh = new THREE.Mesh(treasureGeo, treasureMat);
+    const gy = heightAt(spot.x, spot.z) + 1.5;
+    mesh.position.set(spot.x + 0.5, gy, spot.z + 0.5);
+    scene.add(mesh);
+    return { x: spot.x + 0.5, baseY: gy, z: spot.z + 0.5, mesh, collected: false, bobSeed: Math.random() * Math.PI * 2 };
+  });
+
+  const NPC_SPOTS = [
+    { x: 14, z: 14, name: 'Ville', color: 0xFF7A3D, msg: 'Tack för hjälpen! Här har du lite mynt.' },
+    { x: 24, z: 6, name: 'Saga', color: 0x2FE6D6, msg: 'Så snällt av dig! Varsågod.' },
+    { x: 6, z: 24, name: 'Nova', color: 0xFFD23F, msg: 'Du är en riktig vän!' }
+  ];
+  function buildNpcMesh(color) {
+    const group = new THREE.Group();
+    const mat = new THREE.MeshLambertMaterial({ color });
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 10), mat);
+    head.position.y = 1.5;
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.3, 0.9, 10), mat);
+    body.position.y = 0.9;
+    group.add(head, body);
+    return group;
+  }
+  const npcs = NPC_SPOTS.map(spot => {
+    const group = buildNpcMesh(spot.color);
+    const gy = heightAt(spot.x, spot.z) + 1;
+    group.position.set(spot.x + 0.5, gy, spot.z + 0.5);
+    scene.add(group);
+    return { x: spot.x + 0.5, y: gy, z: spot.z + 0.5, name: spot.name, msg: spot.msg, group, helped: false };
+  });
+
+  const COIN_STORAGE_KEY = 'blockvarlden_coins_total';
+  let coins = 0;
+  let coinsTotal = parseInt(localStorage.getItem(COIN_STORAGE_KEY) || '0', 10);
+
   function findSpawn() {
     const cx = Math.floor(W / 2), cz = Math.floor(D / 2);
     return { x: cx + 0.5, y: heightAt(cx, cz) + 2, z: cz + 0.5 };
@@ -321,13 +395,69 @@
     return false;
   }
 
+  let audioCtx = null;
+  function ctx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+  function tone(freq, start, dur, type, peak) {
+    const c = ctx();
+    const osc = c.createOscillator(); const gain = c.createGain();
+    osc.type = type || 'sine'; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, c.currentTime + start);
+    gain.gain.linearRampToValueAtTime(peak || 0.12, c.currentTime + start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + start + dur);
+    osc.connect(gain).connect(c.destination);
+    osc.start(c.currentTime + start); osc.stop(c.currentTime + start + dur + 0.02);
+  }
+  function playCoin() { tone(700, 0, 0.09, 'triangle'); tone(1000, 0.05, 0.12, 'triangle'); }
+  function playHelp() { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.08, 0.2, 'triangle')); }
+
+  function updateCoinsHud() {
+    coinsVal.textContent = coins + ' (totalt ' + coinsTotal + ')';
+  }
+
+  function collectTreasure(t) {
+    t.collected = true;
+    scene.remove(t.mesh);
+    coins += 10;
+    coinsTotal += 10;
+    localStorage.setItem(COIN_STORAGE_KEY, String(coinsTotal));
+    updateCoinsHud();
+    playCoin();
+  }
+
+  function nearestUnhelpedNpc() {
+    let best = null, bestDist = Infinity;
+    npcs.forEach(n => {
+      if (n.helped) return;
+      const d = Math.hypot(player.x - n.x, player.z - n.z);
+      if (d < bestDist) { bestDist = d; best = n; }
+    });
+    return bestDist < 2.4 ? best : null;
+  }
+
+  function tryHelpNearestNpc() {
+    const n = nearestUnhelpedNpc();
+    if (!n) return;
+    n.helped = true;
+    coins += 25;
+    coinsTotal += 25;
+    localStorage.setItem(COIN_STORAGE_KEY, String(coinsTotal));
+    updateCoinsHud();
+    playHelp();
+    n.group.children.forEach(mesh => { mesh.material = mesh.material.clone(); mesh.material.opacity = 0.5; mesh.material.transparent = true; });
+    npcToast.textContent = n.name + ': ' + n.msg;
+    npcToast.classList.remove('hidden');
+    setTimeout(() => npcToast.classList.add('hidden'), 2600);
+  }
+
   const keys = {};
   window.addEventListener('keydown', e => {
     keys[e.code] = true;
     if (/^Digit[1-8]$/.test(e.code)) selectSlot(parseInt(e.code.slice(5), 10) - 1);
     if (e.code === 'Escape' && document.pointerLockElement === canvas) document.exitPointerLock();
+    if (e.code === 'KeyE') tryHelpNearestNpc();
   });
   window.addEventListener('keyup', e => { keys[e.code] = false; });
+  btnHelp.addEventListener('touchstart', e => { e.preventDefault(); tryHelpNearestNpc(); }, { passive: false });
 
   let selectedSlot = 0;
   function selectSlot(i) {
@@ -484,10 +614,12 @@
     crosshair.style.display = 'block';
     hintBar.style.display = 'block';
     hotbarEl.style.display = 'flex';
+    coinHud.style.display = 'block';
+    updateCoinsHud();
     if (isTouch) {
       controlsActive = true;
       touchUI.style.display = 'block';
-      hintBar.textContent = 'Vänster ratt: gå · Dra på skärmen: titta · ⛏ bryt · 🧱 bygg · ⤒ hoppa';
+      hintBar.textContent = 'Vänster ratt: gå · Dra på skärmen: titta · ⛏ bryt · 🧱 bygg · 🤝 hjälp · ⤒ hoppa';
     }
   }
 
@@ -535,6 +667,21 @@
       camera.rotation.order = 'YXZ';
       camera.rotation.y = player.yaw;
       camera.rotation.x = player.pitch;
+
+      treasures.forEach(t => {
+        if (t.collected) return;
+        t.mesh.rotation.y += dt * 1.6;
+        t.mesh.position.y = t.baseY + Math.sin(ts * 0.003 + t.bobSeed) * 0.12;
+        if (Math.hypot(player.x - t.x, player.z - t.z) < 0.9) collectTreasure(t);
+      });
+
+      const nearNpc = nearestUnhelpedNpc();
+      if (nearNpc) {
+        interactPrompt.textContent = isTouch ? ('Tryck 🤝 för att hjälpa ' + nearNpc.name) : ('Tryck E för att hjälpa ' + nearNpc.name);
+        interactPrompt.classList.remove('hidden');
+      } else {
+        interactPrompt.classList.add('hidden');
+      }
     }
 
     renderer.render(scene, camera);

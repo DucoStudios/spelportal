@@ -1,0 +1,850 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="manifest" href="../manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Spelportal">
+<meta name="theme-color" content="#170F2E">
+<link rel="apple-touch-icon" href="../icon-180.png">
+<link rel="icon" href="../icon-512.png">
+<title>Gårdsriket</title>
+<style>
+  :root {
+    --bg: #170F2E; --bg2: #241A44; --panel: #2C1F52; --outline: #120A24;
+    --pink: #FF6EC7; --orange: #FF7A3D; --yellow: #FFD23F; --cyan: #2FE6D6; --purple: #8B5CF6; --green: #5CB85C;
+    --ink: #FFF6FB; --ink-soft: #C9B6E8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; height: 100dvh; overflow: hidden; overscroll-behavior: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); font-family: 'Open Sans', -apple-system, sans-serif; color: var(--ink); overscroll-behavior-y: contain; }
+
+  .topbar {
+    position: relative; z-index: 5; display: flex; align-items: center; justify-content: space-between;
+    padding: 0.6rem 1rem; background: linear-gradient(180deg, #2A1750 0%, #170F2E 100%);
+    border-bottom: 3px solid var(--outline);
+  }
+  .topbar h1 { font-weight: 800; font-size: 1.05rem; margin: 0; }
+  .topbar a { font-size: 0.72rem; font-weight: 700; color: var(--cyan); text-decoration: none; }
+
+  #gameWrap { position: relative; width: 100%; height: calc(100% - 44px); height: calc(100dvh - 44px); }
+  #gameCanvas { display: block; width: 100%; height: 100%; touch-action: manipulation; }
+
+  .hud { position: absolute; top: 8px; left: 8px; right: 8px; z-index: 3; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; }
+  .pill {
+    background: rgba(23,15,46,0.8); border: 2px solid var(--outline); border-radius: 8px;
+    padding: 0.28rem 0.55rem; font-weight: 800; font-size: 0.78rem; white-space: nowrap;
+  }
+  .pill.gold { color: var(--yellow); }
+  .pill.wood { color: #C9A063; }
+  .pill.grain { color: var(--green); }
+  .pill.rate { color: var(--cyan); }
+
+  .title-badge {
+    position: absolute; top: 46px; left: 8px; z-index: 3;
+    background: rgba(139,92,246,0.85); border: 2px solid var(--outline); border-radius: 8px;
+    padding: 0.24rem 0.55rem; font-weight: 800; font-size: 0.68rem; color: #fff;
+  }
+
+  .toast {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%) translateY(-10px);
+    z-index: 6; background: rgba(23,15,46,0.94); border: 2px solid var(--yellow); border-radius: 10px;
+    padding: 0.55rem 1rem; font-weight: 700; font-size: 0.78rem; text-align: center; max-width: 88vw;
+    opacity: 0; transition: opacity 0.25s ease, transform 0.25s ease; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .build-hint {
+    position: absolute; bottom: 130px; left: 50%; transform: translateX(-50%); z-index: 3;
+    background: rgba(23,15,46,0.85); border: 2px solid var(--outline); border-radius: 8px;
+    padding: 0.35rem 0.8rem; font-size: 0.72rem; font-weight: 700; color: var(--yellow); text-align: center; max-width: 90vw;
+  }
+
+  .menu-wrap { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 4; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .menu-toggle {
+    width: 38px; height: 38px; border-radius: 50%; background: rgba(23,15,46,0.88);
+    border: 2px solid var(--outline); color: #fff; font-size: 1.1rem; cursor: pointer; box-shadow: 2px 2px 0 var(--outline);
+  }
+  .menu-panel { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .menu-panel.collapsed { display: none; }
+  .menu-tabs { display: flex; gap: 6px; }
+  .menu-tab {
+    font-family: 'Open Sans', sans-serif; font-size: 0.68rem; font-weight: 700;
+    padding: 4px 12px; border-radius: 14px; border: 2px solid var(--outline);
+    background: rgba(23,15,46,0.75); color: var(--ink-soft); cursor: pointer;
+  }
+  .menu-tab.active { background: var(--yellow); color: var(--outline); }
+
+  .build-list, .upgrade-list {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 94vw;
+    background: rgba(23,15,46,0.78); padding: 7px; border-radius: 10px; border: 2px solid var(--outline);
+  }
+  .build-list.hidden, .upgrade-list.hidden { display: none; }
+  .build-item, .upgrade-item {
+    width: 68px; min-height: 62px; border-radius: 8px; border: 2px solid var(--outline);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+    cursor: pointer; background: var(--panel); font-size: 1.25rem; position: relative; text-align: center;
+    box-shadow: 2px 2px 0 var(--outline); padding: 4px 2px;
+  }
+  .build-item span.label, .upgrade-item span.label { font-size: 0.46rem; font-weight: 800; color: var(--ink-soft); line-height: 1.15; }
+  .build-item span.cost, .upgrade-item span.cost { font-size: 0.42rem; font-weight: 700; color: var(--yellow); }
+  .build-item.active { outline: 3px solid var(--yellow); outline-offset: 1px; transform: translateY(-3px); }
+  .build-item.disabled, .upgrade-item.disabled { opacity: 0.4; cursor: not-allowed; }
+  .upgrade-item.bought { outline: 3px solid var(--green); outline-offset: 1px; }
+
+  .overlay {
+    position: absolute; inset: 0; background: color-mix(in srgb, var(--bg2) 92%, transparent);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.9rem; text-align: center; padding: 1.3rem; z-index: 7; overflow-y: auto;
+  }
+  .overlay.hidden { display: none; }
+  .overlay h2 { font-weight: 900; font-size: 1.5rem; margin: 0; color: var(--yellow); text-shadow: 2px 2px 0 var(--outline); }
+  .overlay p { max-width: 380px; font-size: 0.86rem; font-weight: 600; color: var(--ink-soft); margin: 0; line-height: 1.6; }
+  .map-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; max-width: 460px; }
+  .map-card {
+    width: 190px; background: var(--panel); border: 3px solid var(--outline); border-radius: 12px;
+    padding: 14px; cursor: pointer; box-shadow: 4px 4px 0 var(--outline); text-align: left;
+  }
+  .map-card:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
+  .map-card .icon { font-size: 1.8rem; }
+  .map-card h3 { margin: 6px 0 4px; font-size: 1rem; color: var(--yellow); }
+  .map-card p { font-size: 0.74rem; margin: 0; max-width: none; color: var(--ink-soft); }
+  button.cta {
+    font-family: 'Open Sans', sans-serif; font-size: 0.9rem; font-weight: 800; text-transform: uppercase;
+    background: var(--yellow); color: var(--outline); border: 3px solid var(--outline); border-radius: 8px;
+    box-shadow: 4px 4px 0 var(--outline); padding: 0.6rem 1.4rem; cursor: pointer;
+  }
+  button.cta:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🌾 GÅRDSRIKET</h1>
+  <a href="../index.html">&larr; HELA SPELKATALOGEN</a>
+</div>
+
+<div id="gameWrap">
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="hud" id="hud" style="display:none;">
+    <div class="pill gold">💰 <span id="goldVal">0</span></div>
+    <div class="pill wood">🪵 <span id="woodVal">0</span></div>
+    <div class="pill grain">🌾 <span id="grainVal">0</span>/<span id="grainCap">100</span></div>
+    <div class="pill rate">📈 <span id="rateVal">0.0</span>/sek</div>
+  </div>
+  <div class="title-badge" id="titleBadge" style="display:none;"></div>
+  <div class="toast" id="toast"></div>
+  <div class="build-hint hidden" id="buildHint" style="display:none;"></div>
+
+  <div class="menu-wrap" id="menuWrap" style="display:none;">
+    <button class="menu-toggle" id="menuToggle" title="Visa/dölj bygg-menyn">🧰</button>
+    <div class="menu-panel" id="menuPanel">
+      <div class="menu-tabs">
+        <button class="menu-tab active" id="tabBuild" type="button">Bygg</button>
+        <button class="menu-tab" id="tabUpgrades" type="button">Uppgraderingar</button>
+      </div>
+      <div class="build-list" id="buildList"></div>
+      <div class="upgrade-list hidden" id="upgradeList"></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="mapOverlay">
+    <h2>GÅRDSRIKET</h2>
+    <p>Bygg upp en liten gård till ett odlingsrike. Så, skörda och sälj — men det riktiga målet är att investera i brunnar, kvarnar och uppgraderingar så att gården jobbar åt dig även när du inte klickar. Det kallas passiv inkomst.</p>
+    <div class="map-grid" id="mapGrid"></div>
+  </div>
+</div>
+
+<script src="lib/three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ================= Kartor =================
+  // '.' = gräs (byggbart), '~' = vatten, '#' = sten (hinder), 'S' = källa
+  // (vattenkälla pa Källan-kartan, fungerar som vatten for bevattning).
+  const MAPS = [
+    {
+      id: 'angen', name: 'Ängen', icon: '🌻',
+      desc: 'Öppen, lättodlad mark. Bra karta för att lära sig grunderna.',
+      rows: [
+        '..............',
+        '..............',
+        '...##.........',
+        '...##.........',
+        '..............',
+        '..............',
+        '..............',
+        '........~~~~..',
+        '........~~~~..',
+        '..............'
+      ],
+      start: { x: 2, z: 5 }, startGold: 140, startWood: 70
+    },
+    {
+      id: 'sjolandet', name: 'Sjölandet', icon: '🌊',
+      desc: 'Vatten överallt — lätt att vattna, men ont om odlingsbar mark.',
+      rows: [
+        '~~~~~~~~~~~~~~',
+        '~~..........~~',
+        '~~..........~~',
+        '~~..........~~',
+        '~~~~~~~~~~~~~~',
+        '~~~~~~~~~~~~~~',
+        '~~..........~~',
+        '~~..........~~',
+        '~~..........~~',
+        '~~~~~~~~~~~~~~'
+      ],
+      start: { x: 6, z: 2 }, startGold: 140, startWood: 70
+    },
+    {
+      id: 'kallan', name: 'Källan', icon: '💧',
+      desc: 'En ensam källa långt bort. Bygg en kanal dit för att vattna gården.',
+      rows: [
+        '..............',
+        '..S...........',
+        '..............',
+        '..............',
+        '..............',
+        '..............',
+        '..............',
+        '..............',
+        '..............',
+        '..............'
+      ],
+      start: { x: 12, z: 8 }, startGold: 170, startWood: 100
+    }
+  ];
+
+  // ================= Byggnader & uppgraderingar =================
+  const BUILDING_TYPES = {
+    field:   { name: 'Åker', icon: '🌾', cost: { gold: 20, wood: 10 } },
+    well:    { name: 'Brunn', icon: '⛲', cost: { gold: 40, wood: 15 } },
+    mill:    { name: 'Kvarn', icon: '🏭', cost: { gold: 60, wood: 25 } },
+    barn:    { name: 'Lada', icon: '🛖', cost: { gold: 35, wood: 15 } },
+    channel: { name: 'Kanal', icon: '💠', cost: { gold: 8, wood: 4 } }
+  };
+  const FARMER_COST_BASE = 25;
+
+  const UPGRADES = [
+    { id: 'seeds', name: 'Bättre utsäde', icon: '🌱', desc: '+50% skörd per åker.', cost: 150 },
+    { id: 'tools', name: 'Effektiva verktyg', icon: '🔧', desc: '-30% väntetid till skörd.', cost: 150 },
+    { id: 'trade', name: 'Handelsavtal', icon: '🤝', desc: '+1 guld per sålt sädeskorn.', cost: 120 },
+    { id: 'training', name: 'Bättre utbildning', icon: '📉', desc: '-30% kostnad att utbilda bönder.', cost: 80 }
+  ];
+
+  const MILESTONES = [
+    { rate: 0.5, title: 'Nybörjarbonde', msg: 'Din första passiva inkomst! Kvarnen säljer säd åt dig automatiskt, även när du inte gör något.' },
+    { rate: 2.0, title: 'Godsägare', msg: 'Bra jobbat — fler åkrar och en uppgradering eller två, och inkomsten växer av sig själv.' },
+    { rate: 5.0, title: 'Jordbruksmagnat', msg: 'Det här är kraften i passiv inkomst: du investerade i infrastruktur, och nu jobbar gården åt dig dygnet runt.' }
+  ];
+
+  // ================= Grundläggande setup =================
+  const canvas = document.getElementById('gameCanvas');
+  const gameWrap = document.getElementById('gameWrap');
+  const hud = document.getElementById('hud');
+  const goldVal = document.getElementById('goldVal');
+  const woodVal = document.getElementById('woodVal');
+  const grainVal = document.getElementById('grainVal');
+  const grainCap = document.getElementById('grainCap');
+  const rateVal = document.getElementById('rateVal');
+  const titleBadge = document.getElementById('titleBadge');
+  const toastEl = document.getElementById('toast');
+  const buildHint = document.getElementById('buildHint');
+  const menuWrap = document.getElementById('menuWrap');
+  const menuToggle = document.getElementById('menuToggle');
+  const menuPanel = document.getElementById('menuPanel');
+  const tabBuildBtn = document.getElementById('tabBuild');
+  const tabUpgradesBtn = document.getElementById('tabUpgrades');
+  const buildListEl = document.getElementById('buildList');
+  const upgradeListEl = document.getElementById('upgradeList');
+  const mapOverlay = document.getElementById('mapOverlay');
+  const mapGridEl = document.getElementById('mapGrid');
+
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x6EC8FF);
+  scene.fog = new THREE.Fog(0x6EC8FF, 30, 60);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+  const sun = new THREE.DirectionalLight(0xfff2d0, 0.85);
+  sun.position.set(10, 20, 6);
+  scene.add(sun);
+
+  const FRUSTUM_PAD = 1.6;
+  const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 200);
+  const CAM_ANGLE = 55 * Math.PI / 180; // "aningen 3d" topview, som gamla RTS-spel
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+
+  let gridW = 14, gridH = 10;
+  function fitCameraToGrid() {
+    const aspect = gameWrap.clientWidth / gameWrap.clientHeight;
+    const halfW = gridW / 2 + FRUSTUM_PAD, halfH = gridH / 2 + FRUSTUM_PAD;
+    // Se till att bade bredd och hojd far plats oavsett skarmformat.
+    let vw = halfW, vh = vw / aspect;
+    if (vh < halfH) { vh = halfH; vw = vh * aspect; }
+    camera.left = -vw; camera.right = vw; camera.top = vh; camera.bottom = -vh;
+    const dist = 26;
+    camera.position.set(0, Math.sin(CAM_ANGLE) * dist, Math.cos(CAM_ANGLE) * dist);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+  }
+  function resize() {
+    const w = gameWrap.clientWidth, h = gameWrap.clientHeight;
+    renderer.setSize(w, h, false);
+    fitCameraToGrid();
+  }
+  window.addEventListener('resize', resize);
+
+  // ================= Rutnät: hjalpfunktioner =================
+  function tileWorldPos(x, z) {
+    return { x: x - gridW / 2 + 0.5, z: z - gridH / 2 + 0.5 };
+  }
+  function inGrid(x, z) { return x >= 0 && x < gridW && z >= 0 && z < gridH; }
+
+  let terrain = [];   // terrain[z][x] = '.'|'~'|'#'|'S'
+  let occupied = [];  // occupied[z][x] = building-objekt eller null
+  let wet = [];        // wet[z][x] = bool, uppdateras av recomputeIrrigation()
+
+  const groundTiles = new THREE.Group();
+  scene.add(groundTiles);
+  const buildingsGroup = new THREE.Group();
+  scene.add(buildingsGroup);
+  const unitsGroup = new THREE.Group();
+  scene.add(unitsGroup);
+
+  const tileGeo = new THREE.BoxGeometry(0.96, 0.2, 0.96);
+  function terrainColor(t) {
+    if (t === '~' || t === 'S') return 0x3E8FD9;
+    if (t === '#') return 0x8C8C8C;
+    return 0x6FBF5C;
+  }
+
+  function buildTerrainMeshes() {
+    while (groundTiles.children.length) groundTiles.remove(groundTiles.children[0]);
+    for (let z = 0; z < gridH; z++) {
+      for (let x = 0; x < gridW; x++) {
+        const t = terrain[z][x];
+        const mat = new THREE.MeshLambertMaterial({ color: terrainColor(t) });
+        const mesh = new THREE.Mesh(tileGeo, mat);
+        const p = tileWorldPos(x, z);
+        mesh.position.set(p.x, -0.1, p.z);
+        mesh.userData = { kind: 'ground', x, z };
+        groundTiles.add(mesh);
+        if (t === 'S') {
+          const glow = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.12, 12), new THREE.MeshStandardMaterial({ color: 0xBEEBFF, emissive: 0x2FE6D6, emissiveIntensity: 0.5 }));
+          glow.position.set(p.x, 0.06, p.z);
+          groundTiles.add(glow);
+        }
+      }
+    }
+  }
+
+  // ================= Byggnads-meshar =================
+  function buildMeshFor(type) {
+    const group = new THREE.Group();
+    if (type === 'farmhq') {
+      const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.9, 1.5), new THREE.MeshLambertMaterial({ color: 0xC9A063 }));
+      body.position.y = 0.45;
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(1.25, 0.8, 4), new THREE.MeshLambertMaterial({ color: 0xB5533C }));
+      roof.position.y = 1.3; roof.rotation.y = Math.PI / 4;
+      group.add(body, roof);
+    } else if (type === 'field') {
+      const soil = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.12, 0.92), new THREE.MeshLambertMaterial({ color: 0x6B4423 }));
+      soil.position.y = 0.06;
+      group.add(soil);
+      const sprouts = new THREE.Group();
+      sprouts.name = 'sprouts';
+      for (let i = 0; i < 9; i++) {
+        const sx = ((i % 3) - 1) * 0.28, sz = (Math.floor(i / 3) - 1) * 0.28;
+        const blade = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.05, 5), new THREE.MeshLambertMaterial({ color: 0xFFD23F }));
+        blade.position.set(sx, 0.14, sz);
+        blade.userData = { baseY: 0.14 };
+        sprouts.add(blade);
+      }
+      group.add(sprouts);
+    } else if (type === 'well') {
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.38, 0.35, 12), new THREE.MeshLambertMaterial({ color: 0x8C8C8C }));
+      ring.position.y = 0.18;
+      const water = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.05, 12), new THREE.MeshLambertMaterial({ color: 0x2FE6D6 }));
+      water.position.y = 0.34;
+      const roofPole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.5, 6), new THREE.MeshLambertMaterial({ color: 0x6B4423 }));
+      roofPole.position.set(0, 0.55, -0.2);
+      group.add(ring, water, roofPole);
+    } else if (type === 'mill') {
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.75, 0.7), new THREE.MeshLambertMaterial({ color: 0xE4D5A0 }));
+      body.position.y = 0.38;
+      const blades = new THREE.Group();
+      blades.name = 'blades';
+      const bladeMat = new THREE.MeshLambertMaterial({ color: 0xFFF6FB });
+      for (let i = 0; i < 4; i++) {
+        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.5, 0.12), bladeMat);
+        blade.position.y = 0.25;
+        blade.rotation.z = (Math.PI / 2) * i;
+        blades.add(blade);
+      }
+      blades.position.set(0, 0.85, 0.4);
+      group.add(body, blades);
+    } else if (type === 'barn') {
+      const body = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.6, 0.9), new THREE.MeshLambertMaterial({ color: 0xB5533C }));
+      body.position.y = 0.3;
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(0.75, 0.5, 4), new THREE.MeshLambertMaterial({ color: 0x6B4423 }));
+      roof.position.y = 0.85; roof.rotation.y = Math.PI / 4;
+      group.add(body, roof);
+    } else if (type === 'channel') {
+      const flow = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.08, 0.86), new THREE.MeshLambertMaterial({ color: 0x3E8FD9 }));
+      flow.position.y = 0.04;
+      group.add(flow);
+    }
+    return group;
+  }
+
+  function buildFarmerMesh() {
+    const group = new THREE.Group();
+    const mat = new THREE.MeshLambertMaterial({ color: 0x4A6B78 });
+    const skin = new THREE.MeshLambertMaterial({ color: 0xE8B98C });
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.5, 8), mat);
+    body.position.y = 0.4;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), skin);
+    head.position.y = 0.75;
+    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.14, 10), new THREE.MeshLambertMaterial({ color: 0xC98A2E }));
+    hat.position.y = 0.86;
+    // Osynlig men klickbar "tryckyta" -- bonden sjalv ar liten och kan
+    // hamna nagot forskjuten fran sin rutas mittpunkt, sa en ren visuell
+    // traff missar latt pa mobil. Denna sfar ar mycket storre och tar
+    // emot klicket/tryckningen istallet, utan att synas.
+    const hitArea = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 }));
+    hitArea.position.y = 0.4;
+    group.add(body, head, hat, hitArea);
+    return group;
+  }
+
+  // ================= Speltillstand =================
+  let farmHq = null;
+  let buildings = [];
+  let farmers = [];
+  let gold = 0, wood = 0, grain = 0, grainCapVal = 100;
+  let placementType = null;
+  let selectedFarmer = null;
+  let bought = {};
+  let farmerCost = FARMER_COST_BASE;
+  let rateWindowGold = 0, displayedRate = 0, rateWindowTimer = 0;
+  let reachedMilestones = 0;
+  let running = false;
+
+  function toast(msg, ms) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => toastEl.classList.remove('show'), ms || 2600);
+  }
+
+  function updateHud() {
+    goldVal.textContent = Math.floor(gold);
+    woodVal.textContent = Math.floor(wood);
+    grainVal.textContent = Math.floor(grain);
+    grainCap.textContent = grainCapVal;
+    rateVal.textContent = displayedRate.toFixed(1);
+  }
+
+  // ================= Bevattning (BFS fran vatten/kalla genom kanaler) =================
+  function recomputeIrrigation() {
+    wet = Array.from({ length: gridH }, () => new Array(gridW).fill(false));
+    const queue = [];
+    for (let z = 0; z < gridH; z++) {
+      for (let x = 0; x < gridW; x++) {
+        if (terrain[z][x] === '~' || terrain[z][x] === 'S') { wet[z][x] = true; queue.push([x, z]); }
+      }
+    }
+    while (queue.length) {
+      const [x, z] = queue.shift();
+      const nbrs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+      for (const [dx, dz] of nbrs) {
+        const nx = x + dx, nz = z + dz;
+        if (!inGrid(nx, nz) || wet[nz][nx]) continue;
+        const b = occupied[nz][nx];
+        if (b && b.type === 'channel') { wet[nz][nx] = true; queue.push([nx, nz]); }
+      }
+    }
+    // Brunnar som ligger intill en vat ruta blir "aktiva" och bevattnar
+    // ett stort omrade runt sig (radie 2), inte bara sina grannrutor --
+    // det ger en riktig anledning att bygga Brunn istallet for bara Kanal
+    // hela vagen till varje enskild aker.
+    for (const b of buildings) {
+      if (b.type !== 'well') continue;
+      const active = neighbors8(b.x, b.z).some(([nx, nz]) => wet[nz] && wet[nz][nx]);
+      b.active = active;
+    }
+  }
+  function neighbors8(x, z) {
+    const out = [];
+    for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dz === 0) continue;
+      const nx = x + dx, nz = z + dz;
+      if (inGrid(nx, nz)) out.push([nx, nz]);
+    }
+    return out;
+  }
+  function isFieldIrrigated(field) {
+    if (neighbors8(field.x, field.z).some(([nx, nz]) => wet[nz][nx])) return true;
+    for (const b of buildings) {
+      if (b.type !== 'well' || !b.active) continue;
+      const dist = Math.max(Math.abs(b.x - field.x), Math.abs(b.z - field.z));
+      if (dist <= 2) return true;
+    }
+    return false;
+  }
+
+  // ================= Byggnadsplacering =================
+  function canAfford(cost) { return gold >= (cost.gold || 0) && wood >= (cost.wood || 0); }
+  function payCost(cost) { gold -= (cost.gold || 0); wood -= (cost.wood || 0); }
+
+  function tryPlaceBuildingAt(x, z) {
+    if (!placementType) return;
+    if (!inGrid(x, z)) return;
+    const def = BUILDING_TYPES[placementType];
+    if (terrain[z][x] !== '.' || occupied[z][x]) { toast('Går inte att bygga där.'); return; }
+    if (!canAfford(def.cost)) { toast('Inte råd med ' + def.name + ' (behöver ' + def.cost.gold + ' guld, ' + def.cost.wood + ' trä).'); return; }
+    payCost(def.cost);
+    const b = {
+      type: placementType, x, z, growTimer: 0, farmerId: null, active: false,
+      sellTimer: 0
+    };
+    const mesh = buildMeshFor(placementType);
+    const p = tileWorldPos(x, z);
+    mesh.position.set(p.x, 0, p.z);
+    mesh.userData = { kind: 'building', ref: b };
+    buildingsGroup.add(mesh);
+    b.mesh = mesh;
+    buildings.push(b);
+    occupied[z][x] = b;
+    if (placementType === 'barn') grainCapVal += 100;
+    recomputeIrrigation();
+    // Byggnadslaget stangs av efter varje lyckad placering istallet for
+    // att ligga kvar -- annars tolkas efterfoljande klick (t.ex. valja en
+    // bonde eller tilldela en aker) som nya byggforsok istallet, en
+    // riktig bugg som hittades under testning 2026-08-07.
+    placementType = null;
+    buildHint.style.display = 'none';
+    renderBuildList();
+    updateHud();
+  }
+
+  // ================= Bönder =================
+  function trainFarmer() {
+    if (gold < farmerCost) { toast('Inte råd att utbilda en bonde (' + Math.round(farmerCost) + ' guld).'); return; }
+    gold -= farmerCost;
+    const mesh = buildFarmerMesh();
+    const p = tileWorldPos(farmHq.x, farmHq.z);
+    mesh.position.set(p.x + (Math.random() - 0.5) * 0.4, 0, p.z + (Math.random() - 0.5) * 0.4);
+    unitsGroup.add(mesh);
+    const f = { mesh, x: farmHq.x, z: farmHq.z, state: 'idle', fieldRef: null, speed: 1.6 };
+    mesh.userData = { kind: 'unit', ref: f };
+    farmers.push(f);
+    updateHud();
+    toast('Ny bonde redo att tilldelas en åker!', 1800);
+  }
+
+  function assignFarmerToField(farmer, field) {
+    if (field.farmerId != null) { toast('Den åkern har redan en bonde.'); return; }
+    if (farmer.fieldRef) { toast('Den bonden jobbar redan.'); return; }
+    farmer.state = 'walking';
+    farmer.fieldRef = field;
+    field.farmerId = farmer;
+    selectedFarmer = null;
+  }
+  function unassignField(field) {
+    if (!field.farmerId) return;
+    const f = field.farmerId;
+    f.fieldRef = null;
+    f.state = 'returning';
+    field.farmerId = null;
+  }
+
+  // ================= Klick/tryck-hantering =================
+  const raycaster = new THREE.Raycaster();
+  function screenToNdc(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    return { x: ((clientX - rect.left) / rect.width) * 2 - 1, y: -((clientY - rect.top) / rect.height) * 2 + 1 };
+  }
+  function handleWorldClick(clientX, clientY) {
+    if (!running) return;
+    const ndc = screenToNdc(clientX, clientY);
+    raycaster.setFromCamera(ndc, camera);
+
+    if (placementType) {
+      const hits = raycaster.intersectObjects(groundTiles.children);
+      if (hits.length) {
+        const gx = hits[0].object.userData.x, gz = hits[0].object.userData.z;
+        if (gx != null) tryPlaceBuildingAt(gx, gz);
+      }
+      return;
+    }
+
+    const unitHits = raycaster.intersectObjects(unitsGroup.children, true);
+    if (unitHits.length) {
+      let obj = unitHits[0].object;
+      while (obj && !obj.userData.ref) obj = obj.parent;
+      if (obj) {
+        const f = obj.userData.ref;
+        if (!f.fieldRef) { selectedFarmer = f; toast(isTouch ? 'Bonde vald — tryck på en ledig åker.' : 'Bonde vald — klicka på en ledig åker.', 1800); }
+        else { selectedFarmer = null; unassignField(f.fieldRef); toast('Bonden kallades hem.'); }
+      }
+      return;
+    }
+
+    const buildHits = raycaster.intersectObjects(buildingsGroup.children, true);
+    if (buildHits.length) {
+      let obj = buildHits[0].object;
+      while (obj && !obj.userData.ref) obj = obj.parent;
+      if (obj) {
+        const b = obj.userData.ref;
+        if (b.type === 'field') {
+          if (selectedFarmer) assignFarmerToField(selectedFarmer, b);
+          else if (b.farmerId) unassignField(b);
+        }
+      }
+    }
+  }
+  canvas.addEventListener('click', e => handleWorldClick(e.clientX, e.clientY));
+
+  // ================= Bygg-meny (kollapsbar, flikar) =================
+  let menuCollapsed = false;
+  function setMenuCollapsed(c) {
+    menuCollapsed = c;
+    menuPanel.classList.toggle('collapsed', c);
+    menuToggle.textContent = c ? '🧰' : '✖️';
+  }
+  menuToggle.addEventListener('click', () => setMenuCollapsed(!menuCollapsed));
+  function selectMenuTab(tab) {
+    tabBuildBtn.classList.toggle('active', tab === 'build');
+    tabUpgradesBtn.classList.toggle('active', tab === 'upgrades');
+    buildListEl.classList.toggle('hidden', tab !== 'build');
+    upgradeListEl.classList.toggle('hidden', tab !== 'upgrades');
+  }
+  tabBuildBtn.addEventListener('click', () => selectMenuTab('build'));
+  tabUpgradesBtn.addEventListener('click', () => selectMenuTab('upgrades'));
+
+  function renderBuildList() {
+    buildListEl.innerHTML = '';
+    const farmerItem = document.createElement('div');
+    farmerItem.className = 'build-item';
+    farmerItem.innerHTML = '👨‍🌾<span class="label">Bonde</span><span class="cost">' + Math.round(farmerCost) + 'g</span>';
+    farmerItem.addEventListener('click', trainFarmer);
+    buildListEl.appendChild(farmerItem);
+
+    Object.keys(BUILDING_TYPES).forEach(key => {
+      const def = BUILDING_TYPES[key];
+      const item = document.createElement('div');
+      item.className = 'build-item' + (placementType === key ? ' active' : '');
+      item.innerHTML = def.icon + '<span class="label">' + def.name + '</span><span class="cost">' + def.cost.gold + 'g ' + def.cost.wood + 'w</span>';
+      item.addEventListener('click', () => {
+        placementType = placementType === key ? null : key;
+        buildHint.style.display = placementType ? 'block' : 'none';
+        buildHint.textContent = placementType ? ('Tryck på en grön ruta för att bygga ' + def.name + '.') : '';
+        renderBuildList();
+      });
+      buildListEl.appendChild(item);
+    });
+  }
+
+  function renderUpgradeList() {
+    upgradeListEl.innerHTML = '';
+    UPGRADES.forEach(u => {
+      const item = document.createElement('div');
+      const owned = !!bought[u.id];
+      item.className = 'upgrade-item' + (owned ? ' bought' : '');
+      item.innerHTML = u.icon + '<span class="label">' + u.name + '</span><span class="cost">' + (owned ? 'Köpt' : u.cost + 'g') + '</span>';
+      item.title = u.desc;
+      if (!owned) {
+        item.addEventListener('click', () => {
+          if (gold < u.cost) { toast('Inte råd med ' + u.name + ' ännu (' + u.cost + ' guld).'); return; }
+          gold -= u.cost;
+          bought[u.id] = true;
+          if (u.id === 'training') farmerCost = FARMER_COST_BASE * 0.7;
+          toast(u.name + ' köpt! ' + u.desc, 2200);
+          renderUpgradeList();
+          renderBuildList();
+          updateHud();
+        });
+      }
+      upgradeListEl.appendChild(item);
+    });
+  }
+
+  // ================= Karta valjs, spel startar =================
+  function startMap(map) {
+    gridW = map.rows[0].length; gridH = map.rows.length;
+    terrain = map.rows.map(row => row.split(''));
+    occupied = Array.from({ length: gridH }, () => new Array(gridW).fill(null));
+    buildings = []; farmers = []; bought = {}; selectedFarmer = null; placementType = null;
+    gold = map.startGold; wood = map.startWood; grain = 0; grainCapVal = 100;
+    farmerCost = FARMER_COST_BASE; rateWindowGold = 0; displayedRate = 0; reachedMilestones = 0;
+
+    while (buildingsGroup.children.length) buildingsGroup.remove(buildingsGroup.children[0]);
+    while (unitsGroup.children.length) unitsGroup.remove(unitsGroup.children[0]);
+    buildTerrainMeshes();
+
+    const hq = { type: 'farmhq', x: map.start.x, z: map.start.z, mesh: null };
+    const mesh = buildMeshFor('farmhq');
+    const p = tileWorldPos(hq.x, hq.z);
+    mesh.position.set(p.x, 0, p.z);
+    mesh.userData = { kind: 'building', ref: hq };
+    buildingsGroup.add(mesh);
+    hq.mesh = mesh;
+    farmHq = hq;
+    occupied[hq.z][hq.x] = hq;
+    buildings.push(hq);
+
+    recomputeIrrigation();
+    resize();
+
+    mapOverlay.classList.add('hidden');
+    hud.style.display = 'flex';
+    titleBadge.style.display = 'block';
+    titleBadge.textContent = 'Nybörjarbonde';
+    menuWrap.style.display = 'flex';
+    setMenuCollapsed(false);
+    selectMenuTab('build');
+    renderBuildList();
+    renderUpgradeList();
+    updateHud();
+    toast('Bygg en åker, utbilda en bonde, och tilldela bonden åkern — så börjar skörden!', 4200);
+
+    running = true;
+    lastTs = performance.now();
+    requestAnimationFrame(tick);
+  }
+
+  function renderMapGrid() {
+    mapGridEl.innerHTML = '';
+    MAPS.forEach(map => {
+      const card = document.createElement('div');
+      card.className = 'map-card';
+      card.innerHTML = '<div class="icon">' + map.icon + '</div><h3>' + map.name + '</h3><p>' + map.desc + '</p>';
+      card.addEventListener('click', () => startMap(map));
+      mapGridEl.appendChild(card);
+    });
+  }
+  renderMapGrid();
+
+  // ================= Spel-loop =================
+  const BASE_GROW_TIME = 16;
+  const BASE_YIELD = 8;
+  const SELL_RATE_PER_MILL = 1.6; // sad/sek
+  const BASE_GOLD_PER_GRAIN = 3;
+
+  let lastTs = performance.now();
+  function tick(ts) {
+    const dt = Math.min(0.05, (ts - lastTs) / 1000);
+    lastTs = ts;
+
+    if (running) {
+      // Bonder: ga till sin aker, jobba, eller ga hem
+      for (const f of farmers) {
+        if (f.state === 'walking' && f.fieldRef) {
+          const p = tileWorldPos(f.fieldRef.x, f.fieldRef.z);
+          const dx = p.x - f.mesh.position.x, dz = p.z - f.mesh.position.z;
+          const dist = Math.hypot(dx, dz);
+          if (dist < 0.08) { f.state = 'working'; }
+          else {
+            const step = Math.min(dist, f.speed * dt);
+            f.mesh.position.x += (dx / dist) * step;
+            f.mesh.position.z += (dz / dist) * step;
+            f.mesh.rotation.y = Math.atan2(dx, dz);
+          }
+        } else if (f.state === 'returning') {
+          const p = tileWorldPos(farmHq.x, farmHq.z);
+          const dx = p.x - f.mesh.position.x, dz = p.z - f.mesh.position.z;
+          const dist = Math.hypot(dx, dz);
+          if (dist < 0.08) { f.state = 'idle'; }
+          else {
+            const step = Math.min(dist, f.speed * dt);
+            f.mesh.position.x += (dx / dist) * step;
+            f.mesh.position.z += (dz / dist) * step;
+          }
+        }
+      }
+
+      // Akrar: vaxer nar de har en bonde som jobbar dar, skordar automatiskt
+      const growMul = bought.tools ? 0.7 : 1;
+      const yieldMul = bought.seeds ? 1.5 : 1;
+      for (const b of buildings) {
+        if (b.type !== 'field') continue;
+        const working = b.farmerId && b.farmerId.state === 'working';
+        const sprouts = b.mesh.getObjectByName('sprouts');
+        if (working) {
+          b.growTimer += dt;
+          const irrigated = isFieldIrrigated(b);
+          const growTime = BASE_GROW_TIME * growMul * (irrigated ? 0.7 : 1);
+          const progress = Math.min(1, b.growTimer / growTime);
+          if (sprouts) sprouts.children.forEach((s, i) => { s.scale.y = 0.3 + progress * 1.6; s.position.y = s.userData.baseY * (0.3 + progress); });
+          if (b.growTimer >= growTime) {
+            b.growTimer = 0;
+            const yieldAmt = BASE_YIELD * yieldMul * (irrigated ? 1.5 : 1);
+            grain = Math.min(grainCapVal, grain + yieldAmt);
+          }
+        } else if (sprouts) {
+          sprouts.children.forEach(s => { s.scale.y = 0.3; });
+        }
+      }
+
+      // Kvarnar: saljer lagrad sad automatiskt -> passiv inkomst
+      const goldPerGrain = BASE_GOLD_PER_GRAIN + (bought.trade ? 1 : 0);
+      for (const b of buildings) {
+        if (b.type !== 'mill') continue;
+        const blades = b.mesh.getObjectByName('blades');
+        if (blades) blades.rotation.x += dt * 2.4;
+        b.sellTimer += dt;
+        const tickRate = 1 / SELL_RATE_PER_MILL;
+        while (b.sellTimer >= tickRate) {
+          b.sellTimer -= tickRate;
+          if (grain > 0) {
+            const sold = Math.min(1, grain);
+            grain -= sold;
+            const earned = sold * goldPerGrain;
+            gold += earned;
+            rateWindowGold += earned;
+          }
+        }
+      }
+
+      rateWindowTimer += dt;
+      if (rateWindowTimer >= 1) {
+        // Utjamnad med ett glidande medelvarde (inte ravardet rakt av) --
+        // annars kan en kort skur nar en kvarn dranerar redan lagrad sad
+        // (t.ex. rester som redan lag i förrådet nar kvarnen byggdes)
+        // trigga en hog milstolpe direkt, trots att den halbara takten
+        // ar mycket lagre. Upptackt under testning 2026-08-07.
+        const rawRate = rateWindowGold / rateWindowTimer;
+        displayedRate = displayedRate * 0.75 + rawRate * 0.25;
+        rateWindowGold = 0; rateWindowTimer = 0;
+        checkMilestones();
+      }
+
+      updateHud();
+    }
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+
+  function checkMilestones() {
+    for (let i = reachedMilestones; i < MILESTONES.length; i++) {
+      if (displayedRate >= MILESTONES[i].rate) {
+        reachedMilestones = i + 1;
+        titleBadge.textContent = MILESTONES[i].title;
+        toast('🎉 ' + MILESTONES[i].title + '! ' + MILESTONES[i].msg, 5200);
+      } else break;
+    }
+  }
+
+  resize();
+})();
+</script>
+</body>
+</html>

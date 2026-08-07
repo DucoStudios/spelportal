@@ -533,7 +533,12 @@
   function makeAnimal(kind) {
     const spot = randomSurfaceSpot();
     const group = buildAnimalMesh(kind);
-    const gy = heightAt(spot.x, spot.z) + 0.5;
+    // +1, inte +0.5 -- toppytan pa en kolonn med hojd h ligger vid
+    // varldskoordinat h+1 (blocket vid array-index h sparar fran h till
+    // h+1), samma offset som NPC:erna redan anvander ett par rader ovan.
+    // Med +0.5 hamnade djuren en halv kub nere I marken, buggen David
+    // flaggade 2026-08-07.
+    const gy = heightAt(spot.x, spot.z) + 1;
     group.position.set(spot.x + 0.5, gy, spot.z + 0.5);
     scene.add(group);
     return {
@@ -571,7 +576,7 @@
         a.z += (dz / dist) * stepLen;
         a.group.rotation.y = Math.atan2(dx, dz);
       }
-      const groundY = heightAt(Math.round(a.x - 0.5), Math.round(a.z - 0.5)) + 0.5;
+      const groundY = heightAt(Math.round(a.x - 0.5), Math.round(a.z - 0.5)) + 1;
       const bob = Math.sin(ts * 0.006 + a.bobSeed) * 0.02 * (dist >= 0.15 ? 1 : 0.3);
       a.group.position.set(a.x, groundY + bob, a.z);
     }

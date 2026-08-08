@@ -155,12 +155,26 @@
   // storre an LAUNCHER_Y, annars filtreras nyss avfyrade bollar bort direkt
   // i samma frame som de skapas (hittades under testning 2026-08-08).
   const RETURN_Y = 760;
+  // FLOOR_Y ar en okrossbar studsyta strax under launchern -- bollar som
+  // faller anda ner studsar upp i stallet for att bara flyga rakt igenom,
+  // vilket ger mycket mer studsande innan omgangen tar slut (onskemal fran
+  // David 2026-08-08). RETURN_Y star kvar som ett sakerhetsnat langre ner
+  // ifall en boll tunnlar igenom golvet pa en enda hogfarts-frame.
+  // Maste ligga en bra bit under launcher-spawnpunkten (LAUNCHER_Y-4) plus
+  // storsta bollradien, annars studsar en tungviktarboll (r=12) mot golvet
+  // redan i spawn-framen (samma buggklass som RETURN_Y-kommentaren ovan).
+  const FLOOR_Y = 740;
+  // Nar sista bollen avfyrats far spelarna se studsandet ett tag innan
+  // omgangen tvingas ta slut (annars skulle bollar kunna studsa for evigt
+  // mellan golvet och taket/kuberna).
+  const TURN_BOUNCE_TIME = 4;
 
-  let scale = 1, offsetX = 0, offsetY = 0;
+  let scale = 1, offsetX = 0, offsetY = 0, dpr = 1;
   function resize() {
     const w = gameWrap.clientWidth, h = gameWrap.clientHeight;
-    canvas.width = Math.round(w * (window.devicePixelRatio || 1));
-    canvas.height = Math.round(h * (window.devicePixelRatio || 1));
+    dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
     scale = Math.min(w / LW, h / LH);
@@ -168,6 +182,13 @@
     offsetY = (h - LH * scale) / 2;
   }
   window.addEventListener('resize', resize);
+  // iOS Safari kan andra visuellt viewport (adressfaltet visas/doljs) utan
+  // ett vanligt 'resize'-event -- lyssna aven pa visualViewport for att fanga det.
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+  // gameWrap:s layout kan vara ohunnen satta sig (dvh-enheter etc) i samma
+  // tick som skriptet korr -- kor om resize() nagra ganger till efter start.
+  setTimeout(resize, 60);
+  setTimeout(resize, 300);
 
   function toLogical(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
@@ -186,6 +207,7 @@
   let ballCount = 1;
   let queuedToFire = 0;
   let fireTimer = 0;
+  let turnTimer = 0;
   let turnActive = false;
   let aiming = false;
   let aimAngle = -Math.PI / 2; // rakt upp
@@ -222,6 +244,7 @@
   }
 
   function setupGame(p) {
+    resize();
     preset = p;
     bricks = []; balls = []; pickups = []; particles = [];
     turn = 1; ballCount = 1; queuedToFire = 0; turnActive = false; aiming = false;
@@ -280,6 +303,7 @@
 
   function drawArena() {
     ctx.save();
+    ctx.scale(dpr, dpr);
     ctx.translate(offsetX, offsetY);
     ctx.scale(scale, scale);
 
@@ -289,6 +313,8 @@
     // vaggar
     ctx.fillStyle = '#8C8C8C';
     ctx.fillRect(0, ARENA_TOP - 14, LW, 14);
+    // okrossbart golv -- bollar studsar upp harifran istallet for att flyga igenom
+    ctx.fillRect(0, FLOOR_Y, LW, 10);
 
     bricks.forEach(drawBrick);
 
@@ -453,6 +479,7 @@
       if (ball.x - ball.r < 0) { ball.x = ball.r; ball.vx *= -1; }
       if (ball.x + ball.r > LW) { ball.x = LW - ball.r; ball.vx *= -1; }
       if (ball.y - ball.r < ARENA_TOP - 14) { ball.y = ARENA_TOP - 14 + ball.r; ball.vy *= -1; }
+      if (ball.y + ball.r > FLOOR_Y) { ball.y = FLOOR_Y - ball.r; ball.vy *= -1; }
       for (const b of bricks.slice()) {
         if (bricks.indexOf(b) === -1) continue;
         resolveBallBrick(ball, b);
@@ -482,9 +509,14 @@
           const jitter = (Math.random() - 0.5) * 0.07;
           spawnBall(LAUNCHER_X, LAUNCHER_Y - 4, aimAngle + jitter, selectedBallType);
           queuedToFire--;
+          if (queuedToFire === 0) turnTimer = TURN_BOUNCE_TIME;
         }
-      } else if (balls.length === 0) {
-        endTurn();
+      } else {
+        turnTimer -= dt;
+        if (balls.length === 0 || turnTimer <= 0) {
+          balls = [];
+          endTurn();
+        }
       }
     }
   }

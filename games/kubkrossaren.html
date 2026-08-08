@@ -175,7 +175,11 @@
   // upp forst nasta gang dess egen studs vander den nedat.
   const RECALL_DURATION = 0.4;
   // Absolut sakerhetsnat om en boll av otur aldrig svanger nedat pa egen hand.
-  const RECALL_SAFETY_TIME = 6;
+  // Hojd fran 6 till 12s (2026-08-08) eftersom bollar nu tillats fortsatta
+  // studsa okontrollerat lange som helst sa lange de fortfarande kan traffa
+  // en kub -- den gamla korta grasnen skulle annars rycka bort en boll mitt
+  // i ett anvandbart studsande.
+  const RECALL_SAFETY_TIME = 12;
 
   let scale = 1, offsetX = 0, offsetY = 0, dpr = 1;
   function resize() {
@@ -483,7 +487,19 @@
     return true;
   }
 
+  function lowestBrickBottom() {
+    // Nedre kanten pa den lagst placerade kvarvarande kuben -- en boll som
+    // fortfarande ar ovanfor den har kanten kan i princip alltid studsa in
+    // i nagon kub igen (via sidovaggarna), sa den ska inte ryckas till
+    // launchern bara for att tiden gatt ut (David 2026-08-08).
+    if (bricks.length === 0) return -Infinity;
+    let max = -Infinity;
+    for (const b of bricks) { const bot = b.y + b.h; if (bot > max) max = bot; }
+    return max;
+  }
+
   function stepPhysics(dt) {
+    const brickFloor = lowestBrickBottom();
     for (const ball of balls) {
       if (ball.recalling) {
         ball.recallT = Math.min(1, (ball.recallT || 0) + dt / RECALL_DURATION);
@@ -505,7 +521,9 @@
       // en boll som fortfarande studsar ska aldrig ryckas tillbaka mitt i
       // en bana -- bara plocka upp den nar den redan ar pa vag nedat mot
       // launchern (David 2026-08-08), annars ser det ut som ett hopp/teleport.
-      if (recallPending && ball.vy > 0) {
+      // Och sa lange den fortfarande ar uppe vid kuberna (kan studsa in i en
+      // igen) ska den fa fortsatta spela aven om omgangens tid runnit ut.
+      if (recallPending && ball.vy > 0 && ball.y - ball.r > brickFloor) {
         ball.recalling = true;
         ball.recallFrom = { x: ball.x, y: ball.y };
         ball.recallT = 0;

@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="manifest" href="../manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Spelportal">
+<meta name="theme-color" content="#170F2E">
+<link rel="apple-touch-icon" href="../icon-180.png">
+<link rel="icon" href="../icon-512.png">
+<title>Ordmästaren</title>
+<style>
+  :root {
+    --bg: #170F2E; --bg2: #241A44; --panel: #2C1F52; --outline: #120A24;
+    --pink: #FF6EC7; --orange: #FF7A3D; --yellow: #FFD23F; --cyan: #2FE6D6; --purple: #8B5CF6;
+    --ink: #FFF6FB; --ink-soft: #C9B6E8; --green: #5CB85C; --red: #FF4D5E;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; height: 100dvh; overflow: hidden; overscroll-behavior: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); font-family: 'Open Sans', -apple-system, sans-serif; color: var(--ink); overscroll-behavior-y: contain; }
+
+  .topbar {
+    position: relative; z-index: 5; display: flex; align-items: center; justify-content: space-between;
+    padding: 0.6rem 1rem; background: linear-gradient(180deg, #2A1750 0%, #170F2E 100%);
+    border-bottom: 3px solid var(--outline);
+  }
+  .topbar h1 { font-weight: 800; font-size: 1.05rem; margin: 0; }
+  .topbar a { font-size: 0.72rem; font-weight: 700; color: var(--cyan); text-decoration: none; }
+
+  #gameWrap { position: relative; width: 100%; height: calc(100% - 44px); height: calc(100dvh - 44px); overflow: hidden; }
+
+  /* ---- Paketval-vy ---- */
+  #packView { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 12px 24px; }
+  .stat-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+  .stat-pill {
+    background: rgba(23,15,46,0.8); border: 2px solid var(--outline); border-radius: 10px;
+    padding: 0.4rem 0.8rem; font-weight: 800; font-size: 0.82rem; text-align: center;
+  }
+  .stat-pill .big { display: block; font-size: 1.05rem; }
+  .stat-pill.streak { color: var(--orange); }
+  .stat-pill.xp { color: var(--yellow); }
+  .stat-pill.words { color: var(--cyan); }
+
+  .pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; max-width: 640px; margin: 0 auto; }
+  .pack-card {
+    background: var(--panel); border: 3px solid var(--outline); border-radius: 14px; padding: 10px;
+    text-align: left; cursor: pointer; box-shadow: 4px 4px 0 var(--outline); position: relative;
+  }
+  .pack-card:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
+  .pack-card.locked { background: #362A5C; cursor: not-allowed; opacity: 0.65; }
+  .pack-card .num { font-size: 0.68rem; font-weight: 800; color: var(--ink-soft); }
+  .pack-card h3 { margin: 2px 0 6px; font-size: 0.86rem; line-height: 1.2; }
+  .pack-card .bar-bg { height: 8px; border-radius: 4px; background: rgba(0,0,0,0.35); overflow: hidden; margin-bottom: 6px; }
+  .pack-card .bar-fill { height: 100%; background: var(--cyan); border-radius: 4px; }
+  .pack-card .stars { font-size: 0.85rem; color: var(--yellow); }
+  .pack-card .lock-icon { position: absolute; top: 8px; right: 10px; font-size: 1rem; }
+
+  .page-title { text-align: center; font-weight: 900; font-size: 1.1rem; margin: 4px 0 10px; color: var(--yellow); text-shadow: 2px 2px 0 var(--outline); }
+  .page-sub { text-align: center; font-size: 0.78rem; color: var(--ink-soft); max-width: 480px; margin: 0 auto 14px; line-height: 1.5; }
+
+  /* ---- Sessions-vy ---- */
+  #sessionView { position: absolute; inset: 0; display: none; flex-direction: column; }
+  .session-hud { display: flex; align-items: center; gap: 8px; padding: 8px 10px; }
+  .session-hud .bar-bg { flex: 1; height: 10px; border-radius: 5px; background: rgba(0,0,0,0.35); overflow: hidden; }
+  .session-hud .bar-fill { height: 100%; background: var(--green); border-radius: 5px; transition: width 0.25s; }
+  .session-hud .xp-pop { font-weight: 800; font-size: 0.8rem; color: var(--yellow); min-width: 44px; text-align: right; }
+  .session-hud .back-btn { background: none; border: none; color: var(--ink-soft); font-size: 1.2rem; cursor: pointer; padding: 0 4px; }
+
+  #cardArea { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; gap: 14px; overflow-y: auto; }
+  .mode-tag { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; padding: 3px 10px; border-radius: 20px; border: 2px solid var(--outline); }
+  .mode-tag.read { background: var(--cyan); color: var(--outline); }
+  .mode-tag.listen { background: var(--purple); color: var(--ink); }
+  .mode-tag.speak { background: var(--orange); color: var(--outline); }
+  .mode-tag.intro { background: var(--yellow); color: var(--outline); }
+
+  .prompt-word { font-size: 2.1rem; font-weight: 900; text-align: center; text-shadow: 2px 2px 0 var(--outline); word-break: break-word; max-width: 90vw; }
+  .prompt-gloss { font-size: 1.3rem; font-weight: 700; text-align: center; color: var(--ink-soft); max-width: 90vw; }
+  .sound-btn {
+    background: var(--panel); border: 3px solid var(--outline); border-radius: 50%; width: 68px; height: 68px;
+    font-size: 1.6rem; cursor: pointer; box-shadow: 4px 4px 0 var(--outline); color: var(--ink);
+  }
+  .sound-btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
+
+  .opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 420px; }
+  .opt-btn {
+    background: var(--panel); border: 3px solid var(--outline); border-radius: 12px; padding: 0.7rem 0.5rem;
+    font-size: 0.88rem; font-weight: 700; cursor: pointer; box-shadow: 4px 4px 0 var(--outline); color: var(--ink);
+  }
+  .opt-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--outline); }
+  .opt-btn.correct { background: var(--green); color: var(--outline); }
+  .opt-btn.wrong { background: var(--red); color: var(--outline); }
+
+  .mic-btn {
+    background: var(--orange); border: 4px solid var(--outline); border-radius: 50%; width: 96px; height: 96px;
+    font-size: 2.2rem; cursor: pointer; box-shadow: 5px 5px 0 var(--outline); color: var(--outline);
+  }
+  .mic-btn:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--outline); }
+  .mic-btn.listening { background: var(--red); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
+  .speak-fallback-btn, .skip-btn {
+    background: var(--green); border: 3px solid var(--outline); border-radius: 10px; padding: 0.7rem 1.3rem;
+    font-size: 0.9rem; font-weight: 800; cursor: pointer; box-shadow: 4px 4px 0 var(--outline); color: var(--outline);
+  }
+  .skip-btn { background: var(--ink-soft); }
+  .speak-fallback-btn:active, .skip-btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
+
+  .heard-text { font-size: 0.85rem; color: var(--ink-soft); min-height: 1.2em; text-align: center; }
+  .continue-btn {
+    background: var(--yellow); color: var(--outline); border: 3px solid var(--outline); border-radius: 10px;
+    padding: 0.75rem 1.6rem; font-size: 0.95rem; font-weight: 800; cursor: pointer; box-shadow: 4px 4px 0 var(--outline);
+  }
+  .continue-btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
+
+  .feedback-flash { font-size: 1rem; font-weight: 800; min-height: 1.4em; text-align: center; }
+  .feedback-flash.ok { color: var(--green); }
+  .feedback-flash.no { color: var(--red); }
+
+  @keyframes bounceIn { 0% { transform: scale(0.7); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+  .anim-in { animation: bounceIn 0.28s ease-out; }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+  .anim-shake { animation: shake 0.3s ease-in-out; }
+
+  /* ---- Overlays (start/summary) ---- */
+  .overlay {
+    position: absolute; inset: 0; background: color-mix(in srgb, var(--bg2) 94%, transparent);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.9rem; text-align: center; padding: 1.3rem; z-index: 8; overflow-y: auto;
+  }
+  .overlay.hidden { display: none; }
+  .overlay h2 { font-weight: 900; font-size: 1.5rem; margin: 0; color: var(--yellow); text-shadow: 2px 2px 0 var(--outline); }
+  .overlay p { max-width: 380px; font-size: 0.86rem; font-weight: 600; color: var(--ink-soft); margin: 0; line-height: 1.6; }
+  button.cta {
+    font-family: 'Open Sans', sans-serif; font-size: 0.9rem; font-weight: 800; text-transform: uppercase;
+    background: var(--yellow); color: var(--outline); border: 3px solid var(--outline); border-radius: 8px;
+    box-shadow: 4px 4px 0 var(--outline); padding: 0.6rem 1.4rem; cursor: pointer;
+  }
+  button.cta:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
+  button.cta.secondary { background: var(--panel); color: var(--ink); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📚 ORDMÄSTAREN</h1>
+  <a href="../index.html">&larr; HELA SPELKATALOGEN</a>
+</div>
+
+<div id="gameWrap">
+
+  <div id="packView">
+    <div class="page-title">Lär dig de 1000 vanligaste franska orden</div>
+    <div class="page-sub">Läs, lyssna och säg orden högt. Varje paket har 50 ord — klara alla tre delarna för varje ord för att bemästra det!</div>
+    <div class="stat-row" id="statRow"></div>
+    <div class="pack-grid" id="packGrid"></div>
+  </div>
+
+  <div id="sessionView">
+    <div class="session-hud">
+      <button class="back-btn" id="backBtn">✕</button>
+      <div class="bar-bg"><div class="bar-fill" id="sessionBar" style="width:0%"></div></div>
+      <div class="xp-pop" id="xpVal">0 XP</div>
+    </div>
+    <div id="cardArea"></div>
+  </div>
+
+  <div class="overlay hidden" id="summaryOverlay">
+    <h2 id="summaryTitle">Bra jobbat!</h2>
+    <p id="summaryText"></p>
+    <div id="summaryStars" style="font-size:1.8rem;"></div>
+    <button class="cta" id="playAgainBtn">Spela igen</button>
+    <button class="cta secondary" id="backToPacksBtn">Till paketen</button>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const PROGRESS_KEY = 'ordmastaren-progress-v2';
+
+  // ================= Ordlista: 20 paket, ~50 ord vardera =================
+  const PACKS = [
+    { name: 'Grunderna 1', words: [
+      ['je','jag'],['tu','du'],['il','han'],['elle','hon'],['nous','vi'],['vous','ni / du (artigt)'],
+      ['ils','de (mask./blandat)'],['elles','de (fem.)'],['on','man / vi (talspråk)'],['être','vara'],
+      ['avoir','ha'],['suis','är (jag)'],['es','är (du)'],['est','är (han/hon/den/det)'],['sommes','är (vi)'],
+      ['êtes','är (ni)'],['sont','är (de)'],['ai','har (jag)'],['as','har (du)'],['a','har (han/hon)'],
+      ['avons','har (vi)'],['avez','har (ni)'],['ont','har (de)'],['bonjour','hej / god dag'],['bonsoir','god kväll'],
+      ['salut','hej / hej då (informellt)'],['au revoir','hej då'],['merci','tack'],['s\'il vous plaît','snälla (artigt)'],
+      ['s\'il te plaît','snälla (till en vän)'],['pardon','förlåt / ursäkta'],['excusez-moi','ursäkta mig'],
+      ['comment','hur'],['ça va','det går bra / hur mår du'],['bien','bra'],['mal','dåligt / ont'],['et','och'],
+      ['mais','men'],['ou','eller'],['donc','alltså / så'],['non','nej'],['oui','ja'],
+      ['le','den/det (best. artikel, mask.)'],['la','den/det (best. artikel, fem.)'],['les','de (best. artikel, plural)'],
+      ['un','en/ett (artikel) / talet 1'],['une','en (artikel, fem.) / talet 1'],['des','några (obest. artikel, plural)'],
+      ['de','av / från'],['à','till / på / hos']
+    ]},
+    { name: 'Grunderna 2', words: [
+      ['qui','vem'],['que','vad / att (bisats)'],['quoi','vad'],['où','var / vart'],['quand','när'],
+      ['pourquoi','varför'],['combien','hur mycket / hur många'],['quel','vilken (mask.)'],['quelle','vilken (fem.)'],
+      ['rien','inget / ingenting'],['pas','inte'],['jamais','aldrig'],['toujours','alltid'],['souvent','ofta'],
+      ['parfois','ibland'],['aussi','också'],['encore','igen / fortfarande'],['déjà','redan'],['très','mycket / väldigt'],
+      ['trop','för mycket'],['peu','lite'],['beaucoup','mycket'],['faire','göra'],['aller','gå / åka'],
+      ['venir','komma'],['vouloir','vilja'],['pouvoir','kunna'],['devoir','måste / vara skyldig'],['savoir','veta / kunna'],
+      ['connaître','känna till / känna (person)'],['voir','se'],['regarder','titta på'],['entendre','höra'],
+      ['écouter','lyssna'],['dire','säga'],['parler','prata / tala'],['demander','fråga'],['répondre','svara'],
+      ['prendre','ta'],['donner','ge'],['mettre','lägga / sätta / ta på (kläder)'],['laisser','lämna / låta'],
+      ['penser','tänka'],['croire','tro'],['aimer','tycka om / älska'],['adorer','älska (starkare)'],
+      ['détester','avsky'],['préférer','föredra'],['chercher','leta efter / söka'],['trouver','hitta']
+    ]},
+    { name: 'Siffror & tid', words: [
+      ['deux','två'],['trois','tre'],['quatre','fyra'],['cinq','fem'],['six','sex'],['sept','sju'],['huit','åtta'],
+      ['neuf','nio'],['dix','tio'],['onze','elva'],['douze','tolv'],['treize','tretton'],['quatorze','fjorton'],
+      ['quinze','femton'],['seize','sexton'],['dix-sept','sjutton'],['dix-huit','arton'],['dix-neuf','nitton'],
+      ['vingt','tjugo'],['trente','trettio'],['quarante','fyrtio'],['cinquante','femtio'],['soixante','sextio'],
+      ['soixante-dix','sjuttio'],['quatre-vingts','åttio'],['quatre-vingt-dix','nittio'],['cent','hundra'],
+      ['mille','tusen'],['premier','först'],['deuxième','andra (ordningstal)'],['dernier','sista'],['an','år'],
+      ['année','år (helt år)'],['jour','dag'],['semaine','vecka'],['mois','månad'],['heure','timme / klockan'],
+      ['minute','minut'],['seconde','sekund'],['matin','morgon'],['midi','middag (klockan 12)'],
+      ['après-midi','eftermiddag'],['soir','kväll'],['nuit','natt'],['aujourd\'hui','idag'],['demain','imorgon'],
+      ['hier','igår'],['maintenant','nu'],['tôt','tidigt'],['tard','sent']
+    ]},
+    { name: 'Familj & dagar', words: [
+      ['père','pappa/far'],['mère','mamma/mor'],['papa','pappa'],['maman','mamma'],['frère','bror'],['sœur','syster'],
+      ['fils','son'],['fille','dotter / flicka'],['enfant','barn'],['bébé','bebis'],['grand-père','farfar/morfar'],
+      ['grand-mère','farmor/mormor'],['oncle','farbror/morbror'],['tante','faster/moster'],['cousin','kusin (man)'],
+      ['cousine','kusin (kvinna)'],['mari','make'],['femme','fru / kvinna'],['ami','vän (man)'],['amie','vän (kvinna)'],
+      ['homme','man'],['personne','person / ingen (nekande)'],['gens','människor/folk'],['nom','namn'],['âge','ålder'],
+      ['lundi','måndag'],['mardi','tisdag'],['mercredi','onsdag'],['jeudi','torsdag'],['vendredi','fredag'],
+      ['samedi','lördag'],['dimanche','söndag'],['janvier','januari'],['février','februari'],['mars','mars'],
+      ['avril','april'],['mai','maj'],['juin','juni'],['juillet','juli'],['août','augusti'],['septembre','september'],
+      ['octobre','oktober'],['novembre','november'],['décembre','december'],['printemps','vår'],['été','sommar'],
+      ['automne','höst'],['hiver','vinter'],['monsieur','herr'],['madame','fru (tilltal)']
+    ]},
+    { name: 'Kroppen', words: [
+      ['corps','kropp'],['tête','huvud'],['visage','ansikte'],['cheveux','hår'],['œil','öga'],['yeux','ögon'],
+      ['oreille','öra'],['nez','näsa'],['bouche','mun'],['dent','tand'],['langue','tunga / språk'],['cou','hals'],
+      ['épaule','axel'],['bras','arm'],['main','hand'],['doigt','finger'],['ventre','mage'],['dos','rygg'],
+      ['jambe','ben'],['genou','knä'],['pied','fot'],['cœur','hjärta'],['peau','hud'],['sang','blod'],
+      ['os','ben (skelett)'],['voix','röst'],['sourire','le / leende'],['pleurer','gråta'],['rire','skratta'],
+      ['dormir','sova'],['réveiller','väcka'],['fatigué','trött'],['malade','sjuk'],['santé','hälsa'],
+      ['docteur','läkare'],['médecin','läkare'],['hôpital','sjukhus'],['médicament','medicin'],['douleur','smärta'],
+      ['fort','stark'],['faible','svag'],['grand','stor / lång'],['petit','liten'],['gros','tjock/stor'],
+      ['mince','smal'],['beau','vacker/fin (mask.)'],['belle','vacker/fin (fem.)'],['laid','ful'],['vieux','gammal'],
+      ['jeune','ung']
+    ]},
+    { name: 'Hemmet', words: [
+      ['maison','hus'],['appartement','lägenhet'],['chambre','sovrum'],['salon','vardagsrum'],['cuisine','kök'],
+      ['salle de bain','badrum'],['toilettes','toalett'],['porte','dörr'],['fenêtre','fönster'],['mur','vägg'],
+      ['toit','tak'],['sol','golv/mark'],['escalier','trappa'],['jardin','trädgård'],['garage','garage'],
+      ['table','bord'],['chaise','stol'],['lit','säng'],['canapé','soffa'],['armoire','garderob/skåp'],
+      ['étagère','hylla'],['lampe','lampa'],['miroir','spegel'],['tapis','matta'],['rideau','gardin'],['clé','nyckel'],
+      ['télévision','tv'],['ordinateur','dator'],['téléphone','telefon'],['réfrigérateur','kylskåp'],['four','ugn'],
+      ['assiette','tallrik'],['verre','glas'],['tasse','kopp'],['fourchette','gaffel'],['couteau','kniv'],
+      ['cuillère','sked'],['serviette','handduk/servett'],['savon','tvål'],['brosse à dents','tandborste'],
+      ['propre','ren'],['sale','smutsig'],['ouvrir','öppna'],['fermer','stänga'],['allumer','tända'],
+      ['éteindre','släcka'],['nettoyer','städa/rengöra'],['ranger','städa undan/ordna'],['habiter','bo'],['vivre','leva/bo']
+    ]},
+    { name: 'Mat & dryck 1', words: [
+      ['manger','äta'],['boire','dricka'],['nourriture','mat'],['repas','måltid'],['petit-déjeuner','frukost'],
+      ['déjeuner','lunch'],['dîner','middag'],['pain','bröd'],['beurre','smör'],['fromage','ost'],['lait','mjölk'],
+      ['œuf','ägg'],['sucre','socker'],['sel','salt'],['poivre','peppar'],['huile','olja'],['eau','vatten'],
+      ['café','kaffe'],['thé','te'],['jus','juice'],['vin','vin'],['bière','öl'],['viande','kött'],['poulet','kyckling'],
+      ['bœuf','nötkött'],['poisson','fisk'],['légume','grönsak'],['fruit','frukt'],['pomme','äpple'],['banane','banan'],
+      ['orange','apelsin / orange (färg)'],['fraise','jordgubbe'],['raisin','druva'],['carotte','morot'],
+      ['tomate','tomat'],['pomme de terre','potatis'],['salade','sallad'],['riz','ris'],['pâtes','pasta'],
+      ['soupe','soppa'],['dessert','efterrätt'],['gâteau','tårta/kaka'],['chocolat','choklad'],['bonbon','godis'],
+      ['glace','glass/is'],['miel','honung'],['confiture','sylt'],['restaurant','restaurang'],['cuisiner','laga mat'],
+      ['recette','recept']
+    ]},
+    { name: 'Mat, dryck & kläder', words: [
+      ['goûter','smaka'],['délicieux','läcker'],['sucré','söt'],['salé','salt (smak)'],['amer','besk'],['chaud','varm'],
+      ['froid','kall'],['faim','hunger'],['soif','törst'],['épicé','kryddstark'],['acheter','köpa'],['vendre','sälja'],
+      ['payer','betala'],['prix','pris'],['argent','pengar'],['magasin','affär/butik'],['marché','marknad'],
+      ['supermarché','stormarknad'],['vêtements','kläder'],['chemise','skjorta'],['pantalon','byxor'],['robe','klänning'],
+      ['jupe','kjol'],['T-shirt','t-shirt'],['pull','tröja'],['veste','jacka'],['manteau','kappa/rock'],
+      ['chaussures','skor'],['chaussettes','strumpor'],['chapeau','hatt'],['gants','handskar'],['écharpe','halsduk'],
+      ['ceinture','skärp/bälte'],['lunettes','glasögon'],['sac','väska'],['porter','bära/ha på sig'],
+      ['s\'habiller','klä på sig'],['taille','storlek'],['couleur','färg'],['nouveau','ny (mask.)'],['nouvelle','ny (fem.)'],
+      ['usé','sliten/utsliten'],['élégant','elegant'],['confortable','bekväm'],['léger','lätt (vikt)'],['lourd','tung'],
+      ['doux','mjuk/mild'],['dur','hård'],['mode','mode'],['essayer','prova / försöka']
+    ]},
+    { name: 'Färger & former', words: [
+      ['rouge','röd'],['bleu','blå'],['vert','grön'],['jaune','gul'],['noir','svart'],['blanc','vit'],['gris','grå'],
+      ['marron','brun'],['rose','rosa'],['violet','lila'],['clair','ljus'],['foncé','mörk'],['forme','form'],
+      ['rond','rund'],['carré','fyrkantig/kvadrat'],['triangle','triangel'],['cercle','cirkel'],['rectangle','rektangel'],
+      ['ligne','linje'],['point','punkt'],['haut','hög'],['bas','låg'],['large','bred'],['étroit','smal'],
+      ['profond','djup'],['plein','full'],['vide','tom'],['même','samma'],['différent','olik/annorlunda'],
+      ['pareil','likadan'],['gauche','vänster'],['droite','höger'],['devant','framför'],['derrière','bakom'],
+      ['dessus','ovanpå'],['dessous','under'],['dedans','inuti'],['dehors','utanför'],['ici','här'],['là','där'],
+      ['partout','överallt'],['nulle part','ingenstans'],['près','nära'],['loin','långt bort'],['entre','mellan'],
+      ['sous','under'],['sur','på'],['dans','i'],['avec','med'],['sans','utan']
+    ]},
+    { name: 'Djuren', words: [
+      ['animal','djur'],['chien','hund'],['chat','katt'],['oiseau','fågel'],['cheval','häst'],['vache','ko'],
+      ['cochon','gris'],['mouton','får'],['chèvre','get'],['lapin','kanin'],['souris','mus'],['rat','råtta'],
+      ['ours','björn'],['loup','varg'],['renard','räv'],['lion','lejon'],['tigre','tiger'],['éléphant','elefant'],
+      ['singe','apa'],['girafe','giraff'],['zèbre','zebra'],['serpent','orm'],['grenouille','groda'],
+      ['tortue','sköldpadda'],['papillon','fjäril'],['abeille','bi'],['araignée','spindel'],['mouche','fluga'],
+      ['fourmi','myra'],['canard','anka'],['poule','höna'],['coq','tupp'],['dinde','kalkon'],['requin','haj'],
+      ['baleine','val'],['dauphin','delfin'],['crabe','krabba'],['insecte','insekt'],['queue','svans'],['aile','vinge'],
+      ['patte','tass/ben (djur)'],['plume','fjäder'],['nid','fågelbo'],['forêt','skog'],['zoo','djurpark'],
+      ['ferme','bondgård'],['élever','föda upp'],['nourrir','mata'],['sauvage','vild'],['domestique','tam']
+    ]},
+    { name: 'Natur & väder', words: [
+      ['nature','natur'],['arbre','träd'],['fleur','blomma'],['herbe','gräs'],['feuille','löv/blad'],['branche','gren'],
+      ['racine','rot'],['montagne','berg'],['colline','kulle'],['vallée','dal'],['rivière','flod/å'],
+      ['fleuve','flod (till havet)'],['lac','sjö'],['mer','hav'],['océan','ocean'],['plage','strand'],['île','ö'],
+      ['désert','öken'],['ciel','himmel'],['soleil','sol'],['lune','måne'],['étoile','stjärna'],['nuage','moln'],
+      ['pluie','regn'],['neige','snö'],['vent','vind'],['orage','åskväder'],['tonnerre','åska'],['éclair','blixt'],
+      ['brouillard','dimma'],['chaleur','värme'],['météo','väderlek'],['température','temperatur'],['degré','grad'],
+      ['saison','årstid'],['terre','jord/mark'],['pierre','sten'],['sable','sand'],['roche','klippa'],
+      ['caillou','liten sten'],['feu','eld'],['fumée','rök'],['air','luft'],['respirer','andas'],
+      ['pousser','växa/knuffa'],['grandir','växa upp'],['planter','plantera'],['récolter','skörda'],['protéger','skydda'],
+      ['environnement','miljö']
+    ]},
+    { name: 'Skolan', words: [
+      ['école','skola'],['professeur','lärare'],['élève','elev'],['étudiant','student'],['classe','klass/lektion'],
+      ['cours','lektion/kurs'],['leçon','lektion'],['devoirs','läxor'],['examen','prov'],['note','betyg'],['livre','bok'],
+      ['cahier','skrivbok'],['stylo','penna (bläck)'],['crayon','blyertspenna'],['gomme','suddgummi'],
+      ['règle','linjal/regel'],['papier','papper'],['tableau','tavla'],['bureau','skrivbord/kontor'],
+      ['sac à dos','ryggsäck'],['bibliothèque','bibliotek'],['apprendre','lära sig'],['étudier','studera'],
+      ['enseigner','undervisa'],['comprendre','förstå'],['expliquer','förklara'],['lire','läsa'],['écrire','skriva'],
+      ['compter','räkna'],['calculer','räkna ut'],['dessiner','rita'],['chanter','sjunga'],['jouer','leka/spela'],
+      ['question','fråga'],['réponse','svar'],['problème','problem'],['solution','lösning'],['idée','idé'],
+      ['mot','ord'],['phrase','mening'],['langage','språk'],['histoire','historia/berättelse'],
+      ['géographie','geografi'],['mathématiques','matematik'],['science','vetenskap'],['musique','musik'],
+      ['art','konst'],['sport','sport'],['récréation','rast'],['vacances','lov/semester']
+    ]},
+    { name: 'Transport & resa', words: [
+      ['voiture','bil'],['bus','buss'],['train','tåg'],['avion','flygplan'],['bateau','båt'],['vélo','cykel'],
+      ['moto','motorcykel'],['taxi','taxi'],['métro','tunnelbana'],['route','väg'],['rue','gata'],['chemin','väg/stig'],
+      ['pont','bro'],['aéroport','flygplats'],['gare','tågstation'],['arrêt','hållplats'],['billet','biljett'],
+      ['valise','resväska'],['passeport','pass'],['voyage','resa'],['voyager','resa (verb)'],['partir','åka iväg'],
+      ['arriver','anlända'],['rentrer','komma hem'],['conduire','köra'],['marcher','gå/promenera'],['courir','springa'],
+      ['monter','kliva på/gå upp'],['descendre','kliva av/gå ner'],['traverser','korsa'],['tourner','svänga'],
+      ['tout droit','rakt fram'],['direction','riktning'],['carte','karta/kort'],['vitesse','hastighet'],['rapide','snabb'],
+      ['lent','långsam'],['distance','avstånd'],['destination','resmål'],['étranger','utländsk/utlänning'],
+      ['pays','land'],['ville','stad'],['capitale','huvudstad'],['frontière','gräns'],['drapeau','flagga'],
+      ['monde','värld'],['continent','kontinent'],['touriste','turist'],['hôtel','hotell'],['réserver','boka']
+    ]},
+    { name: 'Staden', words: [
+      ['quartier','stadsdel'],['centre-ville','centrum'],['banque','bank'],['poste','post/postkontor'],
+      ['église','kyrka'],['musée','museum'],['théâtre','teater'],['cinéma','bio'],['parc','park'],
+      ['piscine','simbassäng'],['stade','stadion'],['usine','fabrik'],['entreprise','företag'],['boutique','butik'],
+      ['pharmacie','apotek'],['boulangerie','bageri'],['mairie','stadshus'],['commissariat','polisstation'],
+      ['caserne de pompiers','brandstation'],['tour','torn'],['immeuble','flerbostadshus'],['bâtiment','byggnad'],
+      ['construction','byggande'],['construire','bygga'],['trottoir','trottoar'],['feu rouge','trafikljus'],
+      ['panneau','skylt'],['place','torg'],['statue','staty'],['fontaine','fontän'],['cimetière','kyrkogård'],
+      ['commerce','handel'],['client','kund'],['vendeur','försäljare'],['employé','anställd'],['patron','chef'],
+      ['collègue','kollega'],['réunion','möte'],['rendez-vous','avtalat möte/träff'],['travail','arbete'],
+      ['travailler','arbeta'],['métier','yrke'],['salaire','lön'],['gagner','tjäna/vinna'],['gratuit','gratis'],
+      ['cher','dyr'],['bon marché','billig'],['ouvert','öppen'],['fermé','stängd'],['horaire','öppettider/schema']
+    ]},
+    { name: 'Känslor', words: [
+      ['heureux','lycklig (mask.)'],['heureuse','lycklig (fem.)'],['triste','ledsen'],['content','nöjd/glad'],
+      ['fâché','arg'],['en colère','arg'],['peur','rädsla'],['avoir peur','vara rädd'],['surpris','förvånad'],
+      ['étonné','förvånad'],['inquiet','orolig'],['calme','lugn'],['nerveux','nervös'],['stressé','stressad'],
+      ['fier','stolt'],['honteux','skamsen'],['jaloux','avundsjuk'],['amoureux','kär'],['seul','ensam'],
+      ['gentil','snäll'],['méchant','elak'],['sympathique','sympatisk/trevlig'],['drôle','rolig/lustig'],
+      ['sérieux','seriös'],['timide','blyg'],['courageux','modig'],['curieux','nyfiken'],['intelligent','intelligent'],
+      ['bête','dum'],['sage','snäll/klok (om barn)'],['patient','tålmodig'],['impatient','otålig'],['poli','artig'],
+      ['impoli','oartig'],['généreux','generös'],['égoïste','egoistisk'],['honnête','ärlig'],['menteur','lögnare'],
+      ['sûr','säker'],['certain','säker/viss'],['possible','möjlig'],['impossible','omöjlig'],['facile','lätt/enkel'],
+      ['difficile','svår'],['important','viktig'],['intéressant','intressant'],['ennuyeux','tråkig'],
+      ['amusant','roligt'],['étrange','konstig'],['normal','normal']
+    ]},
+    { name: 'Motsatser', words: [
+      ['bon','bra/god (mask.)'],['bonne','bra/god (fem.)'],['mauvais','dålig'],['meilleur','bättre'],['pire','sämre'],
+      ['juste','rätt/rättvis'],['faux','fel/falsk'],['vrai','sann'],['ancien','gammal/tidigare'],['moderne','modern'],
+      ['riche','rik'],['pauvre','fattig'],['précieux','värdefull'],['utile','nyttig'],['inutile','onödig'],
+      ['simple','enkel'],['compliqué','komplicerad'],['immédiat','omedelbar'],['libre','fri/ledig'],
+      ['occupé','upptagen'],['prêt','redo'],['épuisé','utmattad'],['rempli','fylld'],['creux','ihålig'],
+      ['correct','korrekt'],['incorrect','felaktig'],['spécial','speciell'],['unique','unik'],
+      ['commun','vanlig/gemensam'],['rare','sällsynt'],['principal','huvudsaklig'],['secondaire','sekundär'],
+      ['total','total'],['entier','hel'],['moitié','hälft'],['quart','kvart/fjärdedel'],['double','dubbel'],
+      ['isolé','isolerad'],['ensemble','tillsammans'],['séparé','separat'],['semblable','liknande'],
+      ['opposé','motsatt'],['égal','lika/jämlik'],['supérieur','högre'],['inférieur','lägre'],['exact','exakt'],
+      ['approximatif','ungefärlig'],['précis','exakt/precis'],['évident','uppenbar'],['confus','förvirrad']
+    ]},
+    { name: 'Vardagsverb 1', words: [
+      ['commencer','börja'],['finir','sluta/avsluta'],['continuer','fortsätta'],['arrêter','stanna/sluta'],
+      ['réussir','lyckas'],['échouer','misslyckas'],['perdre','förlora/tappa'],['aider','hjälpa'],
+      ['utiliser','använda'],['falloir','behövas/måste'],['rester','stanna kvar'],['revenir','komma tillbaka'],
+      ['retourner','återvända'],['changer','ändra/byta'],['devenir','bli'],['sembler','verka/tyckas'],
+      ['paraître','verka/synas'],['apparaître','dyka upp'],['disparaître','försvinna'],['tomber','falla'],
+      ['lever','lyfta/resa sig'],['se lever','gå upp/resa sig'],['s\'asseoir','sätta sig'],['se coucher','lägga sig'],
+      ['se réveiller','vakna'],['se laver','tvätta sig'],['se brosser','borsta (sig)'],['se dépêcher','skynda sig'],
+      ['attendre','vänta'],['espérer','hoppas'],['rêver','drömma'],['imaginer','föreställa sig'],['oublier','glömma'],
+      ['se souvenir','minnas'],['rappeler','påminna/ringa tillbaka'],['promettre','lova'],['décider','bestämma'],
+      ['choisir','välja'],['accepter','acceptera'],['refuser','vägra/neka'],['permettre','tillåta'],
+      ['interdire','förbjuda'],['obliger','tvinga'],['empêcher','hindra'],['réparer','reparera'],
+      ['casser','gå sönder/förstöra'],['briser','krossa'],['détruire','förstöra'],
+      ['sentir','känna/lukta'],['toucher','röra vid']
+    ]},
+    { name: 'Vardagsverb 2', words: [
+      ['emprunter','låna (ta lån)'],['prêter','låna ut'],['rendre','lämna tillbaka'],['offrir','ge bort/bjuda på'],
+      ['recevoir','ta emot/få'],['envoyer','skicka'],['appeler','ringa/kalla'],['téléphoner','ringa (i telefon)'],
+      ['discuter','diskutera'],['bavarder','småprata'],['crier','skrika'],['chuchoter','viska'],
+      ['se taire','vara tyst'],['se disputer','gräla'],['se réconcilier','försonas'],['remercier','tacka'],
+      ['féliciter','gratulera'],['souhaiter','önska'],['fêter','fira'],['inviter','bjuda in'],
+      ['rencontrer','träffa/möta'],['présenter','presentera'],['se présenter','presentera sig'],['quitter','lämna'],
+      ['rejoindre','ansluta sig till'],['accompagner','följa med'],['suivre','följa'],['guider','guida'],
+      ['montrer','visa'],['cacher','gömma'],['vraiment','verkligen'],['peut-être','kanske'],['sûrement','säkert'],
+      ['probablement','troligen'],['heureusement','lyckligtvis'],['malheureusement','tyvärr'],['finalement','till slut'],
+      ['soudain','plötsligt'],['ensuite','sedan/därefter'],['puis','sedan/vidare'],['alors','då/så'],
+      ['pourtant','ändå'],['cependant','dock'],['néanmoins','ändå/likväl'],['environ','ungefär'],
+      ['exactement','exakt'],['presque','nästan'],['seulement','bara/endast'],['surtout','särskilt'],
+      ['ailleurs','någon annanstans']
+    ]},
+    { name: 'Sport & fritid', words: [
+      ['football','fotboll'],['basket','basket'],['tennis','tennis'],['natation','simning'],['nager','simma'],
+      ['course','löpning/lopp'],['danse','dans'],['danser','dansa'],['chanson','sång'],['instrument','instrument'],
+      ['guitare','gitarr'],['piano','piano'],['batterie','trumset'],['peinture','målning'],['peindre','måla'],
+      ['dessin','teckning'],['photo','foto'],['film','film'],['jeu','spel/lek'],['jouet','leksak'],['poupée','docka'],
+      ['ballon','boll'],['puzzle','pussel'],['loisir','fritidsintresse'],['week-end','helg'],['fête','fest'],
+      ['anniversaire','födelsedag'],['cadeau','present'],['surprise','överraskning'],['invitation','inbjudan'],
+      ['équipe','lag'],['joueur','spelare'],['match','match'],['victoire','seger'],['défaite','förlust'],
+      ['entraînement','träning'],['s\'entraîner','träna'],['champion','mästare'],['médaille','medalj'],
+      ['compétition','tävling'],['promenade','promenad'],['se promener','promenera'],['randonnée','vandring'],
+      ['camping','camping'],['pêche','fiske'],['pêcher','fiska'],['chasse','jakt'],['aventure','äventyr'],
+      ['exploration','utforskning'],['explorer','utforska']
+    ]},
+    { name: 'Yrken & mål', words: [
+      ['profession','yrke'],['infirmier','sjuksköterska'],['dentiste','tandläkare'],['vétérinaire','veterinär'],
+      ['avocat','advokat'],['juge','domare'],['policier','polis'],['pompier','brandman'],
+      ['instituteur','lärare (grundskola)'],['ingénieur','ingenjör'],['architecte','arkitekt'],['cuisinier','kock'],
+      ['serveur','servitör'],['caissier','kassör'],['chauffeur','chaufför'],['pilote','pilot'],['marin','sjöman'],
+      ['agriculteur','jordbrukare'],['pêcheur','fiskare'],['artiste','konstnär'],['musicien','musiker'],
+      ['écrivain','författare'],['journaliste','journalist'],['acteur','skådespelare'],['chanteur','sångare'],
+      ['scientifique','forskare'],['boulanger','bagare'],['boucher','slaktare'],['coiffeur','frisör'],
+      ['électricien','elektriker'],['plombier','rörmokare'],['menuisier','snickare'],['secrétaire','sekreterare'],
+      ['directeur','direktör/chef'],['employeur','arbetsgivare'],['retraité','pensionär'],['chômage','arbetslöshet'],
+      ['projet','projekt'],['objectif','mål'],['réussite','framgång'],['échec','misslyckande'],
+      ['effort','ansträngning'],['énergie','energi'],['force','kraft/styrka'],['courage','mod'],['espoir','hopp'],
+      ['rêve','dröm'],['avenir','framtid'],['passé','dåtid'],['présent','nutid/present']
+    ]}
+  ];
+
+  // Bygg upp paket-objekt med {fr, sv} istallet for tuples
+  PACKS.forEach(p => { p.words = p.words.map(w => ({ fr: w[0], sv: w[1] })); });
+
+  const TOTAL_WORDS = PACKS.reduce((sum, p) => sum + p.words.length, 0);
+  const UNLOCK_THRESHOLD = 0.2;  // 20% bemastrat lockar upp nasta paket
+  const SESSION_LEN = 14;
+
+  // ================= Progress (localStorage) =================
+  function todayStr() { return new Date().toISOString().slice(0, 10); }
+  function loadProgress() {
+    let p = null;
+    try { p = JSON.parse(localStorage.getItem(PROGRESS_KEY)); } catch (e) {}
+    if (!p || typeof p !== 'object') p = {};
+    if (!p.words) p.words = {};
+    if (!p.streak) p.streak = { count: 0, lastDate: null };
+    if (typeof p.xp !== 'number') p.xp = 0;
+    if (!p.sessionsPlayed) p.sessionsPlayed = new Array(PACKS.length).fill(0);
+    return p;
+  }
+  function saveProgress(p) { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); }
+  let progress = loadProgress();
+
+  function wordState(fr) { return progress.words[fr] || { read: false, listen: false, speak: false }; }
+  function wordDoneCount(fr) { const s = wordState(fr); return (s.read ? 1 : 0) + (s.listen ? 1 : 0) + (s.speak ? 1 : 0); }
+  function markWordMode(fr, mode) {
+    const s = progress.words[fr] || { read: false, listen: false, speak: false };
+    s[mode] = true;
+    progress.words[fr] = s;
+  }
+  // Delkravsbaserad procentsats (summa av lasa/lyssna/tala-status over alla
+  // ord, delat pa max mojliga) istallet for "andel helt bemastrade ord" --
+  // annars star paketets stapel still pa 0% anda tills forsta ordet klarat
+  // ALLA tre lagen, vilket kans oavlonande tidigt i ett paket (David
+  // spelade igenom en hel session och stapeln visade fortfarande 0%,
+  // hittades under testning 2026-08-08).
+  function packMasteryPct(packIdx) {
+    const words = PACKS[packIdx].words;
+    let done = 0;
+    words.forEach(w => { done += wordDoneCount(w.fr); });
+    return done / (words.length * 3);
+  }
+  function packStars(pct) {
+    if (pct >= 0.9) return 3;
+    if (pct >= 0.6) return 2;
+    if (pct >= 0.3) return 1;
+    return 0;
+  }
+  function isPackUnlocked(packIdx) {
+    if (packIdx === 0) return true;
+    return packMasteryPct(packIdx - 1) >= UNLOCK_THRESHOLD;
+  }
+  function totalMasteredWords() {
+    let n = 0;
+    PACKS.forEach(p => p.words.forEach(w => { if (wordDoneCount(w.fr) === 3) n++; }));
+    return n;
+  }
+  function bumpStreak() {
+    const today = todayStr();
+    if (progress.streak.lastDate === today) return;
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    if (progress.streak.lastDate === yesterday) progress.streak.count++;
+    else progress.streak.count = 1;
+    progress.streak.lastDate = today;
+    saveProgress(progress);
+  }
+
+  // ================= Talsyntes (franska, samma robusta monster som ovriga spel) =================
+  let frenchVoice = null;
+  function pickFrenchVoice() {
+    const voices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+    frenchVoice = voices.find(v => v.lang === 'fr-FR') || voices.find(v => v.lang && v.lang.startsWith('fr')) || null;
+  }
+  if (window.speechSynthesis) {
+    pickFrenchVoice();
+    speechSynthesis.onvoiceschanged = pickFrenchVoice;
+  }
+  function speak(text) {
+    if (!window.speechSynthesis) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'fr-FR';
+    if (frenchVoice) u.voice = frenchVoice;
+    u.rate = 0.92;
+    speechSynthesis.speak(u);
+  }
+
+  // ================= Taligenkanning (feature-detected) =================
+  const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  const speechRecoSupported = !!SpeechRecognitionCtor;
+
+  function normalizeForMatch(s) {
+    return s.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z]/g, '');
+  }
+  function levenshtein(a, b) {
+    const m = a.length, n = b.length;
+    if (m === 0) return n;
+    if (n === 0) return m;
+    const dp = new Array(n + 1);
+    for (let j = 0; j <= n; j++) dp[j] = j;
+    for (let i = 1; i <= m; i++) {
+      let prev = dp[0]; dp[0] = i;
+      for (let j = 1; j <= n; j++) {
+        const tmp = dp[j];
+        dp[j] = Math.min(dp[j] + 1, dp[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+        prev = tmp;
+      }
+    }
+    return dp[n];
+  }
+  function fuzzyMatches(heard, target) {
+    const h = normalizeForMatch(heard), t = normalizeForMatch(target);
+    if (!h || !t) return false;
+    if (h === t) return true;
+    const dist = levenshtein(h, t);
+    const tolerance = Math.max(1, Math.floor(t.length * 0.34));
+    return dist <= tolerance;
+  }
+
+  // ================= UI-referenser =================
+  const packView = document.getElementById('packView');
+  const packGrid = document.getElementById('packGrid');
+  const statRow = document.getElementById('statRow');
+  const sessionView = document.getElementById('sessionView');
+  const cardArea = document.getElementById('cardArea');
+  const sessionBar = document.getElementById('sessionBar');
+  const xpValEl = document.getElementById('xpVal');
+  const backBtn = document.getElementById('backBtn');
+  const summaryOverlay = document.getElementById('summaryOverlay');
+  const summaryTitle = document.getElementById('summaryTitle');
+  const summaryText = document.getElementById('summaryText');
+  const summaryStars = document.getElementById('summaryStars');
+  const playAgainBtn = document.getElementById('playAgainBtn');
+  const backToPacksBtn = document.getElementById('backToPacksBtn');
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // ================= Paketval-vy =================
+  function renderStats() {
+    statRow.innerHTML =
+      '<div class="stat-pill streak">🔥 dagar<span class="big">' + progress.streak.count + '</span></div>' +
+      '<div class="stat-pill xp">⭐ XP<span class="big">' + progress.xp + '</span></div>' +
+      '<div class="stat-pill words">📖 ord<span class="big">' + totalMasteredWords() + '/' + TOTAL_WORDS + '</span></div>';
+  }
+
+  function renderPackGrid() {
+    packGrid.innerHTML = '';
+    PACKS.forEach((pack, idx) => {
+      const unlocked = isPackUnlocked(idx);
+      const pct = packMasteryPct(idx);
+      const stars = packStars(pct);
+      const card = document.createElement('div');
+      card.className = 'pack-card' + (unlocked ? '' : ' locked');
+      card.innerHTML =
+        (unlocked ? '' : '<div class="lock-icon">🔒</div>') +
+        '<div class="num">PAKET ' + (idx + 1) + '</div>' +
+        '<h3>' + pack.name + '</h3>' +
+        '<div class="bar-bg"><div class="bar-fill" style="width:' + Math.round(pct * 100) + '%"></div></div>' +
+        '<div class="stars">' + '⭐'.repeat(stars) + '☆'.repeat(3 - stars) + '</div>';
+      if (unlocked) card.addEventListener('click', () => startSession(idx));
+      packGrid.appendChild(card);
+    });
+  }
+
+  function showPackView() {
+    sessionView.style.display = 'none';
+    packView.style.display = 'block';
+    renderStats();
+    renderPackGrid();
+  }
+
+  // ================= Session-logik =================
+  let session = null; // { packIdx, queue: [cards], cardIdx, correctCount, xpEarned }
+
+  function buildSessionQueue(packIdx) {
+    const words = PACKS[packIdx].words;
+    const withState = words.map(w => ({ w, doneCount: wordDoneCount(w.fr) }));
+    const fresh = shuffle(withState.filter(x => x.doneCount === 0));
+    const partial = shuffle(withState.filter(x => x.doneCount > 0 && x.doneCount < 3));
+    const mastered = shuffle(withState.filter(x => x.doneCount === 3));
+
+    const modeOrder = ['read', 'listen', 'speak'];
+    // Slumpar bland de lagen som saknas istallet for att alltid ta det
+    // forsta ("lasa") -- annars blir en hel forsta session bara
+    // las-uppgifter eftersom varje nytt ord har alla tre lagen kvar och
+    // .find() alltid landar pa samma (hittades under testning 2026-08-08,
+    // David bad uttryckligen om en blandning av lasa/lyssna/tala).
+    // Forsta uppgiften for ett helt nytt ord slumpas dock bara mellan
+    // lasa/lyssna (igenkanning) -- tala (aktiv produktion) sparas till
+    // nasta gang ordet dyker upp.
+    function nextMissingMode(fr) {
+      const s = wordState(fr);
+      const missing = modeOrder.filter(m => !s[m]);
+      if (missing.length === 0) return modeOrder[Math.floor(Math.random() * 3)];
+      if (missing.length === 3) {
+        const recognitionModes = missing.filter(m => m !== 'speak');
+        return recognitionModes[Math.floor(Math.random() * recognitionModes.length)];
+      }
+      return missing[Math.floor(Math.random() * missing.length)];
+    }
+
+    // Bygger kön i prioritetsordning: ord som redan pabörjats forst (for att
+    // fardigstalla dem), sedan nya ord (introduktion + fråga), sedan repetition
+    // av redan bemastrade ord. Om ett paket precis paborjats finns varken
+    // "partial" eller "mastered" ord an -- da maste "fresh"-grenen ensam kunna
+    // fylla hela sessionen, annars blir forsta sessionen alltid for kort
+    // (hittades under testning 2026-08-08: sessionen tog bara 6 kort istallet
+    // for SESSION_LEN eftersom fyllnadsloopen bara tittade i mastered/partial).
+    const cards = [];
+    let freshIdx = 0, partialIdx = 0, masteredIdx = 0, newIntroCount = 0;
+    const MAX_NEW_PER_SESSION = 6;
+    let guard = 0;
+    while (cards.length < SESSION_LEN && guard++ < 500) {
+      if (partialIdx < partial.length) {
+        const x = partial[partialIdx++];
+        cards.push({ type: nextMissingMode(x.w.fr), word: x.w });
+        continue;
+      }
+      if (freshIdx < fresh.length && (newIntroCount < MAX_NEW_PER_SESSION || mastered.length === 0)) {
+        const x = fresh[freshIdx++];
+        cards.push({ type: 'intro', word: x.w });
+        cards.push({ type: nextMissingMode(x.w.fr), word: x.w });
+        newIntroCount++;
+        continue;
+      }
+      if (mastered.length > 0) {
+        const x = mastered[masteredIdx % mastered.length];
+        masteredIdx++;
+        cards.push({ type: modeOrder[Math.floor(Math.random() * 3)], word: x.w });
+        continue;
+      }
+      break; // inget mer kvar att plocka fran (bor inte handa i ett 48-50-ords paket)
+    }
+    return cards;
+  }
+
+  function startSession(packIdx) {
+    session = { packIdx, queue: buildSessionQueue(packIdx), cardIdx: 0, correctCount: 0, xpEarned: 0 };
+    if (session.queue.length === 0) { showPackView(); return; }
+    packView.style.display = 'none';
+    sessionView.style.display = 'flex';
+    xpValEl.textContent = progress.xp + ' XP';
+    renderCurrentCard();
+  }
+
+  function updateSessionBar() {
+    const pct = session.queue.length ? (session.cardIdx / session.queue.length) * 100 : 100;
+    sessionBar.style.width = pct + '%';
+  }
+
+  function buildMcOptions(correctSv, packIdx) {
+    const pool = PACKS[packIdx].words.map(w => w.sv).filter(sv => sv !== correctSv);
+    const distractors = shuffle(pool).slice(0, 3);
+    return shuffle([correctSv].concat(distractors));
+  }
+
+  function flashFeedback(el, ok) {
+    const fb = document.createElement('div');
+    fb.className = 'feedback-flash ' + (ok ? 'ok' : 'no');
+    fb.textContent = ok ? 'Rätt! 🎉' : 'Nästan! Rätt svar visas.';
+    return fb;
+  }
+
+  function awardXp(n) {
+    progress.xp += n;
+    session.xpEarned += n;
+    xpValEl.textContent = progress.xp + ' XP';
+    saveProgress(progress);
+  }
+
+  function goToNextCard() {
+    session.cardIdx++;
+    updateSessionBar();
+    if (session.cardIdx >= session.queue.length) {
+      finishSession();
+    } else {
+      renderCurrentCard();
+    }
+  }
+
+  function renderCurrentCard() {
+    updateSessionBar();
+    const card = session.queue[session.cardIdx];
+    cardArea.innerHTML = '';
+    if (card.type === 'intro') renderIntroCard(card);
+    else if (card.type === 'read') renderReadCard(card);
+    else if (card.type === 'listen') renderListenCard(card);
+    else if (card.type === 'speak') renderSpeakCard(card);
+  }
+
+  function renderIntroCard(card) {
+    const wrap = document.createElement('div');
+    wrap.className = 'anim-in';
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:14px;';
+    wrap.innerHTML =
+      '<div class="mode-tag intro">NYTT ORD</div>' +
+      '<div class="prompt-word">' + card.word.fr + '</div>' +
+      '<div class="prompt-gloss">' + card.word.sv + '</div>' +
+      '<button class="sound-btn" id="introSound">🔊</button>' +
+      '<button class="continue-btn" id="introNext">Nästa &rarr;</button>';
+    cardArea.appendChild(wrap);
+    speak(card.word.fr);
+    document.getElementById('introSound').addEventListener('click', () => speak(card.word.fr));
+    document.getElementById('introNext').addEventListener('click', goToNextCard);
+  }
+
+  function renderReadCard(card) {
+    const opts = buildMcOptions(card.word.sv, session.packIdx);
+    const wrap = document.createElement('div');
+    wrap.className = 'anim-in';
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;';
+    wrap.innerHTML =
+      '<div class="mode-tag read">LÄSA</div>' +
+      '<div class="prompt-word">' + card.word.fr + '</div>' +
+      '<div class="opt-grid" id="optGrid"></div>' +
+      '<div class="feedback-flash" id="fb"></div>';
+    cardArea.appendChild(wrap);
+    const grid = document.getElementById('optGrid');
+    opts.forEach(sv => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = sv;
+      btn.addEventListener('click', () => handleMcAnswer(card, sv, grid, document.getElementById('fb')));
+      grid.appendChild(btn);
+    });
+  }
+
+  function renderListenCard(card) {
+    const opts = buildMcOptions(card.word.sv, session.packIdx);
+    const wrap = document.createElement('div');
+    wrap.className = 'anim-in';
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;';
+    wrap.innerHTML =
+      '<div class="mode-tag listen">LYSSNA</div>' +
+      '<button class="sound-btn" id="listenSound">🔊</button>' +
+      '<div class="opt-grid" id="optGrid"></div>' +
+      '<div class="feedback-flash" id="fb"></div>';
+    cardArea.appendChild(wrap);
+    speak(card.word.fr);
+    document.getElementById('listenSound').addEventListener('click', () => speak(card.word.fr));
+    const grid = document.getElementById('optGrid');
+    opts.forEach(sv => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = sv;
+      btn.addEventListener('click', () => handleMcAnswer(card, sv, grid, document.getElementById('fb')));
+      grid.appendChild(btn);
+    });
+  }
+
+  function handleMcAnswer(card, chosenSv, grid, fbEl) {
+    if (grid.dataset.answered) return;
+    grid.dataset.answered = '1';
+    const ok = chosenSv === card.word.sv;
+    [...grid.children].forEach(btn => {
+      if (btn.textContent === card.word.sv) btn.classList.add('correct');
+      else if (btn.textContent === chosenSv && !ok) btn.classList.add('wrong');
+    });
+    fbEl.className = 'feedback-flash ' + (ok ? 'ok' : 'no');
+    fbEl.textContent = ok ? 'Rätt! 🎉' : 'Rätt svar: ' + card.word.sv;
+    if (!ok) grid.parentElement.classList.add('anim-shake');
+    if (ok) {
+      markWordMode(card.word.fr, card.type);
+      saveProgress(progress);
+      awardXp(10);
+    }
+    setTimeout(goToNextCard, ok ? 900 : 1600);
+  }
+
+  function renderSpeakCard(card) {
+    const wrap = document.createElement('div');
+    wrap.className = 'anim-in';
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;';
+    wrap.innerHTML =
+      '<div class="mode-tag speak">TALA</div>' +
+      '<div class="prompt-gloss">Hur säger man</div>' +
+      '<div class="prompt-word" style="font-size:1.5rem;">' + card.word.sv + '</div>' +
+      '<div class="prompt-gloss">på franska?</div>' +
+      (speechRecoSupported
+        ? '<button class="mic-btn" id="micBtn">🎤</button><div class="heard-text" id="heardText"></div>'
+        : '<button class="sound-btn" id="hintSound">🔊</button><div class="prompt-gloss">Säg ordet högt!</div><button class="speak-fallback-btn" id="saidBtn">Jag har sagt det! ✅</button>') +
+      '<button class="sound-btn" id="hintBtn2" style="' + (speechRecoSupported ? '' : 'display:none;') + '">💡</button>' +
+      '<button class="skip-btn" id="skipBtn">Hoppa över</button>' +
+      '<div class="feedback-flash" id="fb"></div>';
+    cardArea.appendChild(wrap);
+
+    const fb = document.getElementById('fb');
+    document.getElementById('skipBtn').addEventListener('click', () => setTimeout(goToNextCard, 0));
+
+    function onSuccess() {
+      markWordMode(card.word.fr, 'speak');
+      saveProgress(progress);
+      awardXp(10);
+      fb.className = 'feedback-flash ok';
+      fb.textContent = 'Rätt! 🎉';
+      setTimeout(goToNextCard, 900);
+    }
+
+    if (speechRecoSupported) {
+      const micBtn = document.getElementById('micBtn');
+      const heardText = document.getElementById('heardText');
+      document.getElementById('hintBtn2').addEventListener('click', () => speak(card.word.fr));
+      let recognizing = false;
+      micBtn.addEventListener('click', () => {
+        if (recognizing) return;
+        recognizing = true;
+        micBtn.classList.add('listening');
+        heardText.textContent = 'Lyssnar...';
+        const rec = new SpeechRecognitionCtor();
+        rec.lang = 'fr-FR';
+        rec.continuous = false;
+        rec.interimResults = false;
+        rec.maxAlternatives = 3;
+        let handled = false;
+        rec.onresult = (e) => {
+          handled = true;
+          const alts = [];
+          for (let i = 0; i < e.results[0].length; i++) alts.push(e.results[0][i].transcript);
+          heardText.textContent = 'Du sa: "' + alts[0] + '"';
+          const match = alts.some(a => fuzzyMatches(a, card.word.fr));
+          recognizing = false;
+          micBtn.classList.remove('listening');
+          if (match) onSuccess();
+          else {
+            fb.className = 'feedback-flash no';
+            fb.textContent = 'Hördes inte riktigt rätt — försök igen eller hoppa över.';
+          }
+        };
+        rec.onerror = () => {
+          recognizing = false;
+          micBtn.classList.remove('listening');
+          if (!handled) heardText.textContent = 'Kunde inte höra — försök igen.';
+        };
+        rec.onend = () => { recognizing = false; micBtn.classList.remove('listening'); };
+        try { rec.start(); } catch (e) { recognizing = false; micBtn.classList.remove('listening'); }
+      });
+    } else {
+      document.getElementById('hintSound').addEventListener('click', () => speak(card.word.fr));
+      document.getElementById('saidBtn').addEventListener('click', onSuccess);
+    }
+  }
+
+  function finishSession() {
+    bumpStreak();
+    const pct = packMasteryPct(session.packIdx);
+    const stars = packStars(pct);
+    summaryTitle.textContent = 'Bra jobbat!';
+    summaryText.textContent = 'Du fick ' + session.xpEarned + ' XP i "' + PACKS[session.packIdx].name + '". Paketet är ' + Math.round(pct * 100) + '% bemästrat.';
+    summaryStars.textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+    sessionView.style.display = 'none';
+    summaryOverlay.classList.remove('hidden');
+  }
+
+  playAgainBtn.addEventListener('click', () => {
+    summaryOverlay.classList.add('hidden');
+    startSession(session.packIdx);
+  });
+  backToPacksBtn.addEventListener('click', () => {
+    summaryOverlay.classList.add('hidden');
+    showPackView();
+  });
+  backBtn.addEventListener('click', () => {
+    if (window.speechSynthesis) speechSynthesis.cancel();
+    showPackView();
+  });
+
+  showPackView();
+})();
+</script>
+</body>
+</html>

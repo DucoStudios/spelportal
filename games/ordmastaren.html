@@ -139,13 +139,52 @@
   }
   button.cta:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
   button.cta.secondary { background: var(--panel); color: var(--ink); }
+
+  .sound-toggle { background: none; border: none; color: var(--ink-soft); font-size: 1.1rem; cursor: pointer; padding: 0 6px; }
+
+  .burst-particle {
+    position: fixed; width: 9px; height: 9px; border-radius: 50%; pointer-events: none; z-index: 20;
+    animation: burstFly 0.6s ease-out forwards;
+  }
+  @keyframes burstFly {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.3); opacity: 0; }
+  }
+
+  .combo-pop {
+    position: fixed; left: 50%; top: 28%; transform: translate(-50%, -50%); z-index: 21; pointer-events: none;
+    font-weight: 900; font-size: 1.5rem; color: var(--yellow); text-shadow: 2px 2px 0 var(--outline);
+    animation: comboPop 0.75s ease-out forwards; text-align: center; white-space: nowrap;
+  }
+  @keyframes comboPop {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+    100% { transform: translate(-50%, -62%) scale(1); opacity: 0; }
+  }
+
+  .mastery-banner {
+    position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%); z-index: 22; pointer-events: none;
+    background: var(--yellow); color: var(--outline); border: 4px solid var(--outline); border-radius: 16px;
+    padding: 1rem 1.6rem; font-weight: 900; font-size: 1.05rem; text-align: center; box-shadow: 6px 6px 0 var(--outline);
+    animation: masteryPop 1.4s ease-out forwards; max-width: 80vw;
+  }
+  @keyframes masteryPop {
+    0% { transform: translate(-50%, -50%) scale(0.6) rotate(-4deg); opacity: 0; }
+    15% { transform: translate(-50%, -50%) scale(1.08) rotate(2deg); opacity: 1; }
+    25% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+    85% { opacity: 1; }
+    100% { transform: translate(-50%, -62%) scale(1); opacity: 0; }
+  }
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <h1>📚 ORDMÄSTAREN</h1>
-  <a href="../index.html">&larr; HELA SPELKATALOGEN</a>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <button class="sound-toggle" id="soundToggle">🔊</button>
+    <a href="../index.html">&larr; HELA SPELKATALOGEN</a>
+  </div>
 </div>
 
 <div id="gameWrap">
@@ -466,8 +505,11 @@
   function wordDoneCount(fr) { const s = wordState(fr); return (s.read ? 1 : 0) + (s.listen ? 1 : 0) + (s.speak ? 1 : 0); }
   function markWordMode(fr, mode) {
     const s = progress.words[fr] || { read: false, listen: false, speak: false };
+    const wasMastered = s.read && s.listen && s.speak;
     s[mode] = true;
     progress.words[fr] = s;
+    const nowMastered = s.read && s.listen && s.speak;
+    return !wasMastered && nowMastered; // true om ordet just nu blev fardigt bemastrat
   }
   // Delkravsbaserad procentsats (summa av lasa/lyssna/tala-status over alla
   // ord, delat pa max mojliga) istallet for "andel helt bemastrade ord" --
@@ -560,6 +602,104 @@
     return dist <= tolerance;
   }
 
+  // ================= Ljud & belonings-"juice" =================
+  // Ett rakt "+10 XP"-flashmeddelande racker inte for att kansel som ett
+  // spel snarare an ett lax-formular -- forskning pa motivation (variabel
+  // beloning slar fast beloning, retrieval practice + omedelbar feedback
+  // for flow) pekar pa att ljud/partiklar/combo-eskalering ar det som
+  // faktiskt gor skillnaden, inte sjalva quiz-mekaniken. Se minnesfilen
+  // for spelportal for resonemanget bakom detta (2026-08-08).
+  const SOUND_KEY = 'ordmastaren-sound-v1';
+  let soundOn = localStorage.getItem(SOUND_KEY) !== 'off';
+  let audioCtx = null;
+  function ensureAudioCtx() {
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return null;
+    if (!audioCtx) audioCtx = new Ctor();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+  function playTone(freq, duration, type, startOffset, peakGain) {
+    if (!soundOn) return;
+    const ctx = ensureAudioCtx();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    const t0 = ctx.currentTime + startOffset;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.linearRampToValueAtTime(peakGain, t0 + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.03);
+  }
+  function playCorrectSound(comboLevel) {
+    const base = 494 + Math.min(comboLevel, 6) * 35; // tonhojden stiger nagot med kombon
+    playTone(base, 0.11, 'sine', 0, 0.16);
+    playTone(base * 1.5, 0.15, 'sine', 0.08, 0.13);
+  }
+  function playWrongSound() { playTone(150, 0.24, 'sine', 0, 0.13); }
+  function playMasteredSound() {
+    [523, 659, 784].forEach((f, i) => playTone(f, i === 2 ? 0.3 : 0.13, 'triangle', i * 0.1, 0.2));
+  }
+  function playSessionCompleteSound() {
+    [523, 659, 784, 1046].forEach((f, i) => playTone(f, 0.2, 'triangle', i * 0.11, 0.18));
+  }
+
+  function spawnBurst(anchorEl, singleColor) {
+    const rect = anchorEl.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+    const colors = singleColor ? [singleColor] : ['#FFD23F', '#FF6EC7', '#2FE6D6', '#5CB85C'];
+    for (let i = 0; i < 10; i++) {
+      const p = document.createElement('div');
+      p.className = 'burst-particle';
+      p.style.background = colors[i % colors.length];
+      p.style.left = cx + 'px';
+      p.style.top = cy + 'px';
+      const angle = (Math.PI * 2 * i) / 10 + Math.random() * 0.4;
+      const dist = 40 + Math.random() * 40;
+      p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+      p.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 650);
+    }
+  }
+
+  // Enda stallet dar ett ratt svar belonas -- kombo-rakning ger variabel
+  // (eskalerande) beloning istallet for ett fast +10 varje gang, och ett
+  // ord som just blivit fardigt bemastrat (alla tre lagen) far en egen,
+  // storre firande-banner eftersom DET ar det riktiga lardomsmalet, inte
+  // bara "ratt pa en fraga".
+  function celebrateCorrect(anchorEl, justMastered) {
+    session.combo = (session.combo || 0) + 1;
+    const bonus = 10 + Math.min(session.combo - 1, 6) * 3;
+    awardXp(bonus);
+    spawnBurst(anchorEl, justMastered ? '#FFD23F' : null);
+    if (justMastered) {
+      playMasteredSound();
+      const banner = document.createElement('div');
+      banner.className = 'mastery-banner';
+      banner.textContent = '🏆 ORD BEMÄSTRAT! 🏆';
+      document.body.appendChild(banner);
+      setTimeout(() => banner.remove(), 1450);
+    } else {
+      playCorrectSound(session.combo);
+      if (session.combo >= 2) {
+        const pop = document.createElement('div');
+        pop.className = 'combo-pop';
+        pop.textContent = session.combo + 'x KOMBO! +' + bonus + ' XP';
+        document.body.appendChild(pop);
+        setTimeout(() => pop.remove(), 750);
+      }
+    }
+  }
+  function registerWrongAnswer() {
+    session.combo = 0;
+    playWrongSound();
+  }
+
   // ================= UI-referenser =================
   const packView = document.getElementById('packView');
   const packGrid = document.getElementById('packGrid');
@@ -575,6 +715,16 @@
   const summaryStars = document.getElementById('summaryStars');
   const playAgainBtn = document.getElementById('playAgainBtn');
   const backToPacksBtn = document.getElementById('backToPacksBtn');
+  const soundToggle = document.getElementById('soundToggle');
+
+  function updateSoundToggle() { soundToggle.textContent = soundOn ? '🔊' : '🔇'; }
+  updateSoundToggle();
+  soundToggle.addEventListener('click', () => {
+    soundOn = !soundOn;
+    localStorage.setItem(SOUND_KEY, soundOn ? 'on' : 'off');
+    updateSoundToggle();
+    if (soundOn) playCorrectSound(1);
+  });
 
   function shuffle(arr) {
     const a = arr.slice();
@@ -685,7 +835,7 @@
   }
 
   function startSession(packIdx) {
-    session = { packIdx, queue: buildSessionQueue(packIdx), cardIdx: 0, correctCount: 0, xpEarned: 0 };
+    session = { packIdx, queue: buildSessionQueue(packIdx), cardIdx: 0, correctCount: 0, xpEarned: 0, combo: 0 };
     if (session.queue.length === 0) { showPackView(); return; }
     packView.style.display = 'none';
     sessionView.style.display = 'flex';
@@ -702,13 +852,6 @@
     const pool = PACKS[packIdx].words.map(w => w.sv).filter(sv => sv !== correctSv);
     const distractors = shuffle(pool).slice(0, 3);
     return shuffle([correctSv].concat(distractors));
-  }
-
-  function flashFeedback(el, ok) {
-    const fb = document.createElement('div');
-    fb.className = 'feedback-flash ' + (ok ? 'ok' : 'no');
-    fb.textContent = ok ? 'Rätt! 🎉' : 'Nästan! Rätt svar visas.';
-    return fb;
   }
 
   function awardXp(n) {
@@ -806,13 +949,17 @@
       if (btn.textContent === card.word.sv) btn.classList.add('correct');
       else if (btn.textContent === chosenSv && !ok) btn.classList.add('wrong');
     });
-    fbEl.className = 'feedback-flash ' + (ok ? 'ok' : 'no');
-    fbEl.textContent = ok ? 'Rätt! 🎉' : 'Rätt svar: ' + card.word.sv;
-    if (!ok) grid.parentElement.classList.add('anim-shake');
     if (ok) {
-      markWordMode(card.word.fr, card.type);
+      const justMastered = markWordMode(card.word.fr, card.type);
       saveProgress(progress);
-      awardXp(10);
+      fbEl.className = 'feedback-flash ok';
+      fbEl.textContent = justMastered ? 'Bemästrat! 🏆' : 'Rätt! 🎉';
+      celebrateCorrect(grid, justMastered);
+    } else {
+      fbEl.className = 'feedback-flash no';
+      fbEl.textContent = 'Rätt svar: ' + card.word.sv;
+      grid.parentElement.classList.add('anim-shake');
+      registerWrongAnswer();
     }
     setTimeout(goToNextCard, ok ? 900 : 1600);
   }
@@ -837,12 +984,12 @@
     const fb = document.getElementById('fb');
     document.getElementById('skipBtn').addEventListener('click', () => setTimeout(goToNextCard, 0));
 
-    function onSuccess() {
-      markWordMode(card.word.fr, 'speak');
+    function onSuccess(anchorEl) {
+      const justMastered = markWordMode(card.word.fr, 'speak');
       saveProgress(progress);
-      awardXp(10);
       fb.className = 'feedback-flash ok';
-      fb.textContent = 'Rätt! 🎉';
+      fb.textContent = justMastered ? 'Bemästrat! 🏆' : 'Rätt! 🎉';
+      celebrateCorrect(anchorEl, justMastered);
       setTimeout(goToNextCard, 900);
     }
 
@@ -851,47 +998,75 @@
       const heardText = document.getElementById('heardText');
       document.getElementById('hintBtn2').addEventListener('click', () => speak(card.word.fr));
       let recognizing = false;
+      let safetyTimer = null;
+      // Rensar alltid lyssnar-laget, oavsett vilken vag hit gick -- annars
+      // kan mikrofonknappen fastna i "lyssnar"-laget for gott om webblasaren
+      // av nagon anledning aldrig triggar onresult/onerror/onend (David
+      // rapporterade att den "inte horde" trots pafunnet mikrofonlage
+      // 2026-08-08 -- mest sannolikt exakt detta: knappen var faktiskt
+      // permanent upptagen efter forsta forsoket).
+      function resetMic() {
+        recognizing = false;
+        micBtn.classList.remove('listening');
+        if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = null; }
+      }
       micBtn.addEventListener('click', () => {
         if (recognizing) return;
         recognizing = true;
         micBtn.classList.add('listening');
-        heardText.textContent = 'Lyssnar...';
+        heardText.textContent = 'Lyssnar... prata nu!';
+        safetyTimer = setTimeout(() => {
+          resetMic();
+          heardText.textContent = 'Fick inget svar — testa igen.';
+        }, 8000);
         const rec = new SpeechRecognitionCtor();
         rec.lang = 'fr-FR';
         rec.continuous = false;
-        rec.interimResults = false;
+        rec.interimResults = true;
         rec.maxAlternatives = 3;
-        let handled = false;
+        let heardAnyAudio = false;
+        rec.onaudiostart = () => { heardAnyAudio = true; };
+        rec.onspeechstart = () => { heardText.textContent = 'Hör dig...'; };
         rec.onresult = (e) => {
-          handled = true;
+          const res = e.results[e.results.length - 1];
+          if (!res.isFinal) { heardText.textContent = 'Hör: "' + res[0].transcript + '"...'; return; }
+          heardText.textContent = 'Du sa: "' + res[0].transcript + '"';
           const alts = [];
-          for (let i = 0; i < e.results[0].length; i++) alts.push(e.results[0][i].transcript);
-          heardText.textContent = 'Du sa: "' + alts[0] + '"';
+          for (let i = 0; i < res.length; i++) alts.push(res[i].transcript);
           const match = alts.some(a => fuzzyMatches(a, card.word.fr));
-          recognizing = false;
-          micBtn.classList.remove('listening');
-          if (match) onSuccess();
+          resetMic();
+          if (match) onSuccess(micBtn);
           else {
             fb.className = 'feedback-flash no';
             fb.textContent = 'Hördes inte riktigt rätt — försök igen eller hoppa över.';
+            registerWrongAnswer();
           }
         };
-        rec.onerror = () => {
-          recognizing = false;
-          micBtn.classList.remove('listening');
-          if (!handled) heardText.textContent = 'Kunde inte höra — försök igen.';
+        rec.onerror = (e) => {
+          resetMic();
+          const messages = {
+            'not-allowed': 'Mikrofonen är blockerad — tillåt mikrofonåtkomst i webbläsaren.',
+            'service-not-allowed': 'Mikrofonen är blockerad — tillåt mikrofonåtkomst i webbläsaren.',
+            'no-speech': 'Hördes ingenting — testa igen och prata direkt.',
+            'audio-capture': 'Hittade ingen mikrofon.',
+            'network': 'Nätverksfel — testa igen.'
+          };
+          if (messages[e.error]) heardText.textContent = messages[e.error];
+          else if (e.error !== 'aborted') heardText.textContent = heardAnyAudio ? 'Kunde inte tolka — försök igen.' : 'Hördes ingenting — försök igen.';
         };
-        rec.onend = () => { recognizing = false; micBtn.classList.remove('listening'); };
-        try { rec.start(); } catch (e) { recognizing = false; micBtn.classList.remove('listening'); }
+        rec.onend = () => { resetMic(); };
+        try { rec.start(); } catch (err) { resetMic(); heardText.textContent = 'Kunde inte starta mikrofonen — försök igen.'; }
       });
     } else {
       document.getElementById('hintSound').addEventListener('click', () => speak(card.word.fr));
-      document.getElementById('saidBtn').addEventListener('click', onSuccess);
+      const saidBtn = document.getElementById('saidBtn');
+      saidBtn.addEventListener('click', () => onSuccess(saidBtn));
     }
   }
 
   function finishSession() {
     bumpStreak();
+    playSessionCompleteSound();
     const pct = packMasteryPct(session.packIdx);
     const stars = packStars(pct);
     summaryTitle.textContent = 'Bra jobbat!';

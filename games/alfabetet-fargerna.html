@@ -165,11 +165,28 @@
   let score = 0, rounds = 0;
   let current = null;
 
+  // Rosten kunde tidigare falla tillbaka pa en helt annan systemrost (t.ex.
+  // svensk) och las da en lös bokstav enligt sin egen lokala konvention
+  // (David horde "bokstaven h" istallet for bara "h") -- hande framforallt
+  // om speak() anropades innan webblasaren hunnit ladda in rostlistan
+  // (asynkront, sarskilt pa iOS/Safari). Valjer nu explicit en fransk rost
+  // via u.voice istallet for att bara lita pa u.lang som en hint.
+  let frenchVoice = null;
+  function pickFrenchVoice() {
+    if (!('speechSynthesis' in window)) return;
+    const voices = window.speechSynthesis.getVoices();
+    frenchVoice = voices.find(v => v.lang === 'fr-FR') || voices.find(v => v.lang && v.lang.startsWith('fr')) || null;
+  }
+  if ('speechSynthesis' in window) {
+    pickFrenchVoice();
+    window.speechSynthesis.onvoiceschanged = pickFrenchVoice;
+  }
   function speak(text) {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'fr-FR';
+    if (frenchVoice) u.voice = frenchVoice;
     u.rate = 0.8;
     window.speechSynthesis.speak(u);
   }

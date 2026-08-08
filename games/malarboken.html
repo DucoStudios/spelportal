@@ -115,6 +115,10 @@
     <button class="scene-tab active" data-scene="house">🏠 Hus</button>
     <button class="scene-tab" data-scene="flower">🌸 Blomma</button>
     <button class="scene-tab" data-scene="rocket">🚀 Raket</button>
+    <button class="scene-tab" data-scene="shapes">🔵 Former</button>
+    <button class="scene-tab" data-scene="letters">🔤 Alfabetet</button>
+    <button class="scene-tab" data-scene="ark">🌈 Arken</button>
+    <button class="scene-tab" data-scene="plate">🥗 Tallriken</button>
   </div>
 
   <div class="board-wrap">
@@ -156,10 +160,48 @@
           <polygon data-name="Aileron droit" points="180,200 180,240 210,230" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
           <polygon data-name="Flammes" points="148,198 172,198 160,245" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
         </g>
+        <g id="scene-shapes" style="display:none;">
+          <circle data-name="Cercle" cx="85" cy="75" r="48" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <rect data-name="Carré" x="185" y="27" width="96" height="96" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <polygon data-name="Triangle" points="85,140 30,235 140,235" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <polygon data-name="Étoile" points="235,140 250,175 283,175 254,197 264,231 235,210 206,231 216,197 187,175 220,175" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <path data-name="Cœur" d="M85,300 C55,270 25,250 25,225 C25,205 45,190 65,200 C75,205 85,215 85,225 C85,215 95,205 105,200 C125,190 145,205 145,225 C145,250 115,270 85,300 Z" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <polygon data-name="Losange" points="235,230 275,270 235,310 195,270" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+        </g>
+        <g id="scene-letters" style="display:none;">
+          <text data-name="A" x="85" y="150" font-family="Bungee" font-size="150" text-anchor="middle" fill="#EDE7F6" stroke="#120A24" stroke-width="3">A</text>
+          <text data-name="B" x="235" y="150" font-family="Bungee" font-size="150" text-anchor="middle" fill="#EDE7F6" stroke="#120A24" stroke-width="3">B</text>
+          <text data-name="C" x="85" y="300" font-family="Bungee" font-size="150" text-anchor="middle" fill="#EDE7F6" stroke="#120A24" stroke-width="3">C</text>
+          <text data-name="É" x="235" y="300" font-family="Bungee" font-size="150" text-anchor="middle" fill="#EDE7F6" stroke="#120A24" stroke-width="3">É</text>
+        </g>
+        <g id="scene-ark" style="display:none;">
+          <rect data-name="Ciel" x="0" y="0" width="320" height="320" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <rect data-name="Mer" x="0" y="260" width="320" height="60" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <path data-name="Arc-en-ciel" d="M20,260 A140,140 0 0 1 300,260 L260,260 A100,100 0 0 0 60,260 Z" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <circle data-name="Soleil" cx="260" cy="55" r="28" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <ellipse data-name="Nuage" cx="70" cy="60" rx="45" ry="22" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <rect data-name="Coque" x="70" y="210" width="180" height="55" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <rect data-name="Cabine" x="110" y="160" width="100" height="55" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <polygon data-name="Toit" points="100,160 160,120 220,160" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <circle data-name="Hublot" cx="160" cy="237" r="16" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+        </g>
+        <g id="scene-plate" style="display:none;">
+          <circle data-name="Assiette" cx="140" cy="180" r="125" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <path data-name="Céréales" d="M140,180 L140,75 A105,105 0 0 1 245,180 Z" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <path data-name="Protéines" d="M140,180 L245,180 A105,105 0 0 1 140,285 Z" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <path data-name="Fruits" d="M140,180 L140,285 A105,105 0 0 1 35,180 Z" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <path data-name="Légumes" d="M140,180 L35,180 A105,105 0 0 1 140,75 Z" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <polygon data-name="Verre d'eau" points="270,120 300,120 292,220 278,220" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+          <rect data-name="Yaourt" x="268" y="235" width="38" height="45" rx="6" fill="#EDE7F6" stroke="#120A24" stroke-width="3"/>
+        </g>
       </svg>
       <canvas class="paint-canvas visible" id="canvas-house" width="320" height="320"></canvas>
       <canvas class="paint-canvas" id="canvas-flower" width="320" height="320"></canvas>
       <canvas class="paint-canvas" id="canvas-rocket" width="320" height="320"></canvas>
+      <canvas class="paint-canvas" id="canvas-shapes" width="320" height="320"></canvas>
+      <canvas class="paint-canvas" id="canvas-letters" width="320" height="320"></canvas>
+      <canvas class="paint-canvas" id="canvas-ark" width="320" height="320"></canvas>
+      <canvas class="paint-canvas" id="canvas-plate" width="320" height="320"></canvas>
     </div>
   </div>
 
@@ -193,13 +235,20 @@
   const sceneTabsEl = document.getElementById('sceneTabs');
   const modeTabsEl = document.getElementById('modeTabs');
   const allRegions = Array.from(document.querySelectorAll('#board svg [data-name]'));
-  const SCENE_LABELS = { house: 'huset', flower: 'blomman', rocket: 'raketen' };
+  const SCENE_LABELS = {
+    house: 'huset', flower: 'blomman', rocket: 'raketen',
+    shapes: 'formerna', letters: 'bokstäverna', ark: 'arken', plate: 'tallriken'
+  };
   const BRUSH_RADIUS = 12;
 
   const canvases = {
     house: document.getElementById('canvas-house'),
     flower: document.getElementById('canvas-flower'),
-    rocket: document.getElementById('canvas-rocket')
+    rocket: document.getElementById('canvas-rocket'),
+    shapes: document.getElementById('canvas-shapes'),
+    letters: document.getElementById('canvas-letters'),
+    ark: document.getElementById('canvas-ark'),
+    plate: document.getElementById('canvas-plate')
   };
   const ctxs = {};
   Object.keys(canvases).forEach(key => { ctxs[key] = canvases[key].getContext('2d'); });
@@ -308,11 +357,25 @@
     paletteEl.appendChild(sw);
   });
 
+  // Explicit rostval, se samma fix/kommentar i alfabetet-fargerna.html --
+  // utan detta kan rosten falla tillbaka pa en helt annan systemrost och
+  // las en enskild ord/bokstav enligt sin egen sprakkonvention.
+  let frenchVoice = null;
+  function pickFrenchVoice() {
+    if (!('speechSynthesis' in window)) return;
+    const voices = window.speechSynthesis.getVoices();
+    frenchVoice = voices.find(v => v.lang === 'fr-FR') || voices.find(v => v.lang && v.lang.startsWith('fr')) || null;
+  }
+  if ('speechSynthesis' in window) {
+    pickFrenchVoice();
+    window.speechSynthesis.onvoiceschanged = pickFrenchVoice;
+  }
   function speak(text) {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'fr-FR';
+    if (frenchVoice) u.voice = frenchVoice;
     u.rate = 0.85;
     window.speechSynthesis.speak(u);
   }

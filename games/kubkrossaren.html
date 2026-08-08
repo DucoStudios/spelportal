@@ -168,6 +168,11 @@
   // omgangen tvingas ta slut (annars skulle bollar kunna studsa for evigt
   // mellan golvet och taket/kuberna).
   const TURN_BOUNCE_TIME = 4;
+  // Nar TURN_BOUNCE_TIME gar ut flyger kvarvarande bollar tillbaka till
+  // launchern istallet for att bara forsvinna -- ger dem "nagonstans att
+  // aka ut" (David 2026-08-08) och funkar for alla vinklar/hastigheter,
+  // till skillnad fran att lita pa att varje boll rakar studsa ut naturligt.
+  const RECALL_DURATION = 0.4;
 
   let scale = 1, offsetX = 0, offsetY = 0, dpr = 1;
   function resize() {
@@ -208,6 +213,7 @@
   let queuedToFire = 0;
   let fireTimer = 0;
   let turnTimer = 0;
+  let recalling = false;
   let turnActive = false;
   let aiming = false;
   let aimAngle = -Math.PI / 2; // rakt upp
@@ -247,7 +253,7 @@
     resize();
     preset = p;
     bricks = []; balls = []; pickups = []; particles = [];
-    turn = 1; ballCount = 1; queuedToFire = 0; turnActive = false; aiming = false;
+    turn = 1; ballCount = 1; queuedToFire = 0; turnActive = false; recalling = false; aiming = false;
     aimAngle = -Math.PI / 2;
     for (let r = 0; r < preset.startRows; r++) spawnRow(r, 0);
     hud.style.display = 'flex';
@@ -329,9 +335,10 @@
     ctx.setLineDash([]);
 
     balls.forEach(ball => {
+      const r = ball.recallT != null ? ball.r * (1 - 0.55 * ball.recallT) : ball.r;
       ctx.fillStyle = ball.color;
       ctx.beginPath();
-      ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+      ctx.arc(ball.x, ball.y, r, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = '#120A24';
       ctx.lineWidth = 2;
@@ -474,6 +481,13 @@
 
   function stepPhysics(dt) {
     for (const ball of balls) {
+      if (recalling) {
+        ball.recallT = Math.min(1, (ball.recallT || 0) + dt / RECALL_DURATION);
+        const k = ball.recallT, ease = k * k * (3 - 2 * k);
+        ball.x = ball.recallFrom.x + (LAUNCHER_X - ball.recallFrom.x) * ease;
+        ball.y = ball.recallFrom.y + (LAUNCHER_Y - 4 - ball.recallFrom.y) * ease;
+        continue;
+      }
       ball.x += ball.vx * dt;
       ball.y += ball.vy * dt;
       if (ball.x - ball.r < 0) { ball.x = ball.r; ball.vx *= -1; }
@@ -485,7 +499,7 @@
         resolveBallBrick(ball, b);
       }
     }
-    balls = balls.filter(ball => ball.y - ball.r < RETURN_Y);
+    if (!recalling) balls = balls.filter(ball => ball.y - ball.r < RETURN_Y);
 
     for (const p of pickups) p.y += p.vy * dt;
     for (const p of pickups.slice()) {
@@ -511,11 +525,19 @@
           queuedToFire--;
           if (queuedToFire === 0) turnTimer = TURN_BOUNCE_TIME;
         }
+      } else if (recalling) {
+        if (balls.every(b => b.recallT >= 1)) {
+          balls = [];
+          recalling = false;
+          endTurn();
+        }
       } else {
         turnTimer -= dt;
-        if (balls.length === 0 || turnTimer <= 0) {
-          balls = [];
+        if (balls.length === 0) {
           endTurn();
+        } else if (turnTimer <= 0) {
+          recalling = true;
+          for (const ball of balls) { ball.recallFrom = { x: ball.x, y: ball.y }; ball.recallT = 0; }
         }
       }
     }

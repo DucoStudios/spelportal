@@ -127,12 +127,15 @@
 
   const PROGRESS_KEY = 'kulrullaren-progress-v1';
 
+  // points/coinCount skalade 2026-08-08 sa varje bana tar ~2 minuter i stallet
+  // for ~15-20 sekunder (curveLength ~= points * 15, tid = curveLength / speed
+  // -- verifierat empiriskt via headless-test, se minnesfilen for spelportal).
   const LEVELS = [
-    { name: 'Sockerbanan',      seed: 11, points: 9,  turnDeg: 26, width: 6.6, speed: 8.5,  coinCount: 20, railColor: '#FF6EC7' },
-    { name: 'Karamellkurvan',   seed: 22, points: 11, turnDeg: 34, width: 6.0, speed: 9.5,  coinCount: 24, railColor: '#5AD0FF' },
-    { name: 'Regnbågsrampen',   seed: 33, points: 13, turnDeg: 42, width: 5.4, speed: 10.5, coinCount: 28, railColor: '#FFD23F' },
-    { name: 'Virveltornet',     seed: 44, points: 15, turnDeg: 50, width: 4.9, speed: 11.5, coinCount: 32, railColor: '#FF7A3D' },
-    { name: 'Slutrusningen',    seed: 55, points: 17, turnDeg: 58, width: 4.4, speed: 12.5, coinCount: 36, railColor: '#8B5CF6' }
+    { name: 'Sockerbanan',      seed: 11, points: 68,  turnDeg: 26, width: 6.6, speed: 8.5,  coinCount: 151, railColor: '#FF6EC7' },
+    { name: 'Karamellkurvan',   seed: 22, points: 76,  turnDeg: 34, width: 6.0, speed: 9.5,  coinCount: 166, railColor: '#5AD0FF' },
+    { name: 'Regnbågsrampen',   seed: 33, points: 84,  turnDeg: 42, width: 5.4, speed: 10.5, coinCount: 181, railColor: '#FFD23F' },
+    { name: 'Virveltornet',     seed: 44, points: 92,  turnDeg: 50, width: 4.9, speed: 11.5, coinCount: 196, railColor: '#FF7A3D' },
+    { name: 'Slutrusningen',    seed: 55, points: 100, turnDeg: 58, width: 4.4, speed: 12.5, coinCount: 212, railColor: '#8B5CF6' }
   ];
 
   function loadProgress() {

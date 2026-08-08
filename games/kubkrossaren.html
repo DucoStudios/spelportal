@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="manifest" href="../manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Spelportal">
+<meta name="theme-color" content="#170F2E">
+<link rel="apple-touch-icon" href="../icon-180.png">
+<link rel="icon" href="../icon-512.png">
+<title>Kubkrossaren</title>
+<style>
+  :root {
+    --bg: #170F2E; --bg2: #241A44; --panel: #2C1F52; --outline: #120A24;
+    --pink: #FF6EC7; --orange: #FF7A3D; --yellow: #FFD23F; --cyan: #2FE6D6; --purple: #8B5CF6;
+    --ink: #FFF6FB; --ink-soft: #C9B6E8; --green: #5CB85C; --red: #FF4D5E;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; height: 100dvh; overflow: hidden; overscroll-behavior: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); font-family: 'Open Sans', -apple-system, sans-serif; color: var(--ink); overscroll-behavior-y: contain; }
+
+  .topbar {
+    position: relative; z-index: 5; display: flex; align-items: center; justify-content: space-between;
+    padding: 0.6rem 1rem; background: linear-gradient(180deg, #2A1750 0%, #170F2E 100%);
+    border-bottom: 3px solid var(--outline);
+  }
+  .topbar h1 { font-weight: 800; font-size: 1.05rem; margin: 0; }
+  .topbar a { font-size: 0.72rem; font-weight: 700; color: var(--cyan); text-decoration: none; }
+
+  #gameWrap { position: relative; width: 100%; height: calc(100% - 44px); height: calc(100dvh - 44px); touch-action: none; }
+  #gameCanvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+  .hud { position: absolute; top: 8px; left: 8px; right: 8px; z-index: 3; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; justify-content: space-between; }
+  .pill {
+    background: rgba(23,15,46,0.8); border: 2px solid var(--outline); border-radius: 8px;
+    padding: 0.28rem 0.6rem; font-weight: 800; font-size: 0.8rem; white-space: nowrap;
+  }
+  .pill.turn { color: var(--cyan); }
+  .pill.balls { color: var(--yellow); }
+  .pill.best { color: var(--ink-soft); }
+
+  .ball-select {
+    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 4;
+    display: flex; gap: 8px; background: rgba(23,15,46,0.8); border: 2px solid var(--outline);
+    border-radius: 12px; padding: 6px 8px;
+  }
+  .ball-opt {
+    width: 46px; height: 46px; border-radius: 50%; border: 3px solid var(--outline); cursor: pointer;
+    box-shadow: 2px 2px 0 var(--outline); position: relative; display: flex; align-items: center; justify-content: center;
+  }
+  .ball-opt.selected { outline: 3px solid var(--yellow); outline-offset: 2px; transform: translateY(-4px); }
+  .ball-opt .dmg { position: absolute; bottom: -7px; right: -4px; background: var(--outline); color: var(--yellow); font-size: 0.5rem; font-weight: 800; border-radius: 6px; padding: 1px 3px; }
+
+  .overlay {
+    position: absolute; inset: 0; background: color-mix(in srgb, var(--bg2) 92%, transparent);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.9rem; text-align: center; padding: 1.3rem; z-index: 7; overflow-y: auto;
+  }
+  .overlay.hidden { display: none; }
+  .overlay h2 { font-weight: 900; font-size: 1.5rem; margin: 0; color: var(--yellow); text-shadow: 2px 2px 0 var(--outline); }
+  .overlay p { max-width: 380px; font-size: 0.86rem; font-weight: 600; color: var(--ink-soft); margin: 0; line-height: 1.6; }
+  .preset-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; max-width: 460px; }
+  .preset-card {
+    width: 150px; background: var(--panel); border: 3px solid var(--outline); border-radius: 12px;
+    padding: 12px; cursor: pointer; box-shadow: 4px 4px 0 var(--outline); text-align: left;
+  }
+  .preset-card:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
+  .preset-card .icon { font-size: 1.6rem; }
+  .preset-card h3 { margin: 4px 0 3px; font-size: 0.86rem; color: var(--yellow); }
+  .preset-card p { font-size: 0.68rem; margin: 0; max-width: none; color: var(--ink-soft); }
+  button.cta {
+    font-family: 'Open Sans', sans-serif; font-size: 0.9rem; font-weight: 800; text-transform: uppercase;
+    background: var(--yellow); color: var(--outline); border: 3px solid var(--outline); border-radius: 8px;
+    box-shadow: 4px 4px 0 var(--outline); padding: 0.6rem 1.4rem; cursor: pointer;
+  }
+  button.cta:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🧱 KUBKROSSAREN</h1>
+  <a href="../index.html">&larr; HELA SPELKATALOGEN</a>
+</div>
+
+<div id="gameWrap">
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="hud" id="hud" style="display:none;">
+    <div class="pill turn">🧱 Rad <span id="turnVal">1</span></div>
+    <div class="pill balls">⚪ <span id="ballCountVal">1</span> bollar</div>
+    <div class="pill best">🏆 <span id="bestVal">0</span></div>
+  </div>
+
+  <div class="ball-select" id="ballSelect" style="display:none;"></div>
+
+  <div class="overlay" id="startOverlay">
+    <h2>KUBKROSSAREN</h2>
+    <p>Sikta och släpp för att skjuta iväg dina bollar. De studsar mellan väggarna och krossar kuberna — de flesta tål två studsar. Röda kuber dubblerar bollen vid varje träff och small till slut sönder i en hel skur av bollar. Kuberna sjunker neråt för varje omgång — se till att inte bli nedtryckt!</p>
+    <div class="preset-grid" id="presetGrid"></div>
+  </div>
+
+  <div class="overlay hidden" id="overOverlay">
+    <h2>NEDTRYCKT!</h2>
+    <p id="overText"></p>
+    <button class="cta" id="restartBtn">Spela igen</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const BEST_KEY = 'kubkrossaren-best-v1';
+
+  // ================= Bolltyper =================
+  const BALL_TYPES = [
+    { id: 'standard', name: 'Standard', color: '#FFF6FB', dmg: 1, speed: 430, r: 9, splash: false },
+    { id: 'heavy', name: 'Tungviktaren', color: '#C98A2E', dmg: 2, speed: 340, r: 12, splash: false },
+    { id: 'fast', name: 'Blixtbollen', color: '#2FE6D6', dmg: 1, speed: 560, r: 7, splash: false },
+    { id: 'splash', name: 'Sprängbollen', color: '#8B5CF6', dmg: 1, speed: 400, r: 10, splash: true }
+  ];
+  let selectedBallType = BALL_TYPES[0];
+
+  const PRESETS = [
+    { id: 'soft', icon: '🌱', name: 'Mjukstart', desc: 'Färre kuber, långsam upptrappning. Bra för att lära sig.', startRows: 3, hpScale: 0.75, redChance: 0.08 },
+    { id: 'normal', icon: '⚖️', name: 'Standard', desc: 'Balanserad svårighet.', startRows: 5, hpScale: 1, redChance: 0.13 },
+    { id: 'hard', icon: '🔥', name: 'Utmaning', desc: 'Fler kuber redan från start, snabbare upptrappning.', startRows: 7, hpScale: 1.4, redChance: 0.18 }
+  ];
+
+  // ================= Canvas/koordinatsystem =================
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const gameWrap = document.getElementById('gameWrap');
+  const hud = document.getElementById('hud');
+  const turnVal = document.getElementById('turnVal');
+  const ballCountVal = document.getElementById('ballCountVal');
+  const bestVal = document.getElementById('bestVal');
+  const ballSelectEl = document.getElementById('ballSelect');
+  const startOverlay = document.getElementById('startOverlay');
+  const overOverlay = document.getElementById('overOverlay');
+  const overText = document.getElementById('overText');
+  const presetGridEl = document.getElementById('presetGrid');
+  const restartBtn = document.getElementById('restartBtn');
+
+  const LW = 480, LH = 780; // logiskt koordinatsystem, skalas till skarmen
+  const COLS = 8;
+  const CELL = LW / COLS;
+  const ARENA_TOP = 60;
+  const LAUNCH_Y = 690; // farliga linjen -- kuber som nar hit (eller lagre) ger game over
+  const LAUNCHER_X = LW / 2, LAUNCHER_Y = 720;
+  // RETURN_Y (under launchern) racknar en boll som "aterlamnad". Maste vara
+  // storre an LAUNCHER_Y, annars filtreras nyss avfyrade bollar bort direkt
+  // i samma frame som de skapas (hittades under testning 2026-08-08).
+  const RETURN_Y = 760;
+
+  let scale = 1, offsetX = 0, offsetY = 0;
+  function resize() {
+    const w = gameWrap.clientWidth, h = gameWrap.clientHeight;
+    canvas.width = Math.round(w * (window.devicePixelRatio || 1));
+    canvas.height = Math.round(h * (window.devicePixelRatio || 1));
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    scale = Math.min(w / LW, h / LH);
+    offsetX = (w - LW * scale) / 2;
+    offsetY = (h - LH * scale) / 2;
+  }
+  window.addEventListener('resize', resize);
+
+  function toLogical(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const px = clientX - rect.left, py = clientY - rect.top;
+    const dpr = (window.devicePixelRatio || 1);
+    // rect ar i CSS-pixlar (matchar canvas.style.width/height), sa ingen dpr-korrigering behovs har
+    return { x: (px - offsetX) / scale, y: (py - offsetY) / scale };
+  }
+
+  // ================= Spelstate =================
+  let bricks = [];      // {col, row, x, y, w, h, hp, maxHp, type, hitFlash}
+  let balls = [];        // {x, y, vx, vy, r, dmg, splash, color}
+  let pickups = [];      // {x, y, vy}
+  let particles = [];    // enkla visuella krosspartiklar
+  let turn = 1;
+  let ballCount = 1;
+  let queuedToFire = 0;
+  let fireTimer = 0;
+  let turnActive = false;
+  let aiming = false;
+  let aimAngle = -Math.PI / 2; // rakt upp
+  let running = false;
+  let preset = PRESETS[1];
+  let best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10);
+
+  function rowY(row) { return ARENA_TOP + row * CELL; }
+
+  function spawnRow(rowIndex, difficultyTurn) {
+    const hpScale = preset.hpScale * (1 + difficultyTurn * 0.06);
+    const redChance = Math.min(0.3, preset.redChance + difficultyTurn * 0.004);
+    for (let c = 0; c < COLS; c++) {
+      const roll = Math.random();
+      let brick = null;
+      if (roll < 0.18) {
+        // tomt fält, ingen kub
+      } else if (roll < 0.18 + redChance) {
+        brick = { hp: 3, maxHp: 3, type: 'red' };
+      } else if (roll < 0.18 + redChance + 0.10) {
+        const crateHp = Math.round((20 + difficultyTurn * 3) * hpScale);
+        brick = { hp: crateHp, maxHp: crateHp, type: 'crate' };
+      } else {
+        brick = { hp: 2, maxHp: 2, type: 'normal' };
+      }
+      if (brick) {
+        brick.col = c; brick.row = rowIndex;
+        brick.x = c * CELL; brick.y = rowY(rowIndex);
+        brick.w = CELL; brick.h = CELL;
+        brick.hitFlash = 0;
+        bricks.push(brick);
+      }
+    }
+  }
+
+  function setupGame(p) {
+    preset = p;
+    bricks = []; balls = []; pickups = []; particles = [];
+    turn = 1; ballCount = 1; queuedToFire = 0; turnActive = false; aiming = false;
+    aimAngle = -Math.PI / 2;
+    for (let r = 0; r < preset.startRows; r++) spawnRow(r, 0);
+    hud.style.display = 'flex';
+    ballSelectEl.style.display = 'flex';
+    updateHud();
+    running = true;
+    lastTs = performance.now();
+    requestAnimationFrame(tick);
+  }
+
+  function updateHud() {
+    turnVal.textContent = turn;
+    ballCountVal.textContent = ballCount;
+    bestVal.textContent = best;
+  }
+
+  // ================= Rendering =================
+  function drawBrick(b) {
+    const px = b.x, py = b.y;
+    let fill = '#5CB85C';
+    if (b.type === 'red') fill = '#FF4D5E';
+    else if (b.type === 'crate') fill = '#C98A2E';
+    else if (b.hp === 1) fill = '#8FD67F';
+    ctx.fillStyle = b.hitFlash > 0 ? '#FFFFFF' : fill;
+    ctx.fillRect(px + 2, py + 2, b.w - 4, b.h - 4);
+    ctx.strokeStyle = '#120A24';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(px + 2, py + 2, b.w - 4, b.h - 4);
+    if (b.type === 'normal' && b.hp === 1) {
+      ctx.strokeStyle = 'rgba(18,10,36,0.55)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(px + b.w * 0.3, py + b.h * 0.2);
+      ctx.lineTo(px + b.w * 0.55, py + b.h * 0.55);
+      ctx.lineTo(px + b.w * 0.35, py + b.h * 0.8);
+      ctx.stroke();
+    }
+    if (b.type === 'crate') {
+      ctx.fillStyle = '#170F2E';
+      ctx.font = 'bold 15px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(b.hp), px + b.w / 2, py + b.h / 2);
+    }
+    if (b.type === 'red') {
+      ctx.fillStyle = '#170F2E';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('x' + b.hp, px + b.w / 2, py + b.h / 2);
+    }
+  }
+
+  function drawArena() {
+    ctx.save();
+    ctx.translate(offsetX, offsetY);
+    ctx.scale(scale, scale);
+
+    ctx.fillStyle = '#3EA8E0';
+    ctx.fillRect(0, 0, LW, LH);
+
+    // vaggar
+    ctx.fillStyle = '#8C8C8C';
+    ctx.fillRect(0, ARENA_TOP - 14, LW, 14);
+
+    bricks.forEach(drawBrick);
+
+    // farliga-linjen (launcher-raden)
+    ctx.strokeStyle = 'rgba(255,77,94,0.6)';
+    ctx.setLineDash([10, 8]);
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, LAUNCH_Y);
+    ctx.lineTo(LW, LAUNCH_Y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    balls.forEach(ball => {
+      ctx.fillStyle = ball.color;
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#120A24';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+
+    pickups.forEach(p => {
+      ctx.fillStyle = '#FFD23F';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#120A24';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#120A24';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('+1', p.x, p.y);
+    });
+
+    particles.forEach(pt => {
+      ctx.fillStyle = pt.color;
+      ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
+      ctx.fillRect(pt.x - 3, pt.y - 3, 6, 6);
+      ctx.globalAlpha = 1;
+    });
+
+    // launcher
+    ctx.fillStyle = '#FFD23F';
+    ctx.beginPath();
+    ctx.arc(LAUNCHER_X, LAUNCHER_Y, 34, Math.PI, 0);
+    ctx.fill();
+    ctx.strokeStyle = '#120A24';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(LAUNCHER_X, LAUNCHER_Y, 34, Math.PI, 0);
+    ctx.stroke();
+    if (!turnActive) {
+      const aimLen = 60;
+      const ax = LAUNCHER_X + Math.cos(aimAngle) * aimLen;
+      const ay = LAUNCHER_Y + Math.sin(aimAngle) * aimLen;
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.lineWidth = 4;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(LAUNCHER_X, LAUNCHER_Y);
+      ctx.lineTo(ax, ay);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.fillStyle = selectedBallType.color;
+    ctx.beginPath();
+    ctx.arc(LAUNCHER_X, LAUNCHER_Y - 4, selectedBallType.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#120A24';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // ================= Fysik =================
+  function clampAngle(a) {
+    // begransa siktet till en uppatriktad bage, undviker att skjuta rakt at sidorna
+    const minA = -Math.PI + 0.18, maxA = -0.18;
+    return Math.max(minA, Math.min(maxA, a));
+  }
+
+  function spawnBall(x, y, angle, type) {
+    balls.push({
+      x, y,
+      vx: Math.cos(angle) * type.speed,
+      vy: Math.sin(angle) * type.speed,
+      r: type.r, dmg: type.dmg, splash: type.splash, color: type.color
+    });
+  }
+
+  function spawnBurst(x, y, count, type) {
+    for (let i = 0; i < count; i++) {
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.9;
+      spawnBall(x, y, a, type);
+    }
+  }
+
+  function spawnParticles(x, y, color) {
+    for (let i = 0; i < 6; i++) {
+      particles.push({
+        x, y, color,
+        vx: (Math.random() - 0.5) * 220, vy: (Math.random() - 0.5) * 220,
+        life: 0.35, maxLife: 0.35
+      });
+    }
+  }
+
+  function destroyBrick(b) {
+    bricks.splice(bricks.indexOf(b), 1);
+    spawnParticles(b.x + b.w / 2, b.y + b.h / 2, b.type === 'red' ? '#FF4D5E' : (b.type === 'crate' ? '#C98A2E' : '#5CB85C'));
+    if (Math.random() < 0.10) {
+      pickups.push({ x: b.x + b.w / 2, y: b.y + b.h / 2, vy: 130 });
+    }
+  }
+
+  function damageBrick(b, ball) {
+    b.hp -= ball.dmg;
+    b.hitFlash = 0.08;
+    if (b.type === 'red') {
+      if (b.hp > 0) {
+        // Rott tegel: varje traff (utom sista) duplicerar bollen som traffade den.
+        const a2 = Math.atan2(ball.vy, ball.vx) + (Math.random() - 0.5) * 0.6;
+        spawnBall(b.x + b.w / 2, b.y + b.h / 2, a2, selectedBallType);
+      } else {
+        // Sista traffen: exploderar i en hel skur av bollar.
+        spawnBurst(b.x + b.w / 2, b.y + b.h / 2, 5, selectedBallType);
+      }
+    }
+    if (b.hp <= 0) destroyBrick(b);
+  }
+
+  function resolveBallBrick(ball, b) {
+    const bcx = b.x + b.w / 2, bcy = b.y + b.h / 2;
+    const dxc = ball.x - bcx, dyc = ball.y - bcy;
+    const combinedHalfW = b.w / 2 + ball.r, combinedHalfH = b.h / 2 + ball.r;
+    if (Math.abs(dxc) >= combinedHalfW || Math.abs(dyc) >= combinedHalfH) return false;
+    const overlapX = combinedHalfW - Math.abs(dxc);
+    const overlapY = combinedHalfH - Math.abs(dyc);
+    if (overlapX < overlapY) {
+      ball.vx *= -1;
+      ball.x += Math.sign(dxc || 1) * overlapX;
+    } else {
+      ball.vy *= -1;
+      ball.y += Math.sign(dyc || 1) * overlapY;
+    }
+    damageBrick(b, ball);
+    if (ball.splash) {
+      bricks.filter(ob => ob !== b && ob.row === b.row && Math.abs(ob.col - b.col) === 1).forEach(ob => damageBrick(ob, { dmg: 1 }));
+    }
+    return true;
+  }
+
+  function stepPhysics(dt) {
+    for (const ball of balls) {
+      ball.x += ball.vx * dt;
+      ball.y += ball.vy * dt;
+      if (ball.x - ball.r < 0) { ball.x = ball.r; ball.vx *= -1; }
+      if (ball.x + ball.r > LW) { ball.x = LW - ball.r; ball.vx *= -1; }
+      if (ball.y - ball.r < ARENA_TOP - 14) { ball.y = ARENA_TOP - 14 + ball.r; ball.vy *= -1; }
+      for (const b of bricks.slice()) {
+        if (bricks.indexOf(b) === -1) continue;
+        resolveBallBrick(ball, b);
+      }
+    }
+    balls = balls.filter(ball => ball.y - ball.r < RETURN_Y);
+
+    for (const p of pickups) p.y += p.vy * dt;
+    for (const p of pickups.slice()) {
+      if (p.y > RETURN_Y) {
+        pickups.splice(pickups.indexOf(p), 1);
+        ballCount++;
+        updateHud();
+      }
+    }
+
+    for (const pt of particles) { pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.life -= dt; }
+    particles = particles.filter(pt => pt.life > 0);
+
+    bricks.forEach(b => { if (b.hitFlash > 0) b.hitFlash -= dt; });
+
+    if (turnActive) {
+      if (queuedToFire > 0) {
+        fireTimer -= dt;
+        if (fireTimer <= 0) {
+          fireTimer = 0.07;
+          const jitter = (Math.random() - 0.5) * 0.07;
+          spawnBall(LAUNCHER_X, LAUNCHER_Y - 4, aimAngle + jitter, selectedBallType);
+          queuedToFire--;
+        }
+      } else if (balls.length === 0) {
+        endTurn();
+      }
+    }
+  }
+
+  function endTurn() {
+    turnActive = false;
+    turn++;
+    bricks.forEach(b => { b.row += 1; b.y = rowY(b.row); });
+    spawnRow(0, turn);
+    updateHud();
+    const gameOver = bricks.some(b => b.y + b.h > LAUNCH_Y);
+    if (gameOver) triggerGameOver();
+  }
+
+  function triggerGameOver() {
+    running = false;
+    const scoreRows = turn - 1;
+    if (scoreRows > best) { best = scoreRows; localStorage.setItem(BEST_KEY, String(best)); }
+    overText.textContent = 'Du nådde rad ' + turn + ' (bästa: ' + best + ' rader).';
+    overOverlay.classList.remove('hidden');
+  }
+
+  // ================= Styrning =================
+  function angleFromPoint(x, y) {
+    return clampAngle(Math.atan2(y - LAUNCHER_Y, x - LAUNCHER_X));
+  }
+  canvas.addEventListener('pointerdown', e => {
+    if (!running || turnActive) return;
+    aiming = true;
+    const pos = toLogical(e.clientX, e.clientY);
+    aimAngle = angleFromPoint(pos.x, pos.y);
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (!aiming) return;
+    const pos = toLogical(e.clientX, e.clientY);
+    aimAngle = angleFromPoint(pos.x, pos.y);
+  });
+  window.addEventListener('pointerup', () => {
+    if (!aiming) return;
+    aiming = false;
+    if (!running || turnActive) return;
+    turnActive = true;
+    queuedToFire = ballCount;
+    fireTimer = 0;
+  });
+
+  // ================= Bollval =================
+  function renderBallSelect() {
+    ballSelectEl.innerHTML = '';
+    BALL_TYPES.forEach(t => {
+      const el = document.createElement('div');
+      el.className = 'ball-opt' + (t === selectedBallType ? ' selected' : '');
+      el.style.background = t.color;
+      el.innerHTML = '<span class="dmg">' + t.dmg + '×</span>';
+      el.title = t.name;
+      el.addEventListener('click', () => {
+        selectedBallType = t;
+        renderBallSelect();
+      });
+      ballSelectEl.appendChild(el);
+    });
+  }
+  renderBallSelect();
+
+  // ================= Overlays =================
+  function renderPresets() {
+    presetGridEl.innerHTML = '';
+    PRESETS.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'preset-card';
+      card.innerHTML = '<div class="icon">' + p.icon + '</div><h3>' + p.name + '</h3><p>' + p.desc + '</p>';
+      card.addEventListener('click', () => {
+        startOverlay.classList.add('hidden');
+        overOverlay.classList.add('hidden');
+        setupGame(p);
+      });
+      presetGridEl.appendChild(card);
+    });
+  }
+  renderPresets();
+
+  restartBtn.addEventListener('click', () => {
+    overOverlay.classList.add('hidden');
+    startOverlay.classList.remove('hidden');
+  });
+
+  // ================= Loop =================
+  let lastTs = performance.now();
+  function tick(ts) {
+    const dt = Math.min(0.033, (ts - lastTs) / 1000);
+    lastTs = ts;
+    if (running) stepPhysics(dt);
+    drawArena();
+    requestAnimationFrame(tick);
+  }
+
+  resize();
+  drawArena();
+})();
+</script>
+</body>
+</html>

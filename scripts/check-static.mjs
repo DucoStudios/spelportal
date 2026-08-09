@@ -15,7 +15,18 @@ for (const file of htmlFiles) {
 }
 
 new Script(readFileSync("interaction-guard.js", "utf8"), { filename: "interaction-guard.js" });
+new Script(readFileSync("feedback-config.js", "utf8"), { filename: "feedback-config.js" });
+new Script(readFileSync("game-feedback.js", "utf8"), { filename: "game-feedback.js" });
+new Script(readFileSync("feedback-apps-script/Code.gs", "utf8"), { filename: "feedback-apps-script/Code.gs" });
+new Script(readFileSync("games/bible-games.js", "utf8"), { filename: "games/bible-games.js" });
+new Script(readFileSync("games/bibelresan-66.js", "utf8"), { filename: "games/bibelresan-66.js" });
 
 const css = readFileSync("games/game-polish.css", "utf8");
 assert.equal((css.match(/{/g) || []).length, (css.match(/}/g) || []).length, "obalanserade CSS-klamrar");
+const feedbackCss = readFileSync("game-feedback.css", "utf8");
+assert.equal((feedbackCss.match(/{/g) || []).length, (feedbackCss.match(/}/g) || []).length, "obalanserade CSS-klamrar i feedback");
+for (const file of ["games/bible-games.css", "games/bibelresan-66.css"]) {
+  const source = readFileSync(file, "utf8");
+  assert.equal((source.match(/{/g) || []).length, (source.match(/}/g) || []).length, `obalanserade CSS-klamrar i ${file}`);
+}
 console.log(`Statisk kontroll klar för portalen och ${gameFiles.length} spel.`);

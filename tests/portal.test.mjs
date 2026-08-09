@@ -28,6 +28,9 @@ test("delade visuella resurser finns", () => {
   assert.ok(existsSync("interaction-guard.js"));
   assert.ok(existsSync("french-speech.js"));
   assert.ok(existsSync("games/lib/three.min.js"));
+  assert.ok(existsSync("game-feedback.css"));
+  assert.ok(existsSync("game-feedback.js"));
+  assert.ok(existsSync("feedback-config.js"));
 });
 
 test("alla spel har en unik, spelanpassad thumbnail", () => {
@@ -37,8 +40,8 @@ test("alla spel har en unik, spelanpassad thumbnail", () => {
   assert.ok(index.includes('class="thumb-secondary"'));
 });
 
-test("synliga varumärkesreferenser och personnamn är borttagna", () => {
-  const visibleReferences = /Netflix|Wordle|Rich Dad Poor Dad|Klassisk Snake|Gain-frön|David och Goljat|Kung Saul|Josef|Ester/;
+test("synliga varumärkesreferenser är borttagna", () => {
+  const visibleReferences = /Netflix|Wordle|Rich Dad Poor Dad|Klassisk Snake|Gain-frön/;
   for (const file of ["index.html", ...gameFiles.map(name => `games/${name}`)]) {
     assert.doesNotMatch(readFileSync(file, "utf8"), visibleReferences, `${file} innehåller en namngiven referens`);
   }
@@ -216,4 +219,53 @@ test("barnmixens spel är ändliga och saknar köp-, chatt- och lootloopar", () 
   assert.ok(engine.includes('levels.length'));
   assert.ok((engine.match(/duration: /g) || []).length >= 20);
   assert.doesNotMatch(engine, /lootbox|lootlåda|köp nu|in-app purchase|chatta/i);
+});
+
+test("de fem bibelspelen är källmärkta och använder olika spelmekaniker", () => {
+  const engine = readFileSync("games/bible-games.js", "utf8");
+  const ids = ["barmhartighetsresan", "bygg-pa-klippan", "andens-frukttradgard", "ord-som-bygger"];
+  for (const id of ids) {
+    const html = readFileSync(`games/${id}.html`, "utf8");
+    assert.ok(html.includes('href="bible-games.css"'));
+    assert.ok(html.includes('src="bible-games.js"'));
+    assert.ok(html.includes("Källkontrollerad mot nuBibeln"));
+    assert.ok(engine.includes(`"${id}": {`));
+  }
+  assert.ok(existsSync("games/bibelresan-66.html"));
+  assert.match(engine, /Lukas 10:25–37/);
+  assert.match(engine, /Matteus 7:24–27/);
+  assert.match(engine, /Galaterbrevet 5:22–23/);
+  assert.match(engine, /Ordspråksboken 15:1 · Efesierbrevet 4:29 · Jakobsbrevet 1:19/);
+  assert.deepEqual(new Set([...engine.matchAll(/mode: "([a-z]+)"/g)].map(match => match[1])), new Set(["mercy", "builder", "fruit", "words"]));
+  assert.ok(readFileSync("games/bible-games.css", "utf8").includes(".choice-grid[hidden]"), "samtalssvaren måste döljas tills lyssningspausen är klar");
+});
+
+test("Bibelresan omfattar protestantiska Bibelns 66 böcker och 1 189 kapitel", () => {
+  const journey = readFileSync("games/bibelresan-66.js", "utf8");
+  const entries = [...journey.matchAll(/^\s+\["[^"]+","[A-Z0-9]+",(\d+),/gm)];
+  assert.equal(entries.length, 66);
+  assert.equal(entries.reduce((sum, match) => sum + Number(match[1]), 0), 1189);
+  assert.ok(journey.includes("https://www.bible.com/sv/bible/916/"));
+  assert.ok(journey.includes("spelportal-bibelresan-progress-v1"));
+  assert.ok(journey.includes("Kunskapsstopp"));
+  const html = readFileSync("games/bibelresan-66.html", "utf8");
+  assert.ok(html.includes("återger inte den upphovsrättsskyddade texten"));
+});
+
+test("alla spel har samma säkra anonyma feedbackflöde förberett", () => {
+  const guard = readFileSync("interaction-guard.js", "utf8");
+  const feedback = readFileSync("game-feedback.js", "utf8");
+  const receiver = readFileSync("feedback-apps-script/Code.gs", "utf8");
+  assert.ok(guard.includes("document.body?.dataset.gameId"));
+  assert.ok(guard.includes("feedback-config.js"));
+  assert.ok(guard.includes("game-feedback.js"));
+  assert.ok(guard.includes("game-feedback.css"));
+  assert.ok(feedback.includes('role="radiogroup"'));
+  assert.ok(feedback.includes("if (!settings.endpoint) return;"));
+  assert.ok(feedback.includes("value <= 5"));
+  assert.ok(feedback.includes("maxMessageLength"));
+  assert.ok(feedback.includes("Anonymt: inget namn, mejl eller användarkonto samlas in."));
+  assert.doesNotMatch(feedback, /userAgent|geolocation|email|e-mail|ipAddress/);
+  const receiverIds = [...receiver.matchAll(/"([a-z0-9-]+)":\s*"[^"]+"/g)].map(match => match[1]).sort();
+  assert.deepEqual(receiverIds, gameFiles.map(file => file.replace(/\.html$/, "")));
 });

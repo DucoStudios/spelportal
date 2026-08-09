@@ -10,14 +10,18 @@ const ids = [
   "dansstopp", "reaktionsraketen", "balansbanan", "andningsdykaren",
   "brobyggarna", "fargfusion", "molnhoppet", "tornverkstan",
   "minimarknaden", "myntmatchen", "spargrissprint", "ideverkstan",
-  "vanskapskompassen", "hjalparjakten", "talamodstornet", "tacksamhetstradet"
+  "vanskapskompassen", "hjalparjakten", "talamodstornet", "tacksamhetstradet",
+  "barmhartighetsresan", "bygg-pa-klippan", "andens-frukttradgard", "ord-som-bygger", "bibelresan-66"
 ];
 const viewports = [
   { name: "mobile", width: 390, height: 844, mobile: true },
   { name: "tablet", width: 820, height: 1180, mobile: true },
   { name: "desktop", width: 1440, height: 900, mobile: false }
 ];
-const screenshotCases = new Set(["fruktfangaren-mobile", "fargfusion-tablet", "molnhoppet-desktop"]);
+const screenshotCases = new Set([
+  "fruktfangaren-mobile", "fargfusion-tablet", "molnhoppet-desktop",
+  "andens-frukttradgard-mobile", "ord-som-bygger-tablet", "bibelresan-66-desktop"
+]);
 const outputDir = "/tmp/spelportal-kids-mix-smoke";
 mkdirSync(outputDir, { recursive: true });
 
@@ -92,10 +96,12 @@ for (const viewport of viewports) {
   }
   const portalBackground = await evaluate(`({
     root: getComputedStyle(document.documentElement).backgroundColor,
-    body: getComputedStyle(document.body).backgroundColor
+    body: getComputedStyle(document.body).backgroundColor,
+    feedbackButton: Boolean(document.querySelector('#gameFeedbackLaunch'))
   })`);
   assert.notEqual(portalBackground.root, "rgba(0, 0, 0, 0)", `portalen/${viewport.name}: transparent rotbakgrund`);
   assert.notEqual(portalBackground.body, "rgba(0, 0, 0, 0)", `portalen/${viewport.name}: transparent bodybakgrund`);
+  assert.equal(portalBackground.feedbackButton, false, `portalen/${viewport.name}: feedbackknappen ska bara visas inne i spel`);
 
   for (const id of ids) {
     exceptions = [];
@@ -109,9 +115,11 @@ for (const viewport of viewports) {
       title: document.querySelector('#gameTitle')?.textContent,
       button: Boolean(document.querySelector('#startBtn')),
       fits: document.documentElement.scrollWidth <= innerWidth + 1,
-      stageHeight: Math.round(document.querySelector('.mix-stage-wrap')?.getBoundingClientRect().height || 0),
+      stageHeight: Math.round(document.querySelector('.mix-stage-wrap, .bible-stage-wrap')?.getBoundingClientRect().height || 0),
       rootBackground: getComputedStyle(document.documentElement).backgroundColor,
-      bodyBackground: getComputedStyle(document.body).backgroundColor
+      bodyBackground: getComputedStyle(document.body).backgroundColor,
+      feedbackButton: Boolean(document.querySelector('#gameFeedbackLaunch')),
+      feedbackModal: Boolean(document.querySelector('#gameFeedbackModal'))
     })`);
     assert.ok(loaded.title && loaded.title !== "Laddar…", `${id}/${viewport.name}: titel laddades inte`);
     assert.ok(loaded.button, `${id}/${viewport.name}: startknapp saknas`);
@@ -119,14 +127,16 @@ for (const viewport of viewports) {
     assert.ok(loaded.stageHeight >= 250, `${id}/${viewport.name}: spelplanen är för låg`);
     assert.notEqual(loaded.rootBackground, "rgba(0, 0, 0, 0)", `${id}/${viewport.name}: transparent rotbakgrund`);
     assert.notEqual(loaded.bodyBackground, "rgba(0, 0, 0, 0)", `${id}/${viewport.name}: transparent bodybakgrund`);
+    assert.equal(loaded.feedbackButton, false, `${id}/${viewport.name}: feedbackknappen ska vara dold innan endpointen är ansluten`);
+    assert.equal(loaded.feedbackModal, false, `${id}/${viewport.name}: feedbackdialogen ska vara dold innan endpointen är ansluten`);
 
     await evaluate("document.querySelector('#startBtn').click(); true");
     await pause(320);
     const started = await evaluate(`({
       active: document.body.classList.contains('session-active'),
-      overlayHidden: document.querySelector('#mixOverlay').hidden,
-      stageChildren: document.querySelector('#mixStage').children.length,
-      controls: document.querySelector('#mixControls').children.length
+      overlayHidden: document.querySelector('#mixOverlay, #bibleOverlay').hidden,
+      stageChildren: document.querySelector('#mixStage, #bibleStage').children.length,
+      controls: document.querySelector('#mixControls')?.children.length || 0
     })`);
     assert.ok(started.active && started.overlayHidden, `${id}/${viewport.name}: spelet startade inte`);
     assert.ok(started.stageChildren > 0, `${id}/${viewport.name}: tom spelplan`);

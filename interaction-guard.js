@@ -65,6 +65,34 @@
     if (firstVisible) syncOverlay(firstVisible, true);
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setupOverlayFocus, { once: true });
-  else setupOverlayFocus();
+  function loadGameFeedback() {
+    if (!document.body?.dataset.gameId || document.querySelector('script[data-game-feedback]')) return;
+    const currentScript = [...document.scripts].find(script => /interaction-guard\.js(?:\?|$)/.test(script.src));
+    if (!currentScript?.src) return;
+    const root = new URL('.', currentScript.src);
+    const stylesheet = document.createElement('link');
+    stylesheet.rel = 'stylesheet';
+    stylesheet.href = new URL('game-feedback.css', root).href;
+    stylesheet.dataset.gameFeedback = 'styles';
+    document.head.appendChild(stylesheet);
+
+    const config = document.createElement('script');
+    config.src = new URL('feedback-config.js', root).href;
+    config.dataset.gameFeedback = 'config';
+    config.onload = () => {
+      const feedback = document.createElement('script');
+      feedback.src = new URL('game-feedback.js', root).href;
+      feedback.dataset.gameFeedback = 'app';
+      document.head.appendChild(feedback);
+    };
+    document.head.appendChild(config);
+  }
+
+  function setupSharedGameUX() {
+    setupOverlayFocus();
+    loadGameFeedback();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setupSharedGameUX, { once: true });
+  else setupSharedGameUX();
 })();

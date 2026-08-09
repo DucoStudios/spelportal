@@ -70,6 +70,16 @@ test("Ormens mat och segment använder samma responsiva 18×18-rutnät", () => {
   assert.ok(!html.includes("food.x * CELL"));
 });
 
+test("Ormen kan styras med tillgängliga knappar och korta svep på spelplanen", () => {
+  const html = readFileSync("games/ormen.html", "utf8");
+  assert.ok(html.includes('aria-label="Styr Ormen"'));
+  assert.ok(html.includes('aria-label="Styr upp"'));
+  assert.ok(html.includes("boardEl.addEventListener('pointerdown'"));
+  assert.ok(html.includes("boardEl.addEventListener('pointerup'"));
+  assert.ok(html.includes("boardEl.clientWidth * 0.035"));
+  assert.ok(html.includes("navigator.vibrate(10)"));
+});
+
 test("ingen HTML-fil innehåller en GitHub-token", () => {
   for (const file of ["index.html", ...gameFiles.map(name => `games/${name}`)]) {
     assert.doesNotMatch(readFileSync(file, "utf8"), /ghp_[A-Za-z0-9]+/);

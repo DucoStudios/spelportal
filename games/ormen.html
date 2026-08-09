@@ -37,7 +37,8 @@
   .hud-chip .value { font-family: 'Open Sans', sans-serif; font-weight: 800; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 
   .board-wrap { position: relative; }
-  #board { --grid-size: 18; position: relative; width: 396px; height: 396px; max-width: 92vw; max-height: 92vw; background: var(--bg2); border: 3px solid var(--outline); border-radius: 14px; box-shadow: 6px 6px 0 var(--outline); overflow: hidden; }
+  #board { --grid-size: 18; position: relative; width: 396px; height: 396px; max-width: 92vw; max-height: 92vw; background: var(--bg2); border: 3px solid var(--outline); border-radius: 14px; box-shadow: 6px 6px 0 var(--outline); overflow: hidden; touch-action: none; cursor: grab; }
+  #board.is-swiping { cursor: grabbing; }
   .seg { position: absolute; width: calc(100% / var(--grid-size)); height: calc(100% / var(--grid-size)); border-radius: 24%; background: var(--cyan); border: 2px solid var(--outline); }
   .seg.head { background: var(--yellow); }
   .food { position: absolute; width: calc(100% / var(--grid-size)); height: calc(100% / var(--grid-size)); display: flex; align-items: center; justify-content: center; font-size: clamp(.82rem, 4.5vw, 1.1rem); filter: drop-shadow(0 0 5px color-mix(in srgb, var(--yellow) 65%, transparent)); animation: pulse 0.8s ease-in-out infinite; }
@@ -51,10 +52,22 @@
   button.cta { font-family: 'Open Sans', sans-serif; font-size: 0.88rem; font-weight: 800; text-transform: uppercase; background: var(--yellow); color: var(--outline); border: 3px solid var(--outline); border-radius: 8px; box-shadow: 4px 4px 0 var(--outline); padding: 0.6rem 1.4rem; cursor: pointer; transition: transform 0.08s ease, box-shadow 0.08s ease; }
   button.cta:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
 
-  .touch-controls { display: grid; grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(2, 52px); gap: 0.4rem; margin-top: 0.9rem; justify-content: center; }
-  .tbtn { border-radius: 10px; border: 2px solid var(--outline); background: var(--panel); color: var(--ink); font-size: 1.3rem; box-shadow: 3px 3px 0 var(--outline); display: flex; align-items: center; justify-content: center; user-select: none; touch-action: none; }
-  .tbtn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--outline); }
+  .control-label { margin: 0.8rem 0 0.45rem; color: var(--cyan); font-family: 'Bungee', sans-serif; font-size: 0.62rem; letter-spacing: 0.06em; text-align: center; }
+  .touch-controls { display: grid; grid-template-columns: repeat(3, clamp(64px, 19vw, 76px)); grid-template-rows: repeat(2, 62px); gap: 0.5rem; justify-content: center; }
+  .tbtn { min-width: 64px; min-height: 62px; padding: 0; border-radius: 14px; border: 3px solid var(--outline); background: linear-gradient(145deg, #3A286A, var(--panel)); color: var(--ink); font-family: inherit; font-size: 1.55rem; font-weight: 800; box-shadow: 4px 4px 0 var(--outline); display: flex; align-items: center; justify-content: center; user-select: none; touch-action: none; cursor: pointer; transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease, color 0.08s ease; }
+  .tbtn:active, .tbtn.pressed { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); background: var(--cyan); color: var(--outline); }
+  .control-spacer { pointer-events: none; }
   .next-hint { margin-top: 1.1rem; font-size: 0.75rem; font-weight: 600; color: var(--ink-faint); text-align: center; max-width: 406px; }
+
+  @media (max-height: 720px) and (orientation: portrait) {
+    .hero-band { height: 88px; margin-bottom: 0.55rem; }
+    .hero-title { padding-top: 0.75rem; }
+    h1 { font-size: 1.65rem; }
+    .sub { margin-bottom: 0.55rem; font-size: 0.78rem; }
+    .hud { margin-bottom: 0.5rem; }
+    .touch-controls { grid-template-rows: repeat(2, 54px); }
+    .tbtn { min-height: 54px; }
+  }
 
   .fixed-back {
     position: fixed;
@@ -93,7 +106,7 @@
     </div>
   </div>
 
-  <p class="sub">Piltangenter styr. Ät framstegsfröna, väx dig lång, krocka inte med väggen eller dig själv.</p>
+  <p class="sub">Svep över spelplanen eller använd pilarna. Ät framstegsfröna, väx dig lång och undvik krockar.</p>
 
   <div class="hud">
     <div class="hud-chip"><span class="label">POÄNG</span><span class="value" id="scoreVal">0</span></div>
@@ -104,7 +117,7 @@
     <div id="board">
       <div class="overlay" id="startOverlay">
         <h2>REDO?</h2>
-        <p>Piltangenter eller knapparna nedan. Ät fröna, väx dig lång.</p>
+        <p>Svep direkt över spelplanen eller använd de stora pilknapparna.</p>
         <button class="cta" id="startBtn">Kör igång</button>
       </div>
       <div class="overlay hidden" id="endOverlay">
@@ -116,9 +129,10 @@
     </div>
   </div>
 
-  <div class="touch-controls">
-    <div></div><div class="tbtn" id="btnUp">▲</div><div></div>
-    <div class="tbtn" id="btnLeft">◀</div><div class="tbtn" id="btnDown">▼</div><div class="tbtn" id="btnRight">▶</div>
+  <p class="control-label">SVEP PÅ PLANEN ELLER STYR HÄR</p>
+  <div class="touch-controls" aria-label="Styr Ormen">
+    <span class="control-spacer"></span><button class="tbtn" id="btnUp" type="button" aria-label="Styr upp">▲</button><span class="control-spacer"></span>
+    <button class="tbtn" id="btnLeft" type="button" aria-label="Styr vänster">◀</button><button class="tbtn" id="btnDown" type="button" aria-label="Styr nedåt">▼</button><button class="tbtn" id="btnRight" type="button" aria-label="Styr höger">▶</button>
   </div>
 
   <p class="next-hint">Nästa: Ordracet (franska).</p>
@@ -167,10 +181,21 @@
     return !!food;
   }
 
+  function flashControl(x, y) {
+    const id = x === -1 ? 'btnLeft' : x === 1 ? 'btnRight' : y === -1 ? 'btnUp' : 'btnDown';
+    const button = document.getElementById(id);
+    button.classList.remove('pressed');
+    void button.offsetWidth;
+    button.classList.add('pressed');
+    window.setTimeout(() => button.classList.remove('pressed'), 120);
+  }
+
   function setDir(x, y) {
-    if (!running) return;
-    if (dir.x === -x && dir.y === -y) return;
+    if (!running) return false;
+    if (dir.x === -x && dir.y === -y) return false;
     nextDir = { x, y };
+    flashControl(x, y);
+    return true;
   }
   window.addEventListener('keydown', e => {
     if (e.key === 'ArrowUp') { setDir(0, -1); e.preventDefault(); }
@@ -178,10 +203,40 @@
     else if (e.key === 'ArrowLeft') { setDir(-1, 0); e.preventDefault(); }
     else if (e.key === 'ArrowRight') { setDir(1, 0); e.preventDefault(); }
   });
-  document.getElementById('btnUp').addEventListener('pointerdown', () => setDir(0, -1));
-  document.getElementById('btnDown').addEventListener('pointerdown', () => setDir(0, 1));
-  document.getElementById('btnLeft').addEventListener('pointerdown', () => setDir(-1, 0));
-  document.getElementById('btnRight').addEventListener('pointerdown', () => setDir(1, 0));
+  const directionButtons = [
+    ['btnUp', 0, -1], ['btnDown', 0, 1], ['btnLeft', -1, 0], ['btnRight', 1, 0]
+  ];
+  directionButtons.forEach(([id, x, y]) => {
+    document.getElementById(id).addEventListener('pointerdown', event => {
+      event.preventDefault();
+      setDir(x, y);
+    });
+  });
+
+  let swipeStart = null;
+  boardEl.addEventListener('pointerdown', event => {
+    if (!running || event.button > 0) return;
+    swipeStart = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    boardEl.classList.add('is-swiping');
+    boardEl.setPointerCapture?.(event.pointerId);
+  });
+  boardEl.addEventListener('pointerup', event => {
+    if (!swipeStart || swipeStart.id !== event.pointerId) return;
+    const dx = event.clientX - swipeStart.x;
+    const dy = event.clientY - swipeStart.y;
+    const threshold = Math.max(12, boardEl.clientWidth * 0.035);
+    swipeStart = null;
+    boardEl.classList.remove('is-swiping');
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < threshold) return;
+    const changed = Math.abs(dx) > Math.abs(dy)
+      ? setDir(dx > 0 ? 1 : -1, 0)
+      : setDir(0, dy > 0 ? 1 : -1);
+    if (changed && navigator.vibrate) navigator.vibrate(10);
+  });
+  boardEl.addEventListener('pointercancel', () => {
+    swipeStart = null;
+    boardEl.classList.remove('is-swiping');
+  });
 
   function render() {
     pool.forEach(el => el.remove());

@@ -179,3 +179,33 @@ test("ingen HTML-fil innehåller en GitHub-token", () => {
     assert.doesNotMatch(readFileSync(file, "utf8"), /ghp_[A-Za-z0-9]+/);
   }
 });
+
+test("den nya barnmixen innehåller exakt 20 spel och minst tio spelmekaniker", () => {
+  const engine = readFileSync("games/kids-mix.js", "utf8");
+  const newGameIds = [
+    "fruktfangaren", "bistroblixten", "accentjakten", "ordbron",
+    "dansstopp", "reaktionsraketen", "balansbanan", "andningsdykaren",
+    "brobyggarna", "fargfusion", "molnhoppet", "tornverkstan",
+    "minimarknaden", "myntmatchen", "spargrissprint", "ideverkstan",
+    "vanskapskompassen", "hjalparjakten", "talamodstornet", "tacksamhetstradet"
+  ];
+  assert.equal(newGameIds.length, 20);
+  for (const id of newGameIds) {
+    assert.ok(existsSync(`games/${id}.html`), `${id} saknar spelfil`);
+    assert.ok(engine.includes(`"${id}": {`), `${id} saknar spelkonfiguration`);
+    const html = readFileSync(`games/${id}.html`, "utf8");
+    assert.ok(html.includes('href="kids-mix.css"'));
+    assert.ok(html.includes('src="kids-mix.js"'));
+    assert.ok(html.includes('id="startBtn"'));
+    assert.ok(html.includes('aria-live="polite"'));
+  }
+  const mechanics = new Set([...engine.matchAll(/mode: "([a-z]+)"/g)].map(match => match[1]));
+  assert.ok(mechanics.size >= 10, `bara ${mechanics.size} spelmekaniker hittades`);
+});
+
+test("barnmixens spel är ändliga och saknar köp-, chatt- och lootloopar", () => {
+  const engine = readFileSync("games/kids-mix.js", "utf8");
+  assert.ok(engine.includes('levels.length'));
+  assert.ok((engine.match(/duration: /g) || []).length >= 20);
+  assert.doesNotMatch(engine, /lootbox|lootlåda|köp nu|in-app purchase|chatta/i);
+});

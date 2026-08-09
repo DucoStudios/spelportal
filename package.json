@@ -5,6 +5,7 @@
   "scripts": {
     "polish:apply": "node scripts/apply-game-polish.mjs",
     "typecheck": "node scripts/check-static.mjs",
-    "test": "node --test tests/portal.test.mjs"
+    "test": "node --test tests/portal.test.mjs",
+    "test:smoke": "node scripts/smoke-kids-mix.mjs"
   }
 }

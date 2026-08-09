@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<link rel="manifest" href="../manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#130b2b">
+<link rel="apple-touch-icon" href="../icon-180.png">
+<link rel="icon" href="../icon-512.png">
+<title>Nytt spel · Spelportalen</title>
+<link rel="stylesheet" href="game-polish.css">
+<link rel="stylesheet" href="kids-mix.css">
+<script src="../interaction-guard.js" defer></script>
+<script src="../french-speech.js"></script>
+</head>
+<body class="mix-body" data-game-id="brobyggarna" style="--accent:#45d7b4;--accent2:#ff8050;--warm:#ffd64c;--polish-primary:#45d7b4;--polish-secondary:#ff8050;--polish-warm:#ffd64c;">
+<main class="mix-shell">
+  <header class="mix-topbar">
+    <a class="mix-back fixed-back" href="../index.html">← ALLA SPEL</a>
+    <div class="mix-heading">
+      <p class="mix-kicker" id="gameKicker">NYTT SPEL</p>
+      <h1 id="gameTitle">Laddar…</h1>
+    </div>
+    <button class="mix-sound" id="soundBtn" type="button" aria-label="Stäng av ljud">🔊</button>
+  </header>
+  <section class="mix-card">
+    <p class="mix-intro" id="gameIntro"></p>
+    <div class="mix-stage-wrap">
+      <div class="mix-hud" aria-label="Spelstatus">
+        <div class="mix-chip"><span>Poäng</span><strong id="scoreVal">0</strong></div>
+        <div class="mix-chip"><span>Tid</span><strong id="timeVal">0s</strong></div>
+        <div class="mix-chip"><span>Rekord</span><strong id="bestVal">0</strong></div>
+      </div>
+      <div class="mix-stage" id="mixStage"></div>
+      <div class="mix-overlay overlay" id="mixOverlay" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
+        <div class="mix-overlay-card">
+          <div class="mix-big-icon" id="overlayIcon" aria-hidden="true">✦</div>
+          <h2 id="overlayTitle">Laddar…</h2>
+          <p id="overlayText"></p>
+          <button class="mix-btn" id="startBtn" type="button">STARTA SPELET</button>
+        </div>
+      </div>
+    </div>
+    <div class="mix-controls" id="mixControls" aria-label="Spelkontroller"></div>
+    <div class="mix-status" id="mixStatus" role="status" aria-live="polite"></div>
+  </section>
+</main>
+<script src="kids-mix.js"></script>
+</body>
+</html>

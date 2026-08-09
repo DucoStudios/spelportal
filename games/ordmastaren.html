@@ -593,13 +593,31 @@
     }
     return dp[n];
   }
-  function fuzzyMatches(heard, target) {
-    const h = normalizeForMatch(heard), t = normalizeForMatch(target);
+  function withinTolerance(h, t) {
     if (!h || !t) return false;
     if (h === t) return true;
     const dist = levenshtein(h, t);
-    const tolerance = Math.max(1, Math.floor(t.length * 0.34));
+    const tolerance = Math.max(1, Math.ceil(t.length * 0.4));
     return dist <= tolerance;
+  }
+  // Jamforde tidigare hela den normaliserade strangen (mellanslag borttagna)
+  // rakt av mot maloret -- men taligenkanningen lagger ofta pa extra ljud
+  // eller ord runt ett kort ord ("non" transkriberas som "non merci" etc),
+  // och da fallerar hela strang-jamforelsen aven om malordet sades helt
+  // ratt (David rapporterade exakt detta 2026-08-09: spelet horde och
+  // skrev ut vad han sa, men registrerade det inte som ratt svar). Provar
+  // darfor aven varje ordfonster i det som hordes, inte bara hela strangen.
+  function fuzzyMatches(heard, target) {
+    const t = normalizeForMatch(target);
+    if (!t) return false;
+    if (withinTolerance(normalizeForMatch(heard), t)) return true;
+    const targetWordCount = Math.max(1, target.trim().split(/\s+/).length);
+    const heardWords = heard.trim().split(/\s+/).filter(Boolean);
+    for (let i = 0; i + targetWordCount <= heardWords.length; i++) {
+      const windowNorm = normalizeForMatch(heardWords.slice(i, i + targetWordCount).join(''));
+      if (withinTolerance(windowNorm, t)) return true;
+    }
+    return false;
   }
 
   // ================= Ljud & belonings-"juice" =================

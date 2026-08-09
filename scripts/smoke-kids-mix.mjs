@@ -85,6 +85,18 @@ for (const viewport of viewports) {
     width: viewport.width, height: viewport.height, deviceScaleFactor: 1, mobile: viewport.mobile,
     screenWidth: viewport.width, screenHeight: viewport.height
   });
+  await call("Page.navigate", { url: pathToFileURL(resolve("index.html")).href });
+  for (let attempt = 0; attempt < 40; attempt++) {
+    if (await evaluate("document.readyState === 'complete'")) break;
+    await pause(50);
+  }
+  const portalBackground = await evaluate(`({
+    root: getComputedStyle(document.documentElement).backgroundColor,
+    body: getComputedStyle(document.body).backgroundColor
+  })`);
+  assert.notEqual(portalBackground.root, "rgba(0, 0, 0, 0)", `portalen/${viewport.name}: transparent rotbakgrund`);
+  assert.notEqual(portalBackground.body, "rgba(0, 0, 0, 0)", `portalen/${viewport.name}: transparent bodybakgrund`);
+
   for (const id of ids) {
     exceptions = [];
     const url = pathToFileURL(resolve(`games/${id}.html`)).href;
@@ -97,12 +109,16 @@ for (const viewport of viewports) {
       title: document.querySelector('#gameTitle')?.textContent,
       button: Boolean(document.querySelector('#startBtn')),
       fits: document.documentElement.scrollWidth <= innerWidth + 1,
-      stageHeight: Math.round(document.querySelector('.mix-stage-wrap')?.getBoundingClientRect().height || 0)
+      stageHeight: Math.round(document.querySelector('.mix-stage-wrap')?.getBoundingClientRect().height || 0),
+      rootBackground: getComputedStyle(document.documentElement).backgroundColor,
+      bodyBackground: getComputedStyle(document.body).backgroundColor
     })`);
     assert.ok(loaded.title && loaded.title !== "Laddar…", `${id}/${viewport.name}: titel laddades inte`);
     assert.ok(loaded.button, `${id}/${viewport.name}: startknapp saknas`);
     assert.ok(loaded.fits, `${id}/${viewport.name}: horisontell overflow`);
     assert.ok(loaded.stageHeight >= 250, `${id}/${viewport.name}: spelplanen är för låg`);
+    assert.notEqual(loaded.rootBackground, "rgba(0, 0, 0, 0)", `${id}/${viewport.name}: transparent rotbakgrund`);
+    assert.notEqual(loaded.bodyBackground, "rgba(0, 0, 0, 0)", `${id}/${viewport.name}: transparent bodybakgrund`);
 
     await evaluate("document.querySelector('#startBtn').click(); true");
     await pause(320);

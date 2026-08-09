@@ -22,9 +22,12 @@ body[data-game-id] {
 }
 
 html:has(body[data-game-id]) {
+  min-height: 100%;
   width: 100%;
   overflow-x: hidden;
   overscroll-behavior: none;
+  background-color: var(--bg, #170f2e);
+  color-scheme: dark;
 }
 
 body[data-game-id] :is(

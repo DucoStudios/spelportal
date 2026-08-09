@@ -37,10 +37,10 @@
   .hud-chip .value { font-family: 'Open Sans', sans-serif; font-weight: 800; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 
   .board-wrap { position: relative; }
-  #board { position: relative; width: 396px; height: 396px; max-width: 92vw; max-height: 92vw; background: var(--bg2); border: 3px solid var(--outline); border-radius: 14px; box-shadow: 6px 6px 0 var(--outline); overflow: hidden; }
-  .seg { position: absolute; width: 20px; height: 20px; border-radius: 5px; background: var(--cyan); border: 2px solid var(--outline); }
+  #board { --grid-size: 18; position: relative; width: 396px; height: 396px; max-width: 92vw; max-height: 92vw; background: var(--bg2); border: 3px solid var(--outline); border-radius: 14px; box-shadow: 6px 6px 0 var(--outline); overflow: hidden; }
+  .seg { position: absolute; width: calc(100% / var(--grid-size)); height: calc(100% / var(--grid-size)); border-radius: 24%; background: var(--cyan); border: 2px solid var(--outline); }
   .seg.head { background: var(--yellow); }
-  .food { position: absolute; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; animation: pulse 0.8s ease-in-out infinite; }
+  .food { position: absolute; width: calc(100% / var(--grid-size)); height: calc(100% / var(--grid-size)); display: flex; align-items: center; justify-content: center; font-size: clamp(.82rem, 4.5vw, 1.1rem); filter: drop-shadow(0 0 5px color-mix(in srgb, var(--yellow) 65%, transparent)); animation: pulse 0.8s ease-in-out infinite; }
   @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 
   .overlay { position: absolute; inset: 0; background: color-mix(in srgb, var(--bg2) 92%, transparent); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.8rem; text-align: center; padding: 1.4rem; z-index: 5; }
@@ -126,7 +126,7 @@
 
 <script>
 (function () {
-  const COLS = 18, ROWS = 18, CELL = 22;
+  const COLS = 18, ROWS = 18;
   const boardEl = document.getElementById('board');
   const scoreVal = document.getElementById('scoreVal');
   const lenVal = document.getElementById('lenVal');
@@ -156,9 +156,15 @@
 
   function randCell() { return { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) }; }
   function spawnFood() {
-    let c;
-    do { c = randCell(); } while (snake.some(s => s.x === c.x && s.y === c.y));
-    food = c;
+    const occupied = new Set(snake.map(segment => segment.x + ',' + segment.y));
+    const freeCells = [];
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        if (!occupied.has(x + ',' + y)) freeCells.push({ x, y });
+      }
+    }
+    food = freeCells.length ? freeCells[Math.floor(Math.random() * freeCells.length)] : null;
+    return !!food;
   }
 
   function setDir(x, y) {
@@ -181,18 +187,20 @@
     pool.forEach(el => el.remove());
     pool = [];
     if (foodEl) foodEl.remove();
-    foodEl = document.createElement('div');
-    foodEl.className = 'food';
-    foodEl.textContent = '🌱';
-    foodEl.style.left = (food.x * CELL) + 'px';
-    foodEl.style.top = (food.y * CELL) + 'px';
-    boardEl.appendChild(foodEl);
+    if (food) {
+      foodEl = document.createElement('div');
+      foodEl.className = 'food';
+      foodEl.textContent = '🌱';
+      foodEl.style.left = (food.x * 100 / COLS) + '%';
+      foodEl.style.top = (food.y * 100 / ROWS) + '%';
+      boardEl.appendChild(foodEl);
+    }
 
     snake.forEach((s, i) => {
       const el = document.createElement('div');
       el.className = 'seg' + (i === 0 ? ' head' : '');
-      el.style.left = (s.x * CELL) + 'px';
-      el.style.top = (s.y * CELL) + 'px';
+      el.style.left = (s.x * 100 / COLS) + '%';
+      el.style.top = (s.y * 100 / ROWS) + '%';
       boardEl.appendChild(el);
       pool.push(el);
     });

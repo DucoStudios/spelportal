@@ -39,19 +39,38 @@
   .hud-chip .value { font-family: 'Open Sans', sans-serif; font-weight: 800; font-size: 1.1rem; }
 
   .board-wrap { position: relative; }
-  #board { position: relative; width: 380px; height: 380px; max-width: 92vw; max-height: 92vw; background: var(--bg2); border: 3px solid var(--outline); border-radius: 14px; box-shadow: 6px 6px 0 var(--outline); overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.3rem; gap: 0.9rem; }
+  #board { position: relative; width: 380px; height: 410px; max-width: 92vw; max-height: min(112vw, 430px); background: var(--bg2); border: 3px solid var(--outline); border-radius: 14px; box-shadow: 6px 6px 0 var(--outline); overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.1rem; gap: 0.55rem; }
 
   .progress-dots { display: flex; gap: 0.35rem; }
   .pdot { width: 11px; height: 11px; border-radius: 50%; background: var(--panel); border: 1px solid var(--outline); }
   .pdot.done { background: var(--cyan); }
   .pdot.current { background: var(--yellow); }
 
-  .move-icon { font-size: 4.4rem; }
+  .move-icon { font-size: 3.5rem; line-height: 1; }
   .move-name { font-family: 'Bungee', sans-serif; font-size: 1.15rem; text-align: center; color: var(--yellow); text-shadow: 2px 2px 0 var(--outline); }
   .move-target { font-size: 1rem; font-weight: 700; color: var(--ink-soft); text-align: center; }
   .move-why { font-size: 0.74rem; color: var(--ink-faint); text-align: center; max-width: 280px; }
 
+  .timer-ring {
+    --timer-progress: 360deg;
+    position: relative;
+    width: 88px;
+    height: 88px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: conic-gradient(var(--yellow) var(--timer-progress), color-mix(in srgb, var(--panel) 82%, black) 0);
+    box-shadow: 0 0 0 3px var(--outline), 0 10px 22px rgba(0,0,0,.3), 0 0 26px color-mix(in srgb, var(--yellow) 20%, transparent);
+  }
+  .timer-ring::before { content: ''; position: absolute; inset: 9px; border-radius: 50%; background: var(--bg2); box-shadow: inset 0 3px 10px rgba(0,0,0,.28); }
+  .timer-value { position: relative; z-index: 1; font-family: 'Bungee', sans-serif; font-size: 1.8rem; color: var(--ink); text-shadow: 2px 2px 0 var(--outline); }
+  .timer-label { min-height: 1.2em; font-family: 'Bungee', sans-serif; font-size: 0.72rem; letter-spacing: .08em; color: var(--cyan); }
+  .timer-label.switch { color: var(--pink); animation: alarm-pop .45s ease both; }
+  @keyframes alarm-pop { 0% { transform: scale(.78) rotate(-4deg); } 65% { transform: scale(1.18) rotate(3deg); } 100% { transform: scale(1); } }
+
   button.cta { font-family: 'Open Sans', sans-serif; font-size: 0.9rem; font-weight: 800; text-transform: uppercase; background: var(--yellow); color: var(--outline); border: 3px solid var(--outline); border-radius: 8px; box-shadow: 4px 4px 0 var(--outline); padding: 0.65rem 1.6rem; cursor: pointer; }
+  button.cta.secondary { background: var(--panel); color: var(--ink); padding: .45rem 1.1rem; font-size: .75rem; }
   button.cta:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
 
   .overlay { position: absolute; inset: 0; background: color-mix(in srgb, var(--bg2) 92%, transparent); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.8rem; text-align: center; padding: 1.4rem; z-index: 5; }
@@ -60,6 +79,19 @@
   .overlay p { max-width: 300px; font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); margin: 0; }
   .overlay .result { font-size: 2.4rem; }
   .next-hint { margin-top: 1.1rem; font-size: 0.75rem; font-weight: 600; color: var(--ink-faint); text-align: center; max-width: 406px; }
+
+  body.session-active .page { overflow: hidden; }
+  @media (max-height: 700px) {
+    body.session-active .hero-band { height: 104px; margin-bottom: 0.55rem; }
+    body.session-active .hero-title { padding-top: 0.65rem; }
+    body.session-active .hero-title h1 { font-size: 1.45rem; }
+    body.session-active .sun { top: 56px; }
+    body.session-active .grid-floor { height: 54px; }
+    body.session-active .sub,
+    body.session-active .hud,
+    body.session-active .next-hint { display: none; }
+    body.session-active #board { height: 410px; max-height: calc(100dvh - 122px); }
+  }
 </style>
 <link rel="stylesheet" href="game-polish.css">
 <script src="../interaction-guard.js" defer></script>
@@ -90,11 +122,13 @@
       <div class="move-name" id="moveName">Spring på stället</div>
       <div class="move-target" id="moveTarget">20 sekunder</div>
       <div class="move-why" id="moveWhy"></div>
-      <button class="cta" id="doneBtn">Klar!</button>
+      <div class="timer-ring" id="timerRing"><span class="timer-value" id="timerVal">20</span></div>
+      <div class="timer-label" id="timerLabel">GÖR DIG REDO</div>
+      <button class="cta secondary" id="pauseBtn">Pausa</button>
 
       <div class="overlay" id="startOverlay">
         <h2>REDO ATT RÖRA PÅ DIG?</h2>
-        <p>Sex rörelser, en i taget. Gör den på riktigt, tryck sen Klar för att gå vidare.</p>
+        <p>Sex rörelser på tid. Du får tre sekunder att göra dig redo, sedan jobbar du tills det roliga byteslarmet låter.</p>
         <button class="cta" id="startBtn">Kör igång</button>
       </div>
       <div class="overlay hidden" id="endOverlay">
@@ -112,18 +146,18 @@
 <script>
 (function () {
   const MOVES = [
-    { name: 'Hoppjack', icon: '⭐', target: '10 st', why: 'Får igång pulsen och hela kroppen på en gång.' },
-    { name: 'Knäböj', icon: '🦵', target: '10 st', why: 'Bygger starka benmuskler — samma muskler du använder när du springer.' },
-    { name: 'Höga knän', icon: '🏃', target: '15 st', why: 'Tränar kondition och balans samtidigt.' },
-    { name: 'Situps', icon: '🔵', target: '8 st', why: 'Stärker magmusklerna som håller upp hela kroppen.' },
-    { name: 'Plankan', icon: '📏', target: '15 sekunder', why: 'Bygger styrka i hela mittkroppen utan att röra sig.' },
-    { name: 'Tåhäv', icon: '🦶', target: '10 st', why: 'Stärker vaderna och förbättrar balansen.' },
-    { name: 'Axelrullningar', icon: '🔄', target: '10 st', why: 'Löser upp spänningar i axlarna.' },
-    { name: 'Sträck mot tårna', icon: '🙆', target: '10 sekunder', why: 'Stretchar baksida lår och rygg — bra efter träning.' },
-    { name: 'Spring på stället', icon: '👟', target: '20 sekunder', why: 'Enkel kondition du kan göra var som helst.' },
-    { name: 'Utfallssteg', icon: '🚶', target: '8 st per ben', why: 'Tränar ben och balans, som ett stort kliv framåt.' },
-    { name: 'Stjärnhopp', icon: '✨', target: '10 st', why: 'Rör hela kroppen och får hjärtat att pumpa snabbare.' },
-    { name: 'Armcirklar', icon: '💫', target: '10 st varje håll', why: 'Värmer upp axlar och överkropp.' }
+    { name: 'Hoppjack', icon: '⭐', seconds: 20, why: 'Får igång pulsen och hela kroppen på en gång.' },
+    { name: 'Knäböj', icon: '🦵', seconds: 25, why: 'Bygger starka benmuskler — samma muskler du använder när du springer.' },
+    { name: 'Höga knän', icon: '🏃', seconds: 20, why: 'Tränar kondition och balans samtidigt.' },
+    { name: 'Situps', icon: '🔵', seconds: 25, why: 'Stärker magmusklerna som håller upp hela kroppen.' },
+    { name: 'Plankan', icon: '📏', seconds: 20, why: 'Bygger styrka i hela mittkroppen utan att röra sig.' },
+    { name: 'Tåhäv', icon: '🦶', seconds: 20, why: 'Stärker vaderna och förbättrar balansen.' },
+    { name: 'Axelrullningar', icon: '🔄', seconds: 15, why: 'Löser upp spänningar i axlarna.' },
+    { name: 'Sträck mot tårna', icon: '🙆', seconds: 20, why: 'Stretchar baksida lår och rygg — bra efter träning.' },
+    { name: 'Spring på stället', icon: '👟', seconds: 25, why: 'Enkel kondition du kan göra var som helst.' },
+    { name: 'Utfallssteg', icon: '🚶', seconds: 25, why: 'Tränar ben och balans, som ett stort kliv framåt.' },
+    { name: 'Stjärnhopp', icon: '✨', seconds: 20, why: 'Rör hela kroppen och får hjärtat att pumpa snabbare.' },
+    { name: 'Armcirklar', icon: '💫', seconds: 15, why: 'Värmer upp axlar och överkropp.' }
   ];
   const SESSION_LEN = 6;
   const STORAGE_KEY = 'ror_pa_dig_total';
@@ -133,7 +167,10 @@
   const moveName = document.getElementById('moveName');
   const moveTarget = document.getElementById('moveTarget');
   const moveWhy = document.getElementById('moveWhy');
-  const doneBtn = document.getElementById('doneBtn');
+  const timerRing = document.getElementById('timerRing');
+  const timerVal = document.getElementById('timerVal');
+  const timerLabel = document.getElementById('timerLabel');
+  const pauseBtn = document.getElementById('pauseBtn');
   const totalVal = document.getElementById('totalVal');
   const startOverlay = document.getElementById('startOverlay');
   const endOverlay = document.getElementById('endOverlay');
@@ -143,6 +180,13 @@
 
   let session = [];
   let step = 0;
+  let timerHandle = null;
+  let transitionHandle = null;
+  let deadline = 0;
+  let remainingMs = 0;
+  let phase = 'idle';
+  let paused = false;
+  let lastWholeSecond = null;
   let totalSessions = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
   totalVal.textContent = totalSessions;
 
@@ -158,7 +202,14 @@
     osc.connect(gain).connect(c.destination);
     osc.start(c.currentTime + start); osc.stop(c.currentTime + start + dur + 0.02);
   }
-  function playStep() { tone(500, 0, 0.08, 'triangle'); tone(700, 0.05, 0.1, 'triangle'); }
+  function playTick() { tone(620, 0, 0.07, 'sine', 0.08); }
+  function playGo() { tone(520, 0, 0.1, 'square', 0.11); tone(880, 0.08, 0.18, 'triangle', 0.15); }
+  function playSwitchAlarm() {
+    tone(784, 0, 0.1, 'square', 0.13);
+    tone(1047, 0.11, 0.1, 'square', 0.13);
+    tone(1319, 0.22, 0.22, 'triangle', 0.16);
+    if (navigator.vibrate) navigator.vibrate([90, 45, 90]);
+  }
   function playDone() { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.22, 'triangle')); }
 
   function shuffle(arr) { return arr.slice().sort(() => Math.random() - 0.5); }
@@ -177,31 +228,114 @@
     const m = session[step];
     moveIcon.textContent = m.icon;
     moveName.textContent = m.name;
-    moveTarget.textContent = m.target;
+    moveTarget.textContent = 'Jobba i ' + m.seconds + ' sekunder';
     moveWhy.textContent = m.why;
     renderDots();
+    startPhase('ready', 3);
+  }
+
+  function clearTimers() {
+    if (timerHandle) clearInterval(timerHandle);
+    if (transitionHandle) clearTimeout(transitionHandle);
+    timerHandle = null;
+    transitionHandle = null;
+  }
+
+  function paintTimer(milliseconds, totalMilliseconds) {
+    const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
+    timerVal.textContent = seconds;
+    const ratio = totalMilliseconds ? Math.max(0, Math.min(1, milliseconds / totalMilliseconds)) : 0;
+    timerRing.style.setProperty('--timer-progress', (ratio * 360) + 'deg');
+    if (seconds !== lastWholeSecond) {
+      if (phase === 'active' && seconds > 0 && seconds <= 3) playTick();
+      else if (phase === 'ready' && seconds > 0) playTick();
+      lastWholeSecond = seconds;
+    }
+  }
+
+  function startPhase(nextPhase, seconds, resumeMilliseconds) {
+    if (timerHandle) clearInterval(timerHandle);
+    phase = nextPhase;
+    paused = false;
+    pauseBtn.textContent = 'Pausa';
+    timerLabel.classList.remove('switch');
+    timerLabel.textContent = phase === 'ready' ? 'GÖR DIG REDO' : 'KÖR!';
+    remainingMs = resumeMilliseconds ?? seconds * 1000;
+    const totalMs = seconds * 1000;
+    deadline = Date.now() + remainingMs;
+    lastWholeSecond = null;
+
+    function tick() {
+      remainingMs = Math.max(0, deadline - Date.now());
+      paintTimer(remainingMs, totalMs);
+      if (remainingMs <= 0) {
+        clearInterval(timerHandle);
+        timerHandle = null;
+        if (phase === 'ready') {
+          playGo();
+          startPhase('active', session[step].seconds);
+        } else {
+          completeMove();
+        }
+      }
+    }
+
+    tick();
+    timerHandle = setInterval(tick, 100);
+  }
+
+  function completeMove() {
+    phase = 'switch';
+    playSwitchAlarm();
+    timerVal.textContent = '✓';
+    timerRing.style.setProperty('--timer-progress', '360deg');
+    timerLabel.textContent = step + 1 >= SESSION_LEN ? 'PASS KLART!' : 'BYTE!';
+    timerLabel.classList.add('switch');
+    pauseBtn.disabled = true;
+    step++;
+    renderDots();
+    transitionHandle = setTimeout(() => {
+      pauseBtn.disabled = false;
+      showMove();
+    }, 1100);
   }
 
   function finishSession() {
+    clearTimers();
+    phase = 'done';
     totalSessions++;
     localStorage.setItem(STORAGE_KEY, String(totalSessions));
     totalVal.textContent = totalSessions;
     playDone();
-    endText.textContent = 'Sex rörelser klara. Det här passet totalt genom tiderna: ' + totalSessions + '. Kroppen tackar dig!';
+    endText.textContent = 'Sex tidsintervaller klara. Det här passet totalt genom tiderna: ' + totalSessions + '. Kroppen tackar dig!';
     endOverlay.classList.remove('hidden');
   }
 
-  doneBtn.addEventListener('click', () => {
-    playStep();
-    step++;
-    showMove();
+  pauseBtn.addEventListener('click', () => {
+    if (phase !== 'ready' && phase !== 'active') return;
+    if (!paused) {
+      remainingMs = Math.max(0, deadline - Date.now());
+      clearInterval(timerHandle);
+      timerHandle = null;
+      paused = true;
+      timerLabel.textContent = 'PAUSAD';
+      pauseBtn.textContent = 'Fortsätt';
+    } else {
+      const currentPhase = phase;
+      const totalSeconds = currentPhase === 'ready' ? 3 : session[step].seconds;
+      startPhase(currentPhase, totalSeconds, remainingMs);
+    }
   });
 
   function startSession() {
+    clearTimers();
+    ctx();
+    document.body.classList.add('session-active');
     session = shuffle(MOVES).slice(0, SESSION_LEN);
     step = 0;
     startOverlay.classList.add('hidden');
     endOverlay.classList.add('hidden');
+    pauseBtn.disabled = false;
     showMove();
   }
 

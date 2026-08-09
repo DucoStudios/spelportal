@@ -49,6 +49,17 @@ test("Ordmästaren erbjuder manuell godkänning när taligenkänningen är osäk
   assert.ok(html.includes(".replace(/œ/g, 'oe')"));
 });
 
+test("Rör på dig använder tidsintervaller med paus och automatiskt byteslarm", () => {
+  const html = readFileSync("games/ror-pa-dig.html", "utf8");
+  assert.ok(html.includes('id="timerRing"'));
+  assert.ok(html.includes('id="pauseBtn"'));
+  assert.ok(html.includes("seconds: 20"));
+  assert.ok(html.includes("function playSwitchAlarm()"));
+  assert.ok(html.includes("startPhase('ready', 3)"));
+  assert.ok(html.includes("setInterval(tick, 100)"));
+  assert.ok(!html.includes('id="doneBtn"'));
+});
+
 test("ingen HTML-fil innehåller en GitHub-token", () => {
   for (const file of ["index.html", ...gameFiles.map(name => `games/${name}`)]) {
     assert.doesNotMatch(readFileSync(file, "utf8"), /ghp_[A-Za-z0-9]+/);

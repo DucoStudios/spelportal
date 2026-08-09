@@ -178,6 +178,7 @@
 </style>
 <link rel="stylesheet" href="game-polish.css">
 <script src="../interaction-guard.js" defer></script>
+<script src="../french-speech.js"></script>
 </head>
 <body data-game-id="ordmastaren">
 
@@ -550,24 +551,9 @@
     saveProgress(progress);
   }
 
-  // ================= Talsyntes (franska, samma robusta monster som ovriga spel) =================
-  let frenchVoice = null;
-  function pickFrenchVoice() {
-    const voices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
-    frenchVoice = voices.find(v => v.lang === 'fr-FR') || voices.find(v => v.lang && v.lang.startsWith('fr')) || null;
-  }
-  if (window.speechSynthesis) {
-    pickFrenchVoice();
-    speechSynthesis.onvoiceschanged = pickFrenchVoice;
-  }
+  // ================= Talsyntes (franska, gemensam naturligare röstmotor) =================
   function speak(text) {
-    if (!window.speechSynthesis) return;
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'fr-FR';
-    if (frenchVoice) u.voice = frenchVoice;
-    u.rate = 0.92;
-    speechSynthesis.speak(u);
+    window.FrenchSpeech?.speak(text, { rate: 0.9 });
   }
 
   // ================= Taligenkanning (feature-detected) =================
@@ -1117,7 +1103,7 @@
     showPackView();
   });
   backBtn.addEventListener('click', () => {
-    if (window.speechSynthesis) speechSynthesis.cancel();
+    window.FrenchSpeech?.stop();
     showPackView();
   });
 

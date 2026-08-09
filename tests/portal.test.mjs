@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { runInNewContext } from "node:vm";
 
 const index = readFileSync("index.html", "utf8");
 const gameFiles = readdirSync("games").filter(file => file.endsWith(".html")).sort();
@@ -25,6 +26,7 @@ test("alla spel använder det visuella lagret och har korrekt spel-id", () => {
 test("delade visuella resurser finns", () => {
   assert.ok(existsSync("games/game-polish.css"));
   assert.ok(existsSync("interaction-guard.js"));
+  assert.ok(existsSync("french-speech.js"));
   assert.ok(existsSync("games/lib/three.min.js"));
 });
 
@@ -78,6 +80,54 @@ test("Ormen kan styras med tillgängliga knappar och korta svep på spelplanen",
   assert.ok(html.includes("boardEl.addEventListener('pointerup'"));
   assert.ok(html.includes("boardEl.clientWidth * 0.035"));
   assert.ok(html.includes("navigator.vibrate(10)"));
+});
+
+test("alla franska lyssningsspel använder samma förbättrade röstmotor", () => {
+  const speechEngine = readFileSync("french-speech.js", "utf8");
+  assert.ok(speechEngine.includes("function voiceScore(voice)"));
+  assert.ok(speechEngine.includes("natural|neural|premium|enhanced"));
+  assert.ok(speechEngine.includes("synthesis.addEventListener?.('voiceschanged'"));
+  for (const file of ["alfabetet-fargerna.html", "malarboken.html", "ljudmatchen.html", "ordmastaren.html"]) {
+    const html = readFileSync(`games/${file}`, "utf8");
+    assert.ok(html.includes('src="../french-speech.js"'), `${file} saknar den gemensamma rösten`);
+    assert.ok(html.includes("window.FrenchSpeech?.speak"), `${file} använder inte den gemensamma rösten`);
+    assert.ok(!html.includes("new SpeechSynthesisUtterance"), `${file} har kvar en lokal röstmotor`);
+  }
+});
+
+test("den franska röstmotorn prioriterar en enhanced fr-FR-röst", () => {
+  const spoken = [];
+  class MockUtterance {
+    constructor(text) { this.text = text; }
+  }
+  const voices = [
+    { name: "Compact", voiceURI: "compact", lang: "fr-FR", localService: true, default: true },
+    { name: "Natural Enhanced", voiceURI: "enhanced", lang: "fr-FR", localService: true, default: false },
+    { name: "Eddy", voiceURI: "novelty", lang: "fr-FR", localService: true, default: false },
+    { name: "Natural", voiceURI: "natural", lang: "sv-SE", localService: true, default: false }
+  ];
+  const synthesis = {
+    paused: false,
+    cancel() {},
+    getVoices: () => voices,
+    speak: utterance => spoken.push(utterance),
+    addEventListener() {}
+  };
+  const window = {
+    speechSynthesis: synthesis,
+    SpeechSynthesisUtterance: MockUtterance,
+    setInterval,
+    clearInterval
+  };
+  runInNewContext(readFileSync("french-speech.js", "utf8"), {
+    window,
+    SpeechSynthesisUtterance: MockUtterance,
+    console
+  });
+  assert.equal(window.FrenchSpeech.speak("bonjour"), true);
+  assert.equal(spoken[0].voice, voices[1]);
+  assert.equal(spoken[0].lang, "fr-FR");
+  assert.equal(spoken[0].rate, 0.88);
 });
 
 test("ingen HTML-fil innehåller en GitHub-token", () => {

@@ -64,12 +64,12 @@
   .preset-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; max-width: 460px; }
   .preset-card {
     width: 150px; background: var(--panel); border: 3px solid var(--outline); border-radius: 12px;
-    padding: 12px; cursor: pointer; box-shadow: 4px 4px 0 var(--outline); text-align: left;
+    padding: 12px; color: var(--ink); font-family: inherit; cursor: pointer; box-shadow: 4px 4px 0 var(--outline); text-align: left;
   }
   .preset-card:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
-  .preset-card .icon { font-size: 1.6rem; }
-  .preset-card h3 { margin: 4px 0 3px; font-size: 0.86rem; color: var(--yellow); }
-  .preset-card p { font-size: 0.68rem; margin: 0; max-width: none; color: var(--ink-soft); }
+  .preset-card .icon { display: block; font-size: 1.6rem; }
+  .preset-card .preset-title { display: block; margin: 4px 0 3px; font-size: 0.86rem; font-weight: 800; color: var(--yellow); }
+  .preset-card .preset-desc { display: block; font-size: 0.68rem; margin: 0; max-width: none; color: var(--ink-soft); }
   button.cta {
     font-family: 'Open Sans', sans-serif; font-size: 0.9rem; font-weight: 800; text-transform: uppercase;
     background: var(--yellow); color: var(--outline); border: 3px solid var(--outline); border-radius: 8px;
@@ -643,9 +643,11 @@
   function renderPresets() {
     presetGridEl.innerHTML = '';
     PRESETS.forEach(p => {
-      const card = document.createElement('div');
+      const card = document.createElement('button');
+      card.type = 'button';
       card.className = 'preset-card';
-      card.innerHTML = '<div class="icon">' + p.icon + '</div><h3>' + p.name + '</h3><p>' + p.desc + '</p>';
+      card.setAttribute('aria-label', 'Starta ' + p.name);
+      card.innerHTML = '<span class="icon">' + p.icon + '</span><span class="preset-title">' + p.name + '</span><span class="preset-desc">' + p.desc + '</span>';
       card.addEventListener('click', () => {
         startOverlay.classList.add('hidden');
         overOverlay.classList.add('hidden');

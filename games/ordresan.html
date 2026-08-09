@@ -41,7 +41,7 @@
     position: absolute; width: 68px; height: 68px; margin-left: -34px; margin-top: -34px;
     border-radius: 50%; border: 3px solid var(--outline); display: flex; flex-direction: column;
     align-items: center; justify-content: center; cursor: pointer; box-shadow: 3px 3px 0 var(--outline);
-    background: var(--panel); font-family: 'Bungee', sans-serif;
+    padding: 0; color: var(--ink); background: var(--panel); font-family: 'Bungee', sans-serif;
   }
   .stage-node .icon { font-size: 1.5rem; }
   .stage-node .label { font-size: 0.42rem; color: var(--ink-soft); margin-top: 0.1rem; text-align: center; line-height: 1.1; }
@@ -237,9 +237,12 @@
 
     document.querySelectorAll('.stage-node').forEach(el => el.remove());
     STAGES.forEach((s, i) => {
-      const el = document.createElement('div');
+      const el = document.createElement('button');
       const state = i < completedCount ? 'done' : (i === completedCount ? 'current' : 'locked');
+      el.type = 'button';
+      el.disabled = state === 'locked';
       el.className = 'stage-node ' + state;
+      el.setAttribute('aria-label', state === 'locked' ? s.theme + ', låst' : 'Öppna ' + s.theme);
       el.style.left = s.pos.x + 'px';
       el.style.top = s.pos.y + 'px';
       el.innerHTML = '<span class="icon">' + (state === 'done' ? '✅' : s.icon) + '</span><span class="label">' + s.theme + '</span>';

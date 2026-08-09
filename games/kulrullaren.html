@@ -44,7 +44,7 @@
   .toast.show { opacity: 1; }
 
   .steer-btns { position: absolute; bottom: 18px; left: 0; right: 0; z-index: 3; display: flex; justify-content: space-between; padding: 0 16px; pointer-events: none; }
-  .steer-btn { width: 62px; height: 62px; border-radius: 50%; background: rgba(23,15,46,0.55); border: 2px solid var(--outline); color: #fff; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; pointer-events: auto; touch-action: none; }
+  .steer-btn { width: 68px; height: 68px; padding: 0; border-radius: 50%; background: rgba(23,15,46,0.55); border: 2px solid var(--outline); color: #fff; font-family: inherit; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; pointer-events: auto; touch-action: none; cursor: pointer; }
   .steer-btn:active { background: rgba(255,210,63,0.6); }
 
   .overlay {
@@ -67,7 +67,7 @@
   .level-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 340px; }
   .level-btn {
     width: 62px; height: 62px; border-radius: 10px; border: 3px solid var(--outline); background: var(--pink);
-    color: var(--ink); font-weight: 900; font-size: 1.3rem; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--ink); padding: 0; font-family: inherit; font-weight: 900; font-size: 1.3rem; display: flex; flex-direction: column; align-items: center; justify-content: center;
     box-shadow: 3px 3px 0 var(--outline); cursor: pointer; gap: 2px;
   }
   .level-btn small { font-size: 0.6rem; }
@@ -97,8 +97,8 @@
   <div class="toast" id="toast"></div>
 
   <div class="steer-btns" id="steerBtns" style="display:none;">
-    <div class="steer-btn" id="btnLeft">◀</div>
-    <div class="steer-btn" id="btnRight">▶</div>
+    <button class="steer-btn" id="btnLeft" type="button" aria-label="Styr vänster">◀</button>
+    <button class="steer-btn" id="btnRight" type="button" aria-label="Styr höger">▶</button>
   </div>
 
   <div class="overlay" id="startOverlay">
@@ -507,15 +507,19 @@
   });
 
   function bindHold(el, onDown, onUp) {
-    // stopPropagation sa knapptryck inte ocksa bubblar upp till gameWrap
-    // och startar en drag-styrning samtidigt, se touchstart pa wrap nedan.
-    el.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); onDown(); }, { passive: false });
-    el.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); onUp(); }, { passive: false });
-    el.addEventListener('mousedown', onDown);
-    window.addEventListener('mouseup', onUp);
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      el.setPointerCapture?.(e.pointerId);
+      onDown();
+    });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(type => {
+      el.addEventListener(type, e => { e.stopPropagation(); onUp(); });
+    });
   }
   bindHold(document.getElementById('btnLeft'), () => { steerInput = -1; }, () => { if (steerInput < 0) steerInput = 0; });
   bindHold(document.getElementById('btnRight'), () => { steerInput = 1; }, () => { if (steerInput > 0) steerInput = 0; });
+  window.addEventListener('blur', () => { steerInput = 0; dragActive = false; dragLateral = null; });
 
   const wrap = document.getElementById('gameWrap');
   wrap.addEventListener('touchstart', (e) => {
@@ -542,11 +546,14 @@
     const grid = document.getElementById('levelGrid');
     grid.innerHTML = '';
     LEVELS.forEach((lvl, i) => {
-      const btn = document.createElement('div');
+      const btn = document.createElement('button');
       const locked = i >= progress.unlocked;
+      btn.type = 'button';
+      btn.disabled = locked;
       btn.className = 'level-btn' + (locked ? ' locked' : '');
       const st = progress.stars[i] || 0;
-      btn.innerHTML = (locked ? '🔒' : String(i + 1)) + (locked ? '' : '<div class="lvl-stars">' + '⭐'.repeat(st) + '☆'.repeat(3 - st) + '</div>') + '<small>' + lvl.name + '</small>';
+      btn.setAttribute('aria-label', locked ? 'Bana ' + (i + 1) + ', låst' : 'Spela bana ' + (i + 1) + ': ' + lvl.name);
+      btn.innerHTML = (locked ? '🔒' : String(i + 1)) + (locked ? '' : '<span class="lvl-stars">' + '⭐'.repeat(st) + '☆'.repeat(3 - st) + '</span>') + '<small>' + lvl.name + '</small>';
       if (!locked) {
         btn.addEventListener('click', () => startLevel(i));
       }

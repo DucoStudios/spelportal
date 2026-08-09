@@ -105,12 +105,12 @@
   .map-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; max-width: 460px; }
   .map-card {
     width: 190px; background: var(--panel); border: 3px solid var(--outline); border-radius: 12px;
-    padding: 14px; cursor: pointer; box-shadow: 4px 4px 0 var(--outline); text-align: left;
+    padding: 14px; color: var(--ink); font-family: inherit; cursor: pointer; box-shadow: 4px 4px 0 var(--outline); text-align: left;
   }
   .map-card:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
-  .map-card .icon { font-size: 1.8rem; }
-  .map-card h3 { margin: 6px 0 4px; font-size: 1rem; color: var(--yellow); }
-  .map-card p { font-size: 0.74rem; margin: 0; max-width: none; color: var(--ink-soft); }
+  .map-card .icon { display: block; font-size: 1.8rem; }
+  .map-card .map-title { display: block; margin: 6px 0 4px; font-size: 1rem; font-weight: 800; color: var(--yellow); }
+  .map-card .map-desc { display: block; font-size: 0.74rem; margin: 0; max-width: none; color: var(--ink-soft); }
   button.cta {
     font-family: 'Open Sans', sans-serif; font-size: 0.9rem; font-weight: 800; text-transform: uppercase;
     background: var(--yellow); color: var(--outline); border: 3px solid var(--outline); border-radius: 8px;
@@ -725,9 +725,11 @@
   function renderMapGrid() {
     mapGridEl.innerHTML = '';
     MAPS.forEach(map => {
-      const card = document.createElement('div');
+      const card = document.createElement('button');
+      card.type = 'button';
       card.className = 'map-card';
-      card.innerHTML = '<div class="icon">' + map.icon + '</div><h3>' + map.name + '</h3><p>' + map.desc + '</p>';
+      card.setAttribute('aria-label', 'Starta karta: ' + map.name);
+      card.innerHTML = '<span class="icon">' + map.icon + '</span><span class="map-title">' + map.name + '</span><span class="map-desc">' + map.desc + '</span>';
       card.addEventListener('click', () => startMap(map));
       mapGridEl.appendChild(card);
     });

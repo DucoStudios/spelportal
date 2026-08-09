@@ -135,7 +135,7 @@
   .action-btns { position: absolute; right: 16px; bottom: 150px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
   .abtn {
     width: 56px; height: 56px; border-radius: 50%; background: rgba(23,15,46,0.75); border: 2px solid var(--outline);
-    color: #fff; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; touch-action: none;
+    color: #fff; padding: 0; font-family: inherit; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; touch-action: none; cursor: pointer;
   }
   .abtn.break { background: rgba(255,46,147,0.6); }
   .abtn.place { background: rgba(47,230,214,0.45); }
@@ -195,10 +195,10 @@
     <div class="joystick move-joystick" id="joystick"><div class="joystick-knob" id="joystickKnob"></div></div>
     <div class="joystick look-joystick" id="lookJoystick"><div class="joystick-knob" id="lookJoystickKnob"></div></div>
     <div class="action-btns">
-      <div class="abtn" id="btnJump">⤒</div>
-      <div class="abtn break" id="btnBreak">⛏</div>
-      <div class="abtn place" id="btnPlace">🧱</div>
-      <div class="abtn help" id="btnHelp">🤝</div>
+      <button class="abtn" id="btnJump" type="button" aria-label="Hoppa">⤒</button>
+      <button class="abtn break" id="btnBreak" type="button" aria-label="Bryt block">⛏</button>
+      <button class="abtn place" id="btnPlace" type="button" aria-label="Placera block">🧱</button>
+      <button class="abtn help" id="btnHelp" type="button" aria-label="Hjälp närmaste figur">🤝</button>
     </div>
   </div>
 
@@ -673,7 +673,7 @@
     if (e.code === 'KeyE') tryHelpNearestNpc();
   });
   window.addEventListener('keyup', e => { keys[e.code] = false; });
-  btnHelp.addEventListener('touchstart', e => { e.preventDefault(); tryHelpNearestNpc(); }, { passive: false });
+  window.addEventListener('blur', () => { Object.keys(keys).forEach(code => { keys[code] = false; }); });
 
   // placementMode styr vad hoger-klick/🧱-knappen gor: ett enskilt block
   // fran hotbaren, eller ett helt "gadget"-prefab fran hus-katalogen.
@@ -928,7 +928,7 @@
     lookDX = nx; lookDY = ny;
   }, { passive: false });
 
-  window.addEventListener('touchend', e => {
+  function releaseJoysticks(e) {
     if (Array.from(e.changedTouches).some(t => t.identifier === joyTouchId)) {
       joyTouchId = null; joyForward = 0; joyStrafe = 0;
       joystickKnob.style.transform = 'translate(0,0)';
@@ -937,15 +937,18 @@
       lookJoyTouchId = null; lookDX = 0; lookDY = 0;
       lookJoystickKnob.style.transform = 'translate(0,0)';
     }
-  });
+  }
+  window.addEventListener('touchend', releaseJoysticks);
+  window.addEventListener('touchcancel', releaseJoysticks);
 
   let touchJump = false;
   function bindTapButton(el, onTap) {
-    el.addEventListener('touchstart', e => { e.preventDefault(); onTap(); }, { passive: false });
+    el.addEventListener('pointerdown', e => { e.preventDefault(); onTap(); });
   }
   bindTapButton(btnJump, () => { touchJump = true; setTimeout(() => { touchJump = false; }, 150); });
   bindTapButton(btnBreak, () => breakBlock());
   bindTapButton(btnPlace, () => placeAction());
+  bindTapButton(btnHelp, () => tryHelpNearestNpc());
 
   function startGame() {
     running = true;

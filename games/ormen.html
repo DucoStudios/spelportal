@@ -111,6 +111,7 @@
   <div class="hud">
     <div class="hud-chip"><span class="label">POÄNG</span><span class="value" id="scoreVal">0</span></div>
     <div class="hud-chip"><span class="label">LÄNGD</span><span class="value" id="lenVal">3</span></div>
+    <div class="hud-chip"><span class="label">BÄSTA</span><span class="value" id="bestVal">0</span></div>
   </div>
 
   <div class="board-wrap">
@@ -144,12 +145,18 @@
   const boardEl = document.getElementById('board');
   const scoreVal = document.getElementById('scoreVal');
   const lenVal = document.getElementById('lenVal');
+  const bestVal = document.getElementById('bestVal');
   const startOverlay = document.getElementById('startOverlay');
   const endOverlay = document.getElementById('endOverlay');
   const startBtn = document.getElementById('startBtn');
   const restartBtn = document.getElementById('restartBtn');
   const finalScore = document.getElementById('finalScore');
   const finalStats = document.getElementById('finalStats');
+
+  const BEST_KEY = 'ormen-best-v1';
+  let best = 0;
+  try { best = Math.max(0, parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0); } catch (_) {}
+  bestVal.textContent = best;
 
   let snake, dir, nextDir, food, running, score, tickHandle, speedMs, pool = [], foodEl = null;
 
@@ -271,6 +278,11 @@
     snake.unshift(head);
     if (head.x === food.x && head.y === food.y) {
       score += 10;
+      if (score > best) {
+        best = score;
+        bestVal.textContent = best;
+        try { localStorage.setItem(BEST_KEY, String(best)); } catch (_) {}
+      }
       playEat();
       spawnFood();
       speedMs = Math.max(70, speedMs - 3);

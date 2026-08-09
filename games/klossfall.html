@@ -55,7 +55,7 @@
   button.cta:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
 
   .touch-controls { display: flex; justify-content: center; gap: 0.5rem; width: 100%; max-width: 300px; margin-top: 0.9rem; flex-wrap: wrap; }
-  .tbtn { width: 52px; height: 48px; border-radius: 10px; border: 2px solid var(--outline); background: var(--panel); color: var(--ink); font-size: 1.2rem; box-shadow: 3px 3px 0 var(--outline); display: flex; align-items: center; justify-content: center; user-select: none; touch-action: none; }
+  .tbtn { width: 56px; height: 52px; padding: 0; border-radius: 11px; border: 2px solid var(--outline); background: var(--panel); color: var(--ink); font-family: inherit; font-size: 1.2rem; box-shadow: 3px 3px 0 var(--outline); display: flex; align-items: center; justify-content: center; user-select: none; touch-action: none; cursor: pointer; }
   .tbtn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--outline); }
   .next-hint { margin-top: 1.1rem; font-size: 0.75rem; font-weight: 600; color: var(--ink-faint); text-align: center; max-width: 406px; }
 
@@ -121,11 +121,11 @@
   </div>
 
   <div class="touch-controls">
-    <div class="tbtn" id="btnLeft">◀</div>
-    <div class="tbtn" id="btnRotate">⟳</div>
-    <div class="tbtn" id="btnRight">▶</div>
-    <div class="tbtn" id="btnDown">▼</div>
-    <div class="tbtn" id="btnDrop">⤓</div>
+    <button class="tbtn" id="btnLeft" type="button" aria-label="Flytta vänster">◀</button>
+    <button class="tbtn" id="btnRotate" type="button" aria-label="Rotera klossen">⟳</button>
+    <button class="tbtn" id="btnRight" type="button" aria-label="Flytta höger">▶</button>
+    <button class="tbtn" id="btnDown" type="button" aria-label="Flytta nedåt">▼</button>
+    <button class="tbtn" id="btnDrop" type="button" aria-label="Släpp klossen direkt">⤓</button>
   </div>
 
   <p class="next-hint">Nästa: Ordracet (franska).</p>

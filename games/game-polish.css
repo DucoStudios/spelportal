@@ -39,6 +39,21 @@ body[data-game-id] :is(button, a, [role="button"]) {
   touch-action: manipulation;
 }
 
+body[data-game-id] :is(button, a, [role="button"], [tabindex]):focus-visible {
+  outline: 3px solid var(--polish-warm);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--polish-warm) 24%, transparent);
+}
+
+body[data-game-id] :is(button, [role="button"]):disabled,
+body[data-game-id] :is(button, [role="button"])[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: .48;
+  filter: grayscale(.35);
+  transform: none;
+  box-shadow: none;
+}
+
 body[data-game-id]::after {
   content: "";
   position: fixed;
@@ -305,6 +320,7 @@ body[data-game-id] :is(
   .sound-btn, .stop-btn, .go, .scene-tab, .catalog-tab, .menu-tab,
   .touch-controls button, .action-btns button, .controls button
 ) {
+  min-height: 44px;
   border-color: color-mix(in srgb, var(--polish-warm) 54%, var(--outline, #120a24));
   background:
     linear-gradient(180deg, rgba(255,255,255,.25), transparent 36%),
@@ -483,6 +499,23 @@ body[data-game-id="malarboken"] .scene-tabs {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body[data-game-id] .hero-band::before { animation: none; }
-  body[data-game-id] * { scroll-behavior: auto !important; }
+  body[data-game-id] *,
+  body[data-game-id] *::before,
+  body[data-game-id] *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+@media (hover: none) {
+  body[data-game-id] :is(
+    .cta, .choice-btn, .tbtn, .abtn, .mode-btn, .replay-btn, .steer-btn,
+    .sound-btn, .stop-btn, .go, .scene-tab, .catalog-tab, .menu-tab,
+    .touch-controls button, .action-btns button, .controls button
+  ):hover {
+    transform: none;
+    filter: none;
+  }
 }

@@ -80,6 +80,50 @@ test("Ormen kan styras med tillgängliga knappar och korta svep på spelplanen",
   assert.ok(html.includes("boardEl.addEventListener('pointerup'"));
   assert.ok(html.includes("boardEl.clientWidth * 0.035"));
   assert.ok(html.includes("navigator.vibrate(10)"));
+  assert.ok(html.includes('id="bestVal"'));
+  assert.ok(html.includes("const BEST_KEY = 'ormen-best-v1'"));
+});
+
+test("gemensam spel-UX ger tydligt fokus och respekterar minskad rörelse", () => {
+  const polish = readFileSync("games/game-polish.css", "utf8");
+  const guard = readFileSync("interaction-guard.js", "utf8");
+  assert.ok(polish.includes(":focus-visible"));
+  assert.ok(polish.includes("prefers-reduced-motion: reduce"));
+  assert.ok(polish.includes("animation-duration: .01ms !important"));
+  assert.ok(guard.includes("function setupOverlayFocus()"));
+  assert.ok(guard.includes("aria-modal"));
+  assert.ok(guard.includes("MutationObserver"));
+});
+
+test("arkadspelens mobilkontroller är riktiga knappar med tillgängliga namn", () => {
+  for (const file of ["flykten.html", "bokstavsbilen.html", "klossfall.html", "superhjalte-spranget.html", "kulrullaren.html", "blockvarlden.html"]) {
+    const html = readFileSync(`games/${file}`, "utf8");
+    assert.doesNotMatch(html, /<div class="(?:tbtn|steer-btn|abtn[^\"]*)" id="btn/);
+    assert.match(html, /<button class="(?:tbtn|steer-btn|abtn[^\"]*)" id="btn[^>]+aria-label=/);
+  }
+  const hero = readFileSync("games/superhjalte-spranget.html", "utf8");
+  const roller = readFileSync("games/kulrullaren.html", "utf8");
+  const blocks = readFileSync("games/blockvarlden.html", "utf8");
+  assert.ok(hero.includes("'pointercancel'"));
+  assert.ok(hero.includes("function releaseControls()"));
+  assert.ok(roller.includes("'pointerup', 'pointercancel', 'lostpointercapture'"));
+  assert.ok(blocks.includes("window.addEventListener('touchcancel', releaseJoysticks)"));
+});
+
+test("centrala spelval och nivåkort fungerar med tangentbord", () => {
+  const expectations = [
+    ["kulrullaren.html", "document.createElement('button')", "Spela bana"],
+    ["memory-plattorna.html", "document.createElement('button')", "Nedvänt minneskort"],
+    ["ordmastaren.html", "document.createElement('button')", "Starta paket"],
+    ["kubkrossaren.html", "document.createElement('button')", "Starta "],
+    ["gardsriket.html", "document.createElement('button')", "Starta karta"],
+    ["ordresan.html", "document.createElement('button')", "Öppna "]
+  ];
+  for (const [file, buttonCode, label] of expectations) {
+    const html = readFileSync(`games/${file}`, "utf8");
+    assert.ok(html.includes(buttonCode), `${file} skapar inga knappar`);
+    assert.ok(html.includes(label), `${file} saknar tillgängligt namn`);
+  }
 });
 
 test("alla franska lyssningsspel använder samma förbättrade röstmotor", () => {

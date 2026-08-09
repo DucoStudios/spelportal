@@ -1,0 +1,10 @@
+{
+  "name": "spelportal",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "polish:apply": "node scripts/apply-game-polish.mjs",
+    "typecheck": "node scripts/check-static.mjs",
+    "test": "node --test tests/portal.test.mjs"
+  }
+}

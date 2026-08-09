@@ -1,0 +1,442 @@
+/*
+  Spelportal — visual polish layer
+  Visuella förbättringar enbart. Spelregler, kontroller och lagring lämnas i
+  respektive HTML-fil. Varje spel får en egen färgton, men samma taktila djup.
+*/
+
+body[data-game-id] {
+  --polish-primary: #2fe6d6;
+  --polish-secondary: #ff2e93;
+  --polish-warm: #ffd23f;
+  --polish-icon: "✦";
+  --polish-pattern: repeating-linear-gradient(135deg, transparent 0 24px, rgba(255,255,255,.025) 24px 25px);
+  min-height: 100svh;
+  background:
+    radial-gradient(circle at 12% -10%, color-mix(in srgb, var(--polish-primary) 22%, transparent), transparent 34rem),
+    radial-gradient(circle at 92% 110%, color-mix(in srgb, var(--polish-secondary) 18%, transparent), transparent 32rem),
+    var(--bg, #170f2e);
+}
+
+body[data-game-id]::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: .055;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.16) 3px 4px),
+    radial-gradient(circle at center, transparent 25%, rgba(4,2,13,.7) 130%);
+  mix-blend-mode: soft-light;
+}
+
+body[data-game-id] .page {
+  position: relative;
+  isolation: isolate;
+  background:
+    var(--polish-pattern),
+    radial-gradient(ellipse 90% 36rem at 50% -8rem, color-mix(in srgb, var(--polish-primary) 15%, transparent), transparent 72%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg, #170f2e) 93%, var(--polish-secondary) 7%), var(--bg, #170f2e) 62%);
+}
+
+body[data-game-id] .hero-band {
+  position: relative;
+  flex-shrink: 0;
+  isolation: isolate;
+  overflow: hidden;
+  border-bottom: 1px solid color-mix(in srgb, var(--polish-primary) 38%, transparent);
+  background:
+    radial-gradient(circle at 50% 120%, color-mix(in srgb, var(--polish-warm) 28%, transparent), transparent 44%),
+    linear-gradient(145deg, color-mix(in srgb, var(--polish-primary) 12%, transparent), transparent 44%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg2, #241a44) 88%, black 12%), var(--bg, #170f2e));
+  box-shadow:
+    inset 0 -1px 0 color-mix(in srgb, var(--polish-primary) 34%, transparent),
+    0 22px 48px rgba(4, 2, 13, .24);
+}
+
+/* Två äldre startskärmar byggde sina spelbräden först efter knapptryckning.
+   Ge överlägget en riktig scen redan före start så att text och CTA inte kollapsar. */
+body[data-game-id="kulbanan"] #board {
+  width: 252px;
+  min-height: 252px;
+}
+
+body[data-game-id="memory-plattorna"] #board {
+  min-height: min(372px, 92vw);
+}
+
+body[data-game-id] .hero-band::before {
+  content: var(--polish-icon);
+  position: absolute;
+  z-index: 1;
+  right: clamp(.65rem, 6vw, 3rem);
+  top: 52%;
+  transform: translateY(-50%) rotate(-9deg);
+  font-size: clamp(4.8rem, 22vw, 8.5rem);
+  line-height: 1;
+  opacity: .12;
+  filter: saturate(1.25) drop-shadow(0 18px 24px rgba(0,0,0,.45));
+  animation: polish-float 7s ease-in-out infinite;
+  pointer-events: none;
+}
+
+body[data-game-id] .hero-band::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--polish-primary) 7%, transparent) 50%, transparent),
+    radial-gradient(circle at 18% 24%, rgba(255,255,255,.07), transparent 15rem);
+}
+
+body[data-game-id] .hero-title,
+body[data-game-id] .hero-band .sub,
+body[data-game-id] .hero-band .back-link,
+body[data-game-id] .hero-band .sun,
+body[data-game-id] .hero-band .grid-floor {
+  z-index: 2;
+}
+
+body[data-game-id] .hero-title {
+  text-shadow:
+    0 3px 0 color-mix(in srgb, var(--polish-secondary) 58%, #140a27),
+    0 8px 22px rgba(0,0,0,.5),
+    0 0 28px color-mix(in srgb, var(--polish-primary) 19%, transparent);
+}
+
+body[data-game-id] .sun {
+  filter:
+    saturate(1.24)
+    drop-shadow(0 0 22px color-mix(in srgb, var(--polish-warm) 36%, transparent))
+    drop-shadow(0 18px 32px color-mix(in srgb, var(--polish-secondary) 24%, transparent));
+}
+
+body[data-game-id] .grid-floor {
+  opacity: .92;
+  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--polish-primary) 34%, transparent));
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 28%, #000 82%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 28%, #000 82%, transparent);
+}
+
+body[data-game-id] .sub {
+  color: color-mix(in srgb, var(--ink-soft, #c9b6e8) 88%, white 12%);
+  line-height: 1.55;
+  text-wrap: balance;
+}
+
+body[data-game-id] .fixed-back {
+  border: 1px solid color-mix(in srgb, var(--polish-primary) 34%, transparent);
+  background: color-mix(in srgb, var(--panel, #2c1f52) 67%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    0 8px 22px rgba(3,2,12,.28);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  transition: transform .16s ease, border-color .16s ease, background .16s ease;
+}
+
+body[data-game-id] .fixed-back:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--polish-primary) 72%, transparent);
+  background: color-mix(in srgb, var(--polish-primary) 16%, var(--panel, #2c1f52));
+}
+
+body[data-game-id] .back-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: calc(100% - 2rem);
+  margin-inline: auto;
+  padding: .28rem .68rem;
+  border: 1px solid color-mix(in srgb, var(--polish-primary) 26%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel, #2c1f52) 52%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 7px 18px rgba(3,2,12,.18);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+  transition: transform .16s ease, border-color .16s ease, background .16s ease;
+}
+
+body[data-game-id] .back-link:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--polish-primary) 68%, transparent);
+  background: color-mix(in srgb, var(--polish-primary) 12%, var(--panel, #2c1f52));
+}
+
+body[data-game-id] .hud {
+  position: relative;
+  z-index: 5;
+  filter: drop-shadow(0 12px 24px rgba(2,1,10,.2));
+}
+
+body[data-game-id] .hud-chip,
+body[data-game-id] .stat-chip,
+body[data-game-id] .stat-pill,
+body[data-game-id] .pill {
+  border-color: color-mix(in srgb, var(--polish-primary) 26%, var(--outline, #120a24));
+  background:
+    linear-gradient(155deg, rgba(255,255,255,.09), transparent 38%),
+    color-mix(in srgb, var(--panel, #2c1f52) 84%, black 16%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    inset 0 -10px 24px rgba(0,0,0,.08),
+    0 9px 20px rgba(3,2,12,.26),
+    0 0 22px color-mix(in srgb, var(--polish-primary) 7%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+body[data-game-id] .hud-chip .label,
+body[data-game-id] .stat-chip .label,
+body[data-game-id] .stat-pill .label {
+  color: var(--polish-primary);
+  letter-spacing: .08em;
+  text-shadow: 0 0 14px color-mix(in srgb, var(--polish-primary) 45%, transparent);
+}
+
+body[data-game-id] .board-wrap {
+  position: relative;
+  isolation: isolate;
+  border-color: color-mix(in srgb, var(--polish-primary) 20%, var(--outline, #120a24));
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.035), transparent 34%),
+    color-mix(in srgb, var(--panel, #2c1f52) 90%, black 10%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    inset 0 -24px 55px rgba(2,1,10,.11),
+    0 22px 55px rgba(2,1,10,.4),
+    0 0 0 1px color-mix(in srgb, var(--polish-primary) 12%, transparent),
+    0 0 42px color-mix(in srgb, var(--polish-secondary) 8%, transparent);
+}
+
+body[data-game-id] .board-wrap::before {
+  content: "";
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.035),
+    inset 0 28px 44px color-mix(in srgb, var(--polish-primary) 4%, transparent);
+}
+
+body[data-game-id] canvas {
+  filter: saturate(1.07) contrast(1.025);
+}
+
+body[data-game-id] .overlay {
+  isolation: isolate;
+  border-color: color-mix(in srgb, var(--polish-primary) 22%, var(--outline, #120a24));
+  background:
+    radial-gradient(circle at 50% 23%, color-mix(in srgb, var(--polish-primary) 13%, transparent), transparent 19rem),
+    linear-gradient(160deg, color-mix(in srgb, var(--panel, #2c1f52) 88%, transparent), color-mix(in srgb, var(--bg, #170f2e) 94%, transparent));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    inset 0 0 80px rgba(1,0,8,.18);
+  backdrop-filter: blur(13px) saturate(1.15);
+  -webkit-backdrop-filter: blur(13px) saturate(1.15);
+}
+
+body[data-game-id] .overlay::before {
+  content: var(--polish-icon);
+  position: absolute;
+  z-index: -1;
+  right: 7%;
+  top: 8%;
+  font-size: clamp(5rem, 25vw, 10rem);
+  opacity: .055;
+  transform: rotate(10deg);
+  filter: blur(.1px) saturate(1.25);
+  pointer-events: none;
+}
+
+body[data-game-id] .overlay h1,
+body[data-game-id] .overlay h2,
+body[data-game-id] .overlay h3,
+body[data-game-id] .result h2,
+body[data-game-id] .result h3 {
+  text-wrap: balance;
+  text-shadow:
+    0 3px 0 color-mix(in srgb, var(--polish-secondary) 50%, #130a25),
+    0 10px 26px rgba(0,0,0,.34),
+    0 0 25px color-mix(in srgb, var(--polish-primary) 16%, transparent);
+}
+
+body[data-game-id] .result,
+body[data-game-id] .recap,
+body[data-game-id] .assets-box {
+  border-color: color-mix(in srgb, var(--polish-primary) 22%, var(--outline, #120a24));
+  background:
+    linear-gradient(150deg, rgba(255,255,255,.06), transparent 38%),
+    color-mix(in srgb, var(--panel, #2c1f52) 89%, black 11%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.1),
+    0 18px 44px rgba(3,2,12,.36);
+}
+
+body[data-game-id] :is(
+  .cta, .choice-btn, .tbtn, .abtn, .mode-btn, .replay-btn, .steer-btn,
+  .sound-btn, .stop-btn, .go, .scene-tab, .catalog-tab, .menu-tab,
+  .touch-controls button, .action-btns button, .controls button
+) {
+  border-color: color-mix(in srgb, var(--polish-warm) 54%, var(--outline, #120a24));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.25), transparent 36%),
+    linear-gradient(135deg, var(--polish-warm), color-mix(in srgb, var(--polish-warm) 70%, var(--polish-secondary)));
+  color: #180d24;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.38),
+    0 6px 0 color-mix(in srgb, var(--polish-secondary) 32%, #120a24),
+    0 11px 24px rgba(2,1,10,.34),
+    0 0 24px color-mix(in srgb, var(--polish-warm) 13%, transparent);
+  text-shadow: 0 1px 0 rgba(255,255,255,.22);
+  transition: transform .14s ease, box-shadow .14s ease, filter .14s ease;
+}
+
+body[data-game-id] :is(
+  .cta, .choice-btn, .tbtn, .abtn, .mode-btn, .replay-btn, .steer-btn,
+  .sound-btn, .stop-btn, .go, .scene-tab, .catalog-tab, .menu-tab,
+  .touch-controls button, .action-btns button, .controls button
+):hover {
+  transform: translateY(-2px) scale(1.015);
+  filter: saturate(1.12) brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.46),
+    0 8px 0 color-mix(in srgb, var(--polish-secondary) 36%, #120a24),
+    0 16px 30px rgba(2,1,10,.38),
+    0 0 32px color-mix(in srgb, var(--polish-warm) 19%, transparent);
+}
+
+body[data-game-id] :is(
+  .cta, .choice-btn, .tbtn, .abtn, .mode-btn, .replay-btn, .steer-btn,
+  .sound-btn, .stop-btn, .go, .scene-tab, .catalog-tab, .menu-tab,
+  .touch-controls button, .action-btns button, .controls button
+):active {
+  transform: translateY(4px) scale(.99);
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,.12),
+    0 2px 0 color-mix(in srgb, var(--polish-secondary) 40%, #120a24),
+    0 5px 12px rgba(2,1,10,.3);
+}
+
+body[data-game-id] :is(.next-hint, .mode-tag, .prompt-gloss, .verse-tag, .toast, .feedback-flash) {
+  border: 1px solid color-mix(in srgb, var(--polish-primary) 20%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel, #2c1f52) 72%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 8px 22px rgba(3,2,12,.2);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+}
+
+body[data-game-id] .topbar {
+  border-bottom: 1px solid color-mix(in srgb, var(--polish-primary) 28%, transparent);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--polish-secondary) 10%, transparent), transparent 44%, color-mix(in srgb, var(--polish-primary) 9%, transparent)),
+    color-mix(in srgb, var(--bg, #170f2e) 82%, transparent);
+  box-shadow: 0 12px 32px rgba(2,1,10,.28), inset 0 -1px 0 rgba(255,255,255,.04);
+  backdrop-filter: blur(14px) saturate(1.25);
+  -webkit-backdrop-filter: blur(14px) saturate(1.25);
+}
+
+body[data-game-id] :is(.menu-panel, .catalog-panel, .hotbar, .touch-ui, .controls-row) {
+  border-color: color-mix(in srgb, var(--polish-primary) 25%, var(--outline, #120a24));
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.07), transparent 42%),
+    color-mix(in srgb, var(--panel, #2c1f52) 84%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 18px 44px rgba(2,1,10,.36);
+  backdrop-filter: blur(13px) saturate(1.2);
+  -webkit-backdrop-filter: blur(13px) saturate(1.2);
+}
+
+/* Rörelse-/fysikspel: ett diskret ritbordsrutnät. */
+body:is(
+  [data-game-id="sikta-ratt"], [data-game-id="traffa-ratt"],
+  [data-game-id="poppa-ballongerna"], [data-game-id="raddaagget"],
+  [data-game-id="kulbanan"], [data-game-id="kulrullaren"],
+  [data-game-id="kubkrossaren"], [data-game-id="superhjalte-spranget"]
+) {
+  --polish-pattern:
+    linear-gradient(color-mix(in srgb, var(--polish-primary) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--polish-primary) 5%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Lärspel: mjukare prickmönster. */
+body:is(
+  [data-game-id="alfabetet-fargerna"], [data-game-id="bokstavsbilen"],
+  [data-game-id="ljudmatchen"], [data-game-id="meningsbyggaren"],
+  [data-game-id="ordracet"], [data-game-id="ordresan"],
+  [data-game-id="ordgatan"], [data-game-id="ordmastaren"],
+  [data-game-id="malarboken"]
+) {
+  --polish-pattern: radial-gradient(circle, color-mix(in srgb, var(--polish-primary) 7%, transparent) 1px, transparent 1.5px);
+  background-size: 22px 22px;
+}
+
+/* Värderings-/berättelsespel: varma ljusstrålar. */
+body:is(
+  [data-game-id="bibelhjalten"], [data-game-id="vishetens-vag"],
+  [data-game-id="kroppens-tempel"], [data-game-id="gavokedjan"],
+  [data-game-id="saftstand-erbjudandet"], [data-game-id="ekorrhjulet"],
+  [data-game-id="gardsriket"], [data-game-id="sex-burkar-sortern"]
+) {
+  --polish-pattern: conic-gradient(from 210deg at 50% -24%, transparent 0 12deg, color-mix(in srgb, var(--polish-warm) 4%, transparent) 12deg 14deg, transparent 14deg 28deg);
+}
+
+/* Individuella spelpaletter och symboler. */
+body[data-game-id="alfabetet-fargerna"] { --polish-primary:#45f1e0; --polish-secondary:#ff4fa3; --polish-warm:#ffd43b; --polish-icon:"🔤"; }
+body[data-game-id="bibelhjalten"] { --polish-primary:#76d9ff; --polish-secondary:#8b5cf6; --polish-warm:#f5c451; --polish-icon:"⚔️"; }
+body[data-game-id="blockvarlden"] { --polish-primary:#58e47e; --polish-secondary:#28a8a1; --polish-warm:#ffd04d; --polish-icon:"🧱"; }
+body[data-game-id="bokstavsbilen"] { --polish-primary:#41e7dc; --polish-secondary:#ff477e; --polish-warm:#ffd23f; --polish-icon:"🚗"; }
+body[data-game-id="byggkost-eller-sallanmat"] { --polish-primary:#65e47a; --polish-secondary:#ff7756; --polish-warm:#ffe14d; --polish-icon:"🥦"; }
+body[data-game-id="ekorrhjulet"] { --polish-primary:#5ee2b0; --polish-secondary:#ff8b3d; --polish-warm:#ffd34e; --polish-icon:"🐹"; }
+body[data-game-id="flykten"] { --polish-primary:#35ddff; --polish-secondary:#5267ff; --polish-warm:#ffe168; --polish-icon:"🌊"; }
+body[data-game-id="gap-monstren"] { --polish-primary:#69e7df; --polish-secondary:#c85cff; --polish-warm:#ffdf55; --polish-icon:"💭"; }
+body[data-game-id="gardsriket"] { --polish-primary:#68df86; --polish-secondary:#c68b3d; --polish-warm:#f6cf55; --polish-icon:"🌾"; }
+body[data-game-id="gavokedjan"] { --polish-primary:#4ce6dc; --polish-secondary:#ff4f9a; --polish-warm:#ffd84f; --polish-icon:"🎁"; }
+body[data-game-id="klossfall"] { --polish-primary:#3ce7e0; --polish-secondary:#ff3f98; --polish-warm:#ffd33f; --polish-icon:"🧱"; }
+body[data-game-id="kroppens-tempel"] { --polish-primary:#75e6cc; --polish-secondary:#ff6f61; --polish-warm:#f8d35b; --polish-icon:"🙏"; }
+body[data-game-id="kubkrossaren"] { --polish-primary:#42e9da; --polish-secondary:#ff514d; --polish-warm:#ffc847; --polish-icon:"💥"; }
+body[data-game-id="kulbanan"] { --polish-primary:#4fe8e0; --polish-secondary:#ff7a3d; --polish-warm:#ffd64f; --polish-icon:"⚙️"; }
+body[data-game-id="kulrullaren"] { --polish-primary:#45e4ff; --polish-secondary:#8d59ff; --polish-warm:#ffd85b; --polish-icon:"🎢"; }
+body[data-game-id="ljudmatchen"] { --polish-primary:#4ce8df; --polish-secondary:#6e79ff; --polish-warm:#ffdb4a; --polish-icon:"👂"; }
+body[data-game-id="malarboken"] { --polish-primary:#44eadb; --polish-secondary:#ff4ca4; --polish-warm:#ffdd47; --polish-icon:"🎨"; }
+body[data-game-id="memory-plattorna"] { --polish-primary:#46e8da; --polish-secondary:#9c5cff; --polish-warm:#ffd34e; --polish-icon:"🃏"; }
+body[data-game-id="meningsbyggaren"] { --polish-primary:#42e6d9; --polish-secondary:#ff6b68; --polish-warm:#ffd34c; --polish-icon:"🧵"; }
+body[data-game-id="ordgatan"] { --polish-primary:#64e693; --polish-secondary:#655cff; --polish-warm:#ffe052; --polish-icon:"🧠"; }
+body[data-game-id="ordmastaren"] { --polish-primary:#50e5dc; --polish-secondary:#5b70ff; --polish-warm:#ffd83f; --polish-icon:"📚"; }
+body[data-game-id="ordracet"] { --polish-primary:#45e7df; --polish-secondary:#ff4e66; --polish-warm:#ffd84e; --polish-icon:"🇫🇷"; }
+body[data-game-id="ordresan"] { --polish-primary:#54e3a0; --polish-secondary:#4f79ff; --polish-warm:#ffd85a; --polish-icon:"🗺️"; }
+body[data-game-id="ordspraks-pusslet"] { --polish-primary:#44e6d8; --polish-secondary:#ff4e9d; --polish-warm:#ffd746; --polish-icon:"🧩"; }
+body[data-game-id="ormen"] { --polish-primary:#6af06d; --polish-secondary:#28bfa7; --polish-warm:#dcff50; --polish-icon:"🐍"; }
+body[data-game-id="poppa-ballongerna"] { --polish-primary:#52e6e0; --polish-secondary:#ff4f9c; --polish-warm:#ffdd4c; --polish-icon:"🎈"; }
+body[data-game-id="pusselvridaren"] { --polish-primary:#4ce4da; --polish-secondary:#9a59ff; --polish-warm:#ffd350; --polish-icon:"🌀"; }
+body[data-game-id="raddaagget"] { --polish-primary:#65e5cb; --polish-secondary:#ff784a; --polish-warm:#ffe067; --polish-icon:"🥚"; }
+body[data-game-id="ror-pa-dig"] { --polish-primary:#49e5d6; --polish-secondary:#ff5e66; --polish-warm:#ffdb4b; --polish-icon:"🤸"; }
+body[data-game-id="saftstand-erbjudandet"] { --polish-primary:#72e47b; --polish-secondary:#ff8a3d; --polish-warm:#ffe14f; --polish-icon:"🍋"; }
+body[data-game-id="schack"] { --polish-primary:#72e8df; --polish-secondary:#9b75ff; --polish-warm:#f5dc70; --polish-icon:"♟️"; }
+body[data-game-id="sex-burkar-sortern"] { --polish-primary:#47e6d8; --polish-secondary:#ff7a46; --polish-warm:#ffd348; --polish-icon:"💰"; }
+body[data-game-id="sikta-ratt"] { --polish-primary:#46e7dd; --polish-secondary:#ff624a; --polish-warm:#ffd64a; --polish-icon:"🎯"; }
+body[data-game-id="superhjalte-spranget"] { --polish-primary:#48ddff; --polish-secondary:#ff455f; --polish-warm:#ffd54a; --polish-icon:"🦸"; }
+body[data-game-id="traffa-ratt"] { --polish-primary:#47e6db; --polish-secondary:#ff5c9c; --polish-warm:#ffd84f; --polish-icon:"✏️"; }
+body[data-game-id="vishetens-vag"] { --polish-primary:#58dfb5; --polish-secondary:#8f63e8; --polish-warm:#f4cb59; --polish-icon:"📜"; }
+
+@keyframes polish-float {
+  0%, 100% { transform: translateY(-50%) rotate(-9deg) scale(1); }
+  50% { transform: translateY(calc(-50% - 6px)) rotate(-5deg) scale(1.025); }
+}
+
+@media (max-width: 520px) {
+  body[data-game-id] .hero-band::before { right: -.25rem; opacity: .095; }
+  body[data-game-id] .hud-chip { min-width: 0; }
+  body[data-game-id] .board-wrap { box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 16px 36px rgba(2,1,10,.34), 0 0 0 1px color-mix(in srgb, var(--polish-primary) 10%, transparent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-game-id] .hero-band::before { animation: none; }
+  body[data-game-id] * { scroll-behavior: auto !important; }
+}

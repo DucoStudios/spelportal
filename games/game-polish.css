@@ -11,10 +11,32 @@ body[data-game-id] {
   --polish-icon: "✦";
   --polish-pattern: repeating-linear-gradient(135deg, transparent 0 24px, rgba(255,255,255,.025) 24px 25px);
   min-height: 100svh;
+  width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
   background:
     radial-gradient(circle at 12% -10%, color-mix(in srgb, var(--polish-primary) 22%, transparent), transparent 34rem),
     radial-gradient(circle at 92% 110%, color-mix(in srgb, var(--polish-secondary) 18%, transparent), transparent 32rem),
     var(--bg, #170f2e);
+}
+
+html:has(body[data-game-id]) {
+  width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+}
+
+body[data-game-id] :is(
+  canvas, #board, .board, .board-wrap, #gameWrap, .game-wrap,
+  .game-area, .playfield, .stage, .touch-controls, .joystick-zone
+) {
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+body[data-game-id] :is(button, a, [role="button"]) {
+  touch-action: manipulation;
 }
 
 body[data-game-id]::after {
@@ -434,6 +456,30 @@ body[data-game-id="vishetens-vag"] { --polish-primary:#58dfb5; --polish-secondar
   body[data-game-id] .hero-band::before { right: -.25rem; opacity: .095; }
   body[data-game-id] .hud-chip { min-width: 0; }
   body[data-game-id] .board-wrap { box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 16px 36px rgba(2,1,10,.34), 0 0 0 1px color-mix(in srgb, var(--polish-primary) 10%, transparent); }
+}
+
+@media (max-width: 359px) {
+  body[data-game-id] .hero-title h1 {
+    max-width: calc(100vw - 5.6rem);
+    margin-inline: auto;
+    font-size: clamp(1rem, 6.4vw, 1.38rem);
+    overflow-wrap: anywhere;
+  }
+
+  body[data-game-id] .page { padding-inline: .72rem; }
+  body[data-game-id] :is(.hud, .status-row) { max-width: 100%; }
+  body[data-game-id] :is(.controls-row, .actions, .action-btns) { max-width: 100%; flex-wrap: wrap; justify-content: center; }
+}
+
+body[data-game-id="malarboken"] .scene-tabs {
+  width: min(100%, 430px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+@media (min-width: 900px) {
+  body[data-game-id] .hero-band { max-width: 560px; }
+  body[data-game-id] .sub { max-width: 520px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

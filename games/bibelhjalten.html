@@ -279,6 +279,7 @@
   .fixed-back:active { transform: scale(0.92); }
 </style>
 <link rel="stylesheet" href="game-polish.css">
+<script src="../interaction-guard.js" defer></script>
 </head>
 <body data-game-id="bibelhjalten">
 <a class="fixed-back" href="../index.html" aria-label="Tillbaka till spelkatalogen">&larr;</a>
@@ -307,15 +308,15 @@
   const boardEl = document.getElementById('board');
 
   const STORIES = [
-    { id: 'david', icon: '🪨', title: 'David och Goljat', desc: 'Mod mot en jätte.', locked: false },
-    { id: 'josef', icon: '🌾', title: 'Josef', desc: 'Kommer snart.', locked: true },
-    { id: 'ester', icon: '👑', title: 'Ester', desc: 'Kommer snart.', locked: true }
+    { id: 'herden', icon: '🪨', title: 'Herdepojken och jätten', desc: 'Mod mot en jätte.', locked: false },
+    { id: 'dromtolkaren', icon: '🌾', title: 'Drömtolkaren', desc: 'Kommer snart.', locked: true },
+    { id: 'drottningen', icon: '👑', title: 'Den modiga drottningen', desc: 'Kommer snart.', locked: true }
   ];
 
   const SCENES = {
     intro: {
       icon: '🏔️',
-      text: 'Filistéernas jätte Goljat ropar över dalen varje dag: "Skicka fram en man!" Israels soldater står stilla, för rädda för att svara. Du är där med mat åt dina bröder — och du hör vad han ropar.',
+      text: 'Fiendens jätte ropar över dalen varje dag: "Skicka fram en man!" Soldaterna står stilla, för rädda för att svara. Du är där med mat åt dina bröder — och du hör vad han ropar.',
       choices: [
         { label: 'Backa. Det här är inte ditt problem.', cls: 'a', next: 'flee_end' },
         { label: 'Fråga: "Vad händer med den som besegrar honom?"', cls: 'b', next: 'saul' }
@@ -323,13 +324,13 @@
     },
     flee_end: {
       icon: '🚶',
-      text: 'Du går hem med bröderna. Goljat ropar fortfarande, dag efter dag. Ibland är modet det enda som öppnar en dörr som annars förblir stängd.',
+      text: 'Du går hem med bröderna. Jätten ropar fortfarande, dag efter dag. Ibland är modet det enda som öppnar en dörr som annars förblir stängd.',
       ending: true,
       recap: ['Du valde tryggheten']
     },
     saul: {
       icon: '🛡️',
-      text: 'Kung Saul hör om dig och kallar dig till sitt tält. "Du är bara en pojke", säger han — men erbjuder dig sin egen rustning och sitt svärd ändå.',
+      text: 'Kungen hör om dig och kallar dig till sitt tält. "Du är bara en pojke", säger han — men erbjuder dig sin egen rustning och sitt svärd ändå.',
       choices: [
         { label: 'Ta på dig kungens rustning.', cls: 'a', next: 'taunt', tag: 'Provade någon annans rustning först', flavor: 'Du kan knappt röra dig i den tunga rustningen. Efter några steg tar du av den igen — den var aldrig din.' },
         { label: 'Lägg av den. Lita på det du redan kan.', cls: 'b', next: 'taunt', tag: 'Litade på det som var ditt', flavor: 'Du känner igen tyngden av din egen slunga i handen. Den har du tränat med i åratal.' }
@@ -337,7 +338,7 @@
     },
     taunt: {
       icon: '😤',
-      textTemplate: '{flavor} Du går ner i dalen. Goljat ser dig och skrattar. "Är jag en hund, eftersom du kommer med en käpp?" Han hotar dig med vad han ska göra med dig.',
+      textTemplate: '{flavor} Du går ner i dalen. Jätten ser dig och skrattar. "Är jag en hund, eftersom du kommer med en käpp?" Han hotar dig med vad han ska göra med dig.',
       choices: [
         { label: 'Hota tillbaka, hårdare.', cls: 'a', next: 'climax', tag: 'Mötte hot med hot', flavor: 'Din röst darrar lite när du ropar tillbaka. Rädslan är fortfarande där — du bara döljer den.' },
         { label: 'Säg varför du vet att du vinner ändå.', cls: 'b', next: 'climax', tag: 'Mötte hot med lugn övertygelse', flavor: '"Du kommer med svärd. Jag kommer i ett namn större än ditt." Orden känns sanna när du säger dem.' }
@@ -345,7 +346,7 @@
     },
     climax: {
       icon: '🎯',
-      textTemplate: '{flavor} Goljat rusar mot dig. Du sträcker ner handen i påsen efter en sten.',
+      textTemplate: '{flavor} Jätten rusar mot dig. Du sträcker ner handen i påsen efter en sten.',
       choices: [
         { label: 'Sikta snabbt, utan att tänka.', cls: 'a', next: 'victory', tag: 'Siktade snabbt, hann precis', flavor: 'Stenen träffar, men det var nära — du hade bara en chans och du visste det knappt.' },
         { label: 'Ta ett andetag. Sikta lugnt.', cls: 'b', next: 'victory', tag: 'Andades lugnt och siktade', flavor: 'Stenen träffar precis där du siktade. Ett enda kast.' }
@@ -353,7 +354,7 @@
     },
     victory: {
       icon: '🏆',
-      textTemplate: '{flavor} Goljat faller. Hela dalen blir tyst, sen fylls den av rop. Du var inte den starkaste där nere — men du var den som vågade gå ner.',
+      textTemplate: '{flavor} Jätten faller. Hela dalen blir tyst, sen fylls den av rop. Du var inte den starkaste där nere — men du var den som vågade gå ner.',
       ending: true
     }
   };

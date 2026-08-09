@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="manifest" href="../manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -162,6 +162,7 @@
   .npc-toast.hidden { display: none; }
 </style>
 <link rel="stylesheet" href="game-polish.css">
+<script src="../interaction-guard.js" defer></script>
 </head>
 <body data-game-id="blockvarlden" style="overscroll-behavior-y: contain;">
 
@@ -537,8 +538,7 @@
     // +1, inte +0.5 -- toppytan pa en kolonn med hojd h ligger vid
     // varldskoordinat h+1 (blocket vid array-index h sparar fran h till
     // h+1), samma offset som NPC:erna redan anvander ett par rader ovan.
-    // Med +0.5 hamnade djuren en halv kub nere I marken, buggen David
-    // flaggade 2026-08-07.
+    // Med +0.5 hamnade djuren en halv kub nere i marken vid anvandardtest.
     const gy = heightAt(spot.x, spot.z) + 1;
     group.position.set(spot.x + 0.5, gy, spot.z + 0.5);
     scene.add(group);

@@ -13,6 +13,15 @@ for (const file of files) {
     html = html.replace("</head>", '<link rel="stylesheet" href="game-polish.css">\n</head>');
   }
 
+  if (!html.includes('src="../interaction-guard.js"')) {
+    html = html.replace("</head>", '<script src="../interaction-guard.js" defer></script>\n</head>');
+  }
+
+  html = html.replace(
+    /<meta name="viewport"[^>]*>/,
+    '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">'
+  );
+
   if (!html.includes("data-game-id=")) {
     html = html.replace(/<body([^>]*)>/, `<body data-game-id="${gameId}"$1>`);
   }

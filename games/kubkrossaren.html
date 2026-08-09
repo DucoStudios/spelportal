@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="manifest" href="../manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -78,6 +78,7 @@
   button.cta:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
 </style>
 <link rel="stylesheet" href="game-polish.css">
+<script src="../interaction-guard.js" defer></script>
 </head>
 <body data-game-id="kubkrossaren">
 
@@ -158,8 +159,8 @@
   const RETURN_Y = 760;
   // FLOOR_Y ar en okrossbar studsyta strax under launchern -- bollar som
   // faller anda ner studsar upp i stallet for att bara flyga rakt igenom,
-  // vilket ger mycket mer studsande innan omgangen tar slut (onskemal fran
-  // David 2026-08-08). RETURN_Y star kvar som ett sakerhetsnat langre ner
+  // vilket ger mycket mer studsande innan omgangen tar slut. RETURN_Y star
+  // kvar som ett sakerhetsnat langre ner
   // ifall en boll tunnlar igenom golvet pa en enda hogfarts-frame.
   // Maste ligga en bra bit under launcher-spawnpunkten (LAUNCHER_Y-4) plus
   // storsta bollradien, annars studsar en tungviktarboll (r=12) mot golvet
@@ -169,8 +170,8 @@
   // omgangen tvingas ta slut (annars skulle bollar kunna studsa for evigt
   // mellan golvet och taket/kuberna).
   const TURN_BOUNCE_TIME = 4;
-  // Nar TURN_BOUNCE_TIME gar ut far bollar "nagonstans att aka ut" (David
-  // 2026-08-08) genom att flyga till launchern -- men bara de som redan ar
+  // Nar TURN_BOUNCE_TIME gar ut far bollar "nagonstans att aka ut" genom
+  // att flyga till launchern -- men bara de som redan ar
   // pa vag nedat (vy > 0). En boll som fortfarande studsar uppat/at sidan
   // ska inte ryckas ur sin bana, det ser ut som ett teleport. Den fangas
   // upp forst nasta gang dess egen studs vander den nedat.
@@ -492,7 +493,7 @@
     // Nedre kanten pa den lagst placerade kvarvarande kuben -- en boll som
     // fortfarande ar ovanfor den har kanten kan i princip alltid studsa in
     // i nagon kub igen (via sidovaggarna), sa den ska inte ryckas till
-    // launchern bara for att tiden gatt ut (David 2026-08-08).
+    // launchern bara for att tiden gatt ut.
     if (bricks.length === 0) return -Infinity;
     let max = -Infinity;
     for (const b of bricks) { const bot = b.y + b.h; if (bot > max) max = bot; }
@@ -521,7 +522,7 @@
       }
       // en boll som fortfarande studsar ska aldrig ryckas tillbaka mitt i
       // en bana -- bara plocka upp den nar den redan ar pa vag nedat mot
-      // launchern (David 2026-08-08), annars ser det ut som ett hopp/teleport.
+      // launchern, annars ser det ut som ett hopp/teleport.
       // Och sa lange den fortfarande ar uppe vid kuberna (kan studsa in i en
       // igen) ska den fa fortsatta spela aven om omgangens tid runnit ut.
       if (recallPending && ball.vy > 0 && ball.y - ball.r > brickFloor) {

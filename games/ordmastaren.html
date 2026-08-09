@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="manifest" href="../manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -177,6 +177,7 @@
   }
 </style>
 <link rel="stylesheet" href="game-polish.css">
+<script src="../interaction-guard.js" defer></script>
 </head>
 <body data-game-id="ordmastaren">
 
@@ -515,8 +516,8 @@
   // Delkravsbaserad procentsats (summa av lasa/lyssna/tala-status over alla
   // ord, delat pa max mojliga) istallet for "andel helt bemastrade ord" --
   // annars star paketets stapel still pa 0% anda tills forsta ordet klarat
-  // ALLA tre lagen, vilket kans oavlonande tidigt i ett paket (David
-  // spelade igenom en hel session och stapeln visade fortfarande 0%,
+  // ALLA tre lagen, vilket kans oavlonande tidigt i ett paket (ett
+  // anvandardtest visade fortfarande 0% efter en hel session,
   // hittades under testning 2026-08-08).
   function packMasteryPct(packIdx) {
     const words = PACKS[packIdx].words;
@@ -574,7 +575,9 @@
   const speechRecoSupported = !!SpeechRecognitionCtor;
 
   function normalizeForMatch(s) {
-    return s.toLowerCase()
+    return String(s || '').toLowerCase()
+      .replace(/œ/g, 'oe')
+      .replace(/æ/g, 'ae')
       .normalize('NFD').replace(/[̀-ͯ]/g, '')
       .replace(/[^a-z]/g, '');
   }
@@ -605,7 +608,7 @@
   // rakt av mot maloret -- men taligenkanningen lagger ofta pa extra ljud
   // eller ord runt ett kort ord ("non" transkriberas som "non merci" etc),
   // och da fallerar hela strang-jamforelsen aven om malordet sades helt
-  // ratt (David rapporterade exakt detta 2026-08-09: spelet horde och
+  // ratt (ett anvandardtest visade att spelet horde och
   // skrev ut vad han sa, men registrerade det inte som ratt svar). Provar
   // darfor aven varje ordfonster i det som hordes, inte bara hela strangen.
   function fuzzyMatches(heard, target) {
@@ -802,8 +805,7 @@
     // Slumpar bland de lagen som saknas istallet for att alltid ta det
     // forsta ("lasa") -- annars blir en hel forsta session bara
     // las-uppgifter eftersom varje nytt ord har alla tre lagen kvar och
-    // .find() alltid landar pa samma (hittades under testning 2026-08-08,
-    // David bad uttryckligen om en blandning av lasa/lyssna/tala).
+    // .find() alltid landar pa samma (hittades under testning 2026-08-08).
     // Forsta uppgiften for ett helt nytt ord slumpas dock bara mellan
     // lasa/lyssna (igenkanning) -- tala (aktiv produktion) sparas till
     // nasta gang ordet dyker upp.
@@ -993,7 +995,7 @@
       '<div class="prompt-word" style="font-size:1.5rem;">' + card.word.sv + '</div>' +
       '<div class="prompt-gloss">på franska?</div>' +
       (speechRecoSupported
-        ? '<button class="mic-btn" id="micBtn">🎤</button><div class="heard-text" id="heardText"></div>'
+        ? '<button class="mic-btn" id="micBtn" aria-label="Starta mikrofonen">🎤</button><div class="heard-text" id="heardText"></div><button class="speak-fallback-btn" id="approveSpeechBtn" hidden>Jag sa ordet — godkänn ✅</button>'
         : '<button class="sound-btn" id="hintSound">🔊</button><div class="prompt-gloss">Säg ordet högt!</div><button class="speak-fallback-btn" id="saidBtn">Jag har sagt det! ✅</button>') +
       '<button class="sound-btn" id="hintBtn2" style="' + (speechRecoSupported ? '' : 'display:none;') + '">💡</button>' +
       '<button class="skip-btn" id="skipBtn">Hoppa över</button>' +
@@ -1003,7 +1005,10 @@
     const fb = document.getElementById('fb');
     document.getElementById('skipBtn').addEventListener('click', () => setTimeout(goToNextCard, 0));
 
+    let completed = false;
     function onSuccess(anchorEl) {
+      if (completed) return;
+      completed = true;
       const justMastered = markWordMode(card.word.fr, 'speak');
       saveProgress(progress);
       fb.className = 'feedback-flash ok';
@@ -1015,13 +1020,19 @@
     if (speechRecoSupported) {
       const micBtn = document.getElementById('micBtn');
       const heardText = document.getElementById('heardText');
+      const approveSpeechBtn = document.getElementById('approveSpeechBtn');
       document.getElementById('hintBtn2').addEventListener('click', () => speak(card.word.fr));
+      approveSpeechBtn.addEventListener('click', () => onSuccess(approveSpeechBtn));
       let recognizing = false;
       let safetyTimer = null;
+      function offerManualApproval(message) {
+        approveSpeechBtn.hidden = false;
+        if (message) heardText.textContent = message;
+      }
       // Rensar alltid lyssnar-laget, oavsett vilken vag hit gick -- annars
       // kan mikrofonknappen fastna i "lyssnar"-laget for gott om webblasaren
-      // av nagon anledning aldrig triggar onresult/onerror/onend (David
-      // rapporterade att den "inte horde" trots pafunnet mikrofonlage
+      // av nagon anledning aldrig triggar onresult/onerror/onend (ett
+      // anvandardtest gav pafunnet mikrofonlage utan resultat
       // 2026-08-08 -- mest sannolikt exakt detta: knappen var faktiskt
       // permanent upptagen efter forsta forsoket).
       function resetMic() {
@@ -1036,7 +1047,7 @@
         heardText.textContent = 'Lyssnar... prata nu!';
         safetyTimer = setTimeout(() => {
           resetMic();
-          heardText.textContent = 'Fick inget svar — testa igen.';
+          offerManualApproval('Fick inget svar — testa igen eller godkänn själv.');
         }, 8000);
         const rec = new SpeechRecognitionCtor();
         rec.lang = 'fr-FR';
@@ -1057,7 +1068,8 @@
           if (match) onSuccess(micBtn);
           else {
             fb.className = 'feedback-flash no';
-            fb.textContent = 'Hördes inte riktigt rätt — försök igen eller hoppa över.';
+            fb.textContent = 'Taligenkänningen var osäker — försök igen eller godkänn själv.';
+            offerManualApproval();
             registerWrongAnswer();
           }
         };
@@ -1072,6 +1084,7 @@
           };
           if (messages[e.error]) heardText.textContent = messages[e.error];
           else if (e.error !== 'aborted') heardText.textContent = heardAnyAudio ? 'Kunde inte tolka — försök igen.' : 'Hördes ingenting — försök igen.';
+          if (e.error !== 'aborted') offerManualApproval();
         };
         rec.onend = () => { resetMic(); };
         try { rec.start(); } catch (err) { resetMic(); heardText.textContent = 'Kunde inte starta mikrofonen — försök igen.'; }

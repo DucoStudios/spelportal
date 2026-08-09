@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -10,6 +10,7 @@
 <meta name="theme-color" content="#170F2E">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-512.png">
+<script src="interaction-guard.js" defer></script>
 <title>Familjens spelportal</title>
 <style>
   @font-face {
@@ -42,7 +43,8 @@
   }
 
   * { box-sizing: border-box; }
-  body { margin: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; overflow-x: hidden; overscroll-behavior: none; touch-action: manipulation; }
+  body { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 
   .page {
     background: var(--bg);
@@ -120,7 +122,7 @@
   }
 
   main {
-    max-width: 920px;
+    max-width: 1180px;
     margin: 0 auto;
     padding: 1.6rem 1.2rem 0;
   }
@@ -142,11 +144,14 @@
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+    gap: 1.15rem;
   }
 
   .card {
+    --thumb-a: var(--cyan);
+    --thumb-b: var(--pink);
+    --thumb-warm: var(--yellow);
     display: flex;
     flex-direction: column;
     background: var(--panel);
@@ -156,23 +161,87 @@
     text-decoration: none;
     color: var(--ink);
     overflow: hidden;
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
   }
   .card:hover, .card:focus-visible {
     transform: translate(-2px, -2px);
     box-shadow: 7px 7px 0 var(--outline);
+    border-color: color-mix(in srgb, var(--thumb-a) 68%, var(--outline));
   }
   .card:active {
     transform: translate(3px, 3px);
     box-shadow: 1px 1px 0 var(--outline);
   }
   .card-art {
-    height: 96px;
+    position: relative;
+    isolation: isolate;
+    height: 118px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.6rem;
+    overflow: hidden;
     border-bottom: 3px solid var(--outline);
+    background:
+      radial-gradient(circle at 76% 28%, color-mix(in srgb, var(--thumb-warm) 78%, white 12%) 0 5%, transparent 26%),
+      radial-gradient(circle at 24% 118%, color-mix(in srgb, var(--thumb-a) 46%, transparent), transparent 50%),
+      linear-gradient(145deg, color-mix(in srgb, var(--thumb-b) 36%, #17102e), #17102e 68%);
+  }
+  .card-art::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    left: -18%; right: -18%; bottom: -22px;
+    height: 78px;
+    opacity: .72;
+    background-image:
+      repeating-linear-gradient(90deg, color-mix(in srgb, var(--thumb-a) 70%, transparent) 0 1px, transparent 1px 22px),
+      repeating-linear-gradient(0deg, color-mix(in srgb, var(--thumb-a) 58%, transparent) 0 1px, transparent 1px 15px);
+    transform: perspective(130px) rotateX(58deg);
+    transform-origin: bottom;
+  }
+  .card-art::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    background: linear-gradient(120deg, rgba(255,255,255,.13), transparent 28% 72%, rgba(255,255,255,.04));
+  }
+  .thumb-main {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    border: 2px solid color-mix(in srgb, var(--thumb-warm) 62%, white);
+    border-radius: 23px;
+    background:
+      linear-gradient(145deg, rgba(255,255,255,.2), transparent 45%),
+      color-mix(in srgb, var(--thumb-a) 30%, #21153f);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 12px 24px rgba(3,2,12,.45), 0 0 24px color-mix(in srgb, var(--thumb-a) 24%, transparent);
+    font-size: 2.65rem;
+    transform: rotate(-4deg);
+    transition: transform .22s ease, filter .22s ease;
+  }
+  .thumb-secondary {
+    position: absolute;
+    z-index: 3;
+    right: 15%;
+    bottom: 13px;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 2px solid var(--outline);
+    border-radius: 50%;
+    background: linear-gradient(145deg, var(--thumb-warm), color-mix(in srgb, var(--thumb-warm) 62%, var(--thumb-b)));
+    box-shadow: 3px 4px 0 var(--outline), 0 8px 16px rgba(0,0,0,.3);
+    font-size: 1.2rem;
+  }
+  .card:hover .thumb-main, .card:focus-visible .thumb-main {
+    transform: translateY(-4px) rotate(2deg) scale(1.06);
+    filter: saturate(1.12) brightness(1.06);
   }
   .card-body { padding: 0.7rem 0.75rem 0.85rem; display: flex; flex-direction: column; gap: 0.3rem; flex: 1; }
   .card-title {
@@ -201,12 +270,29 @@
   .card.locked .card-title::after { content: ' — SNART'; }
 
   footer {
-    max-width: 920px;
+    max-width: 1180px;
     margin: 2.5rem auto 0;
     padding: 0 1.2rem;
     text-align: center;
     font-size: 0.72rem;
     color: var(--ink-faint);
+  }
+
+  @media (max-width: 600px) {
+    main { padding-inline: .85rem; }
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .72rem; }
+  }
+
+  @media (max-width: 380px) {
+    .card-art { height: 102px; }
+    .thumb-main { width: 62px; height: 62px; font-size: 2.25rem; }
+    .thumb-secondary { right: 10%; width: 34px; height: 34px; }
+    .card-title { font-size: .68rem; overflow-wrap: anywhere; }
+    .card-desc { font-size: .62rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card, .thumb-main { transition: none; }
   }
 </style>
 </head>
@@ -217,7 +303,7 @@
     <div class="grid-floor"></div>
     <div class="hero-inner">
       <h1>FAMILJENS SPELPORTAL</h1>
-      <p class="tagline">Spel man väljer själv istället för Netflix. Ingen reklam. Spela en runda, spela igen, eller välj ett annat.</p>
+      <p class="tagline">Spel man väljer själv istället för passiv skärmtid. Ingen reklam. Spela en runda, spela igen, eller välj ett annat.</p>
     </div>
   </div>
 
@@ -240,13 +326,13 @@
     { href: 'games/gap-monstren.html', icon: '💭', title: 'Gap-monstren', desc: 'Smäll jämförelsetankar innan de sjunker undan.', tag: 'sticky' },
     { href: 'games/saftstand-erbjudandet.html', icon: '🍋', title: 'Saftstånd-erbjudandet', desc: 'Läs kundens behov, välj rätt erbjudande.', tag: 'uppbyggligt' },
     { href: 'games/sikta-ratt.html', icon: '🎯', title: 'Sikta rätt', desc: 'Slangbella-fysik mot en rörlig måltavla.', tag: 'sticky' },
-    { href: 'games/bibelhjalten.html', icon: '📖', title: 'Bibelhjälten', desc: 'David och Goljat — dina val styr berättelsen.', tag: 'uppbyggligt' },
+    { href: 'games/bibelhjalten.html', icon: '📖', title: 'Bibelhjälten', desc: 'Herdepojken och jätten — dina val styr berättelsen.', tag: 'uppbyggligt' },
     { href: 'games/superhjalte-spranget.html', icon: '🦸', title: 'Superhjälte-språnget', desc: 'Riktig hopp-fysik, plocka stjärnor, nå flaggan.', tag: 'sticky' },
     { href: 'games/bokstavsbilen.html', icon: '🚗', title: 'Bokstavsbilen', desc: 'Byt fil till rätt bokstav — bara två knappar.', tag: 'sticky' },
     { href: 'games/gavokedjan.html', icon: '🎁', title: 'Gåvokedjan', desc: 'Håll fyra mätare balanserade — ingen får torka ut.', tag: 'uppbyggligt' },
     { href: 'games/klossfall.html', icon: '🧱', title: 'Klossfall', desc: 'Fallande block, rotera och rensa rader.', tag: 'sticky' },
     { href: 'games/ordracet.html', icon: '🇫🇷', title: 'Ordracet', desc: 'Matcha franska ord mot svenska, mot klockan.', tag: 'sticky' },
-    { href: 'games/ormen.html', icon: '🐍', title: 'Ormen', desc: 'Klassisk Snake — piltangenter, ät Gain-frön.', tag: 'sticky' },
+    { href: 'games/ormen.html', icon: '🐍', title: 'Ormen', desc: 'Klassiskt slingaspel — styr rätt och ät framstegsfrön.', tag: 'sticky' },
     { href: 'games/ljudmatchen.html', icon: '👂', title: 'Ljudmatchen', desc: 'Hör franska ord, peka rätt bild — ingen läsning behövs.', tag: 'uppbyggligt' },
     { href: 'games/meningsbyggaren.html', icon: '🧵', title: 'Meningsbyggaren', desc: 'Klicka fram franska ord i rätt ordning.', tag: 'uppbyggligt' },
     { href: 'games/memory-plattorna.html', icon: '🃏', title: 'Memory-plattorna', desc: '36 brickor, 18 par, jaga bästa tiden.', tag: 'sticky' },
@@ -256,12 +342,12 @@
     { href: 'games/alfabetet-fargerna.html', icon: '🔤', title: 'Alfabetet & Färgerna', desc: 'Franska bokstäver och färger, för de minsta.', tag: 'uppbyggligt' },
     { href: 'games/malarboken.html', icon: '🎨', title: 'Målarboken', desc: 'Klicka och färglägg ett hus — franska ord läses högt.', tag: 'uppbyggligt' },
     { href: 'games/ordresan.html', icon: '🗺️', title: 'Ordresan', desc: 'Sex stationer på franska — framsteget sparas.', tag: 'uppbyggligt' },
-    { href: 'games/ordgatan.html', icon: '🧠', title: 'Ordgåtan', desc: 'Fransk Wordle — gissa fembokstavsordet på sex försök.', tag: 'sticky' },
+    { href: 'games/ordgatan.html', icon: '🧠', title: 'Ordgåtan', desc: 'Gissa det franska fembokstavsordet på sex försök.', tag: 'sticky' },
     { href: 'games/poppa-ballongerna.html', icon: '🎈', title: 'Poppa ballongerna', desc: 'Rita en ramp, poppa ballongerna i rätt ordning.', tag: 'sticky' },
     { href: 'games/raddaagget.html', icon: '🥚', title: 'Rädda ägget', desc: 'Bromsa fallet med din ramp — för hög fart och det spricker.', tag: 'sticky' },
     { href: 'games/blockvarlden.html', icon: '🧱', title: 'Blockvärlden', desc: 'Egen 3D-voxelvärld — gå runt, bryt och bygg med block.', tag: 'sticky' },
     { href: 'games/schack.html', icon: '♟️', title: 'Schack', desc: '1 eller 2 spelare — riktiga regler, AI med tre svårighetsgrader.', tag: 'sticky' },
-    { href: 'games/ekorrhjulet.html', icon: '🐹', title: 'Ekorrhjulet', desc: 'Köp tillgångar tills de täcker dina utgifter — Rich Dad Poor Dad för barn.', tag: 'uppbyggligt' },
+    { href: 'games/ekorrhjulet.html', icon: '🐹', title: 'Ekorrhjulet', desc: 'Köp tillgångar tills de täcker dina utgifter — ekonomi som spel.', tag: 'uppbyggligt' },
     { href: 'games/kroppens-tempel.html', icon: '🙏', title: 'Kroppens Tempel', desc: 'Frågor om rörelse, protein och socker — kopplat till Bibeln.', tag: 'uppbyggligt' },
     { href: 'games/ror-pa-dig.html', icon: '🤸', title: 'Rör på dig!', desc: 'Ett riktigt rörelsepass — res dig upp och kör.', tag: 'uppbyggligt' },
     { href: 'games/byggkost-eller-sallanmat.html', icon: '🥦', title: 'Byggkost eller Sällanmat', desc: 'Sortera maten rätt innan den når botten.', tag: 'sticky' },
@@ -273,13 +359,58 @@
     { href: 'games/ordmastaren.html', icon: '📚', title: 'Ordmästaren', desc: 'Lär dig de 1000 vanligaste franska orden — läs, lyssna och tala. 20 paket, dagliga streaks.', tag: 'uppbyggligt' }
   ];
 
+  const THUMBNAILS = {
+    'ordspraks-pusslet': ['💬', '#44e6d8', '#ff4e9d', '#ffd746'],
+    'sex-burkar-sortern': ['🪙', '#47e6d8', '#ff7a46', '#ffd348'],
+    'gap-monstren': ['🌱', '#69e7df', '#c85cff', '#ffdf55'],
+    'saftstand-erbjudandet': ['🥤', '#72e47b', '#ff8a3d', '#ffe14f'],
+    'sikta-ratt': ['🟡', '#46e7dd', '#ff624a', '#ffd64a'],
+    'bibelhjalten': ['🪨', '#76d9ff', '#8b5cf6', '#f5c451'],
+    'superhjalte-spranget': ['⭐', '#48ddff', '#ff455f', '#ffd54a'],
+    'bokstavsbilen': ['🔤', '#41e7dc', '#ff477e', '#ffd23f'],
+    'gavokedjan': ['❤️', '#4ce6dc', '#ff4f9a', '#ffd84f'],
+    'klossfall': ['⚡', '#3ce7e0', '#ff3f98', '#ffd33f'],
+    'ordracet': ['💬', '#45e7df', '#ff4e66', '#ffd84e'],
+    'ormen': ['🌱', '#6af06d', '#28bfa7', '#dcff50'],
+    'ljudmatchen': ['🗣️', '#4ce8df', '#6e79ff', '#ffdb4a'],
+    'meningsbyggaren': ['💬', '#42e6d9', '#ff6b68', '#ffd34c'],
+    'memory-plattorna': ['✨', '#46e8da', '#9c5cff', '#ffd34e'],
+    'pusselvridaren': ['🧩', '#4ce4da', '#9a59ff', '#ffd350'],
+    'traffa-ratt': ['⚽', '#47e6db', '#ff5c9c', '#ffd84f'],
+    'flykten': ['🏃', '#35ddff', '#5267ff', '#ffe168'],
+    'alfabetet-fargerna': ['🎨', '#45f1e0', '#ff4fa3', '#ffd43b'],
+    'malarboken': ['🏠', '#44eadb', '#ff4ca4', '#ffdd47'],
+    'ordresan': ['🧭', '#54e3a0', '#4f79ff', '#ffd85a'],
+    'ordgatan': ['🔠', '#64e693', '#655cff', '#ffe052'],
+    'poppa-ballongerna': ['1️⃣', '#52e6e0', '#ff4f9c', '#ffdd4c'],
+    'raddaagget': ['〰️', '#65e5cb', '#ff784a', '#ffe067'],
+    'blockvarlden': ['⛏️', '#58e47e', '#28a8a1', '#ffd04d'],
+    'schack': ['👑', '#72e8df', '#9b75ff', '#f5dc70'],
+    'ekorrhjulet': ['🪙', '#5ee2b0', '#ff8b3d', '#ffd34e'],
+    'kroppens-tempel': ['❤️', '#75e6cc', '#ff6f61', '#f8d35b'],
+    'ror-pa-dig': ['🎵', '#49e5d6', '#ff5e66', '#ffdb4b'],
+    'byggkost-eller-sallanmat': ['⚡', '#65e47a', '#ff7756', '#ffe14d'],
+    'vishetens-vag': ['🏮', '#58dfb5', '#8f63e8', '#f4cb59'],
+    'kulbanan': ['🔵', '#4fe8e0', '#ff7a3d', '#ffd64f'],
+    'kulrullaren': ['🪙', '#45e4ff', '#8d59ff', '#ffd85b'],
+    'gardsriket': ['🪙', '#68df86', '#c68b3d', '#f6cf55'],
+    'kubkrossaren': ['⚪', '#42e9da', '#ff514d', '#ffc847'],
+    'ordmastaren': ['🎤', '#50e5dc', '#5b70ff', '#ffd83f']
+  };
+
   const grid = document.getElementById('grid');
   GAMES.forEach(g => {
+    const gameId = g.href.split('/').pop().replace('.html', '');
+    const [secondaryIcon, colorA, colorB, colorWarm] = THUMBNAILS[gameId];
     const a = document.createElement('a');
     a.className = 'card' + (g.locked ? ' locked' : '');
     a.href = g.href;
+    a.dataset.gameId = gameId;
     a.innerHTML =
-      '<div class="card-art">' + g.icon + '</div>' +
+      '<div class="card-art" style="--thumb-a:' + colorA + ';--thumb-b:' + colorB + ';--thumb-warm:' + colorWarm + '">' +
+        '<span class="thumb-main" aria-hidden="true">' + g.icon + '</span>' +
+        '<span class="thumb-secondary" aria-hidden="true">' + secondaryIcon + '</span>' +
+      '</div>' +
       '<div class="card-body">' +
         '<div class="card-title">' + g.title + '</div>' +
         '<div class="card-desc">' + g.desc + '</div>' +

@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { Script } from "node:vm";
 
-const files = readdirSync("games").filter(file => file.endsWith(".html")).sort();
-for (const file of files) {
-  const html = readFileSync(`games/${file}`, "utf8");
+const gameFiles = readdirSync("games").filter(file => file.endsWith(".html")).sort();
+const htmlFiles = ["index.html", ...gameFiles.map(file => `games/${file}`)];
+for (const file of htmlFiles) {
+  const html = readFileSync(file, "utf8");
   const scripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)]
     .map(match => match[1].trim())
     .filter(Boolean);
@@ -13,6 +14,8 @@ for (const file of files) {
   }
 }
 
+new Script(readFileSync("interaction-guard.js", "utf8"), { filename: "interaction-guard.js" });
+
 const css = readFileSync("games/game-polish.css", "utf8");
 assert.equal((css.match(/{/g) || []).length, (css.match(/}/g) || []).length, "obalanserade CSS-klamrar");
-console.log(`Statisk kontroll klar för ${files.length} spel.`);
+console.log(`Statisk kontroll klar för portalen och ${gameFiles.length} spel.`);

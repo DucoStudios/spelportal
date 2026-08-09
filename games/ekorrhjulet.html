@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="manifest" href="../manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -83,6 +83,7 @@
   .next-hint { margin-top: 1.1rem; font-size: 0.75rem; font-weight: 600; color: var(--ink-faint); text-align: center; max-width: 406px; }
 </style>
 <link rel="stylesheet" href="game-polish.css">
+<script src="../interaction-guard.js" defer></script>
 </head>
 <body data-game-id="ekorrhjulet" style="overscroll-behavior-y: contain;">
 
@@ -97,7 +98,7 @@
     </div>
   </div>
 
-  <p class="sub">Kan du få dina pengar att jobba åt dig innan de tar slut? Baserad på idéerna i Rich Dad Poor Dad.</p>
+  <p class="sub">Kan du få dina pengar att jobba åt dig innan de tar slut? Träna på kassaflöde, val och tålamod.</p>
 
   <div class="board-wrap">
     <div id="board">
@@ -147,7 +148,7 @@
       <div class="overlay hidden" id="winOverlay">
         <h2>DU HAR LÄMNAT EKORRHJULET!</h2>
         <p id="winText"></p>
-        <p style="font-style:italic; color:var(--cyan);">Precis den här idén — köp saker som jobbar för dig, inte bara saker du jobbar för — är kärnan i boken Rich Dad Poor Dad.</p>
+        <p style="font-style:italic; color:var(--cyan);">Nyckeln är att bygga tillgångar som hjälper ekonomin varje månad, inte bara köpa sådant som kostar.</p>
         <button class="cta" id="winAgainBtn">Spela igen</button>
       </div>
     </div>

@@ -17,6 +17,10 @@ for (const file of files) {
     html = html.replace("</head>", '<script src="../interaction-guard.js" defer></script>\n</head>');
   }
 
+  if (!html.includes('src="arcade-objects.js"')) {
+    html = html.replace("</head>", '<script src="arcade-objects.js" defer></script>\n</head>');
+  }
+
   html = html.replace(
     /<meta name="viewport"[^>]*>/,
     '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">'

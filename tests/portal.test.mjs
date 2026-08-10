@@ -18,13 +18,29 @@ test("alla spel använder det visuella lagret och har korrekt spel-id", () => {
     const id = file.replace(/\.html$/, "");
     assert.ok(html.includes('href="game-polish.css"'), `${file} saknar game-polish.css`);
     assert.ok(html.includes('src="../interaction-guard.js"'), `${file} saknar interaction-guard.js`);
+    assert.ok(html.includes('src="arcade-objects.js"'), `${file} saknar arcade-objects.js`);
     assert.ok(html.includes(`data-game-id="${id}"`), `${file} har fel data-game-id`);
     assert.match(html, /<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">/);
   }
 });
 
+test("objektnära arkaddesign täcker samtliga spel och dynamiska spelobjekt", () => {
+  const source = readFileSync("games/arcade-objects.js", "utf8");
+  const supportedBlock = source.match(/const SUPPORTED_GAME_IDS = \[([\s\S]*?)\];/);
+  assert.ok(supportedBlock, "listan över spel med objektdesign saknas");
+  const supported = [...supportedBlock[1].matchAll(/"([a-z0-9-]+)"/g)].map(match => match[1]).sort();
+  assert.deepEqual(supported, gameFiles.map(file => file.replace(/\.html$/, "")));
+  assert.equal(new Set(supported).size, gameFiles.length);
+  assert.ok(source.includes("new MutationObserver"), "dynamiskt skapade spelobjekt dekoreras inte");
+  assert.ok(source.includes('world: "arcade-world"'));
+  assert.ok(source.includes('tile: "arcade-tile"'));
+  assert.ok(source.includes('sprite: "arcade-sprite"'));
+  assert.ok(source.includes('target: "arcade-target"'));
+});
+
 test("delade visuella resurser finns", () => {
   assert.ok(existsSync("games/game-polish.css"));
+  assert.ok(existsSync("games/arcade-objects.js"));
   assert.ok(existsSync("interaction-guard.js"));
   assert.ok(existsSync("french-speech.js"));
   assert.ok(existsSync("games/lib/three.min.js"));

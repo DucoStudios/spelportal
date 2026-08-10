@@ -76,6 +76,7 @@
 </style>
 <link rel="stylesheet" href="game-polish.css">
 <script src="../interaction-guard.js" defer></script>
+<script src="arcade-objects.js" defer></script>
 </head>
 <body data-game-id="kulrullaren">
 
@@ -243,18 +244,26 @@
   // ---- Three.js setup ----
   const canvas = document.getElementById('gameCanvas');
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x6EC8FF);
-  scene.fog = new THREE.Fog(0x6EC8FF, 40, 160);
+  scene.background = new THREE.Color(0x344cb8);
+  scene.fog = new THREE.Fog(0x548fd8, 40, 160);
 
   const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 500);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.9;
 
   const hemi = new THREE.HemisphereLight(0xffffff, 0x88aaff, 0.9);
   scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffffff, 0.9);
   sun.position.set(30, 60, 20);
   scene.add(sun);
+  const arcadeRim = new THREE.DirectionalLight(0xff5fc8, 0.55);
+  arcadeRim.position.set(-22, 20, -14);
+  scene.add(arcadeRim);
+  const ballGlow = new THREE.PointLight(0x4fe8ff, 1.1, 12);
+  scene.add(ballGlow);
 
   function resize() {
     const w = canvas.clientWidth, h = canvas.clientHeight;
@@ -365,7 +374,7 @@
     geo.computeVertexNormals();
     const tex = makeStripeTexture('#EAF6FF', '#BFE3FB', 10);
     tex.repeat.set(1, 1);
-    const mat = new THREE.MeshStandardMaterial({ map: tex, side: THREE.DoubleSide, roughness: 0.85 });
+    const mat = new THREE.MeshStandardMaterial({ map: tex, side: THREE.DoubleSide, roughness: 0.68, metalness: 0.06 });
     return new THREE.Mesh(geo, mat);
   }
 
@@ -375,7 +384,7 @@
     const geo = new THREE.TubeGeometry(curve, Math.max(20, Math.round(totalLen / 1.5)), 0.22, 8, false);
     const tex = makeHazardTexture();
     tex.repeat.set(2, Math.max(4, Math.round(totalLen / 4)));
-    const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7 });
+    const mat = new THREE.MeshStandardMaterial({ map: tex, color: colorHex, emissive: colorHex, emissiveIntensity: 0.18, roughness: 0.48, metalness: 0.12 });
     return new THREE.Mesh(geo, mat);
   }
 
@@ -385,7 +394,7 @@
     const r = hw * 1.55;
     const geo = new THREE.TorusGeometry(r, r * 0.32, 14, 28);
     const tex = makeSprinkleTexture(colorHex);
-    const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6 });
+    const mat = new THREE.MeshStandardMaterial({ map: tex, emissive: colorHex, emissiveIntensity: 0.16, roughness: 0.46, metalness: 0.1 });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.copy(f.point).addScaledVector(f.up, r * 1.05);
     const basis = new THREE.Matrix4().makeBasis(f.right, f.up, f.tangent);
@@ -396,7 +405,7 @@
   function buildCoins(frames, hw, count, rnd) {
     const list = [];
     const coinGeo = new THREE.TorusGeometry(0.4, 0.13, 8, 16);
-    const coinMat = new THREE.MeshStandardMaterial({ color: 0xFFD23F, emissive: 0x554400, roughness: 0.3, metalness: 0.5 });
+    const coinMat = new THREE.MeshStandardMaterial({ color: 0xFFD23F, emissive: 0x9c6500, emissiveIntensity: 1.1, roughness: 0.22, metalness: 0.62 });
     for (let i = 0; i < count; i++) {
       const t = (i + 1) / (count + 1);
       const idx = Math.min(frames.length - 1, Math.round(t * (frames.length - 1)));
@@ -439,7 +448,7 @@
 
     if (!ballMesh) {
       const ballGeo = new THREE.SphereGeometry(ballRadius, 24, 18);
-      const ballMat = new THREE.MeshStandardMaterial({ map: ballTexture, roughness: 0.4 });
+      const ballMat = new THREE.MeshStandardMaterial({ map: ballTexture, roughness: 0.24, metalness: 0.08, emissive: 0x151f38, emissiveIntensity: 0.45 });
       ballMesh = new THREE.Mesh(ballGeo, ballMat);
       scene.add(ballMesh);
     }
@@ -626,6 +635,7 @@
     const f = frameAt(t);
     const ballPos = f.point.clone().addScaledVector(f.right, lateral).addScaledVector(f.up, ballRadius);
     ballMesh.position.copy(ballPos);
+    ballGlow.position.copy(ballPos).addScaledVector(f.up, 1.3);
 
     const rollAxis = new THREE.Vector3().crossVectors(f.up, f.tangent).normalize();
     const rollAngle = (level.speed * dt) / ballRadius;

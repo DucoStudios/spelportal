@@ -6,6 +6,7 @@
     "polish:apply": "node scripts/apply-game-polish.mjs",
     "typecheck": "node scripts/check-static.mjs",
     "test": "node --test tests/*.test.mjs",
-    "test:smoke": "node scripts/smoke-kids-mix.mjs"
+    "test:smoke": "node scripts/smoke-kids-mix.mjs",
+    "test:smoke:all": "node scripts/smoke-all-games.mjs"
   }
 }

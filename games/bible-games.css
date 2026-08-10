@@ -95,3 +95,77 @@ body.bible-body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* Arcade object pass — warmer materials and clearer playable silhouettes. */
+.bible-stage {
+  background-image:
+    radial-gradient(circle at 50% 8%, color-mix(in srgb, var(--accent) 21%, transparent), transparent 52%),
+    linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px),
+    linear-gradient(145deg, var(--bg2), color-mix(in srgb, var(--panel) 90%, #090618));
+  background-size: auto, 24px 24px, 24px 24px, auto;
+}
+
+.choice,
+.fruit-choice {
+  position: relative;
+  overflow: hidden;
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(255,255,255,.16), transparent 28%),
+    linear-gradient(150deg, rgba(255,255,255,.06), transparent 42%, rgba(4,2,17,.2));
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.2), inset 0 -4px 0 rgba(4,2,17,.2), 0 6px 0 var(--outline), 0 11px 20px rgba(3,2,14,.22);
+}
+
+.choice::after,
+.fruit-choice::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.fruit-choice b,
+.traveler,
+.mercy-token {
+  filter: saturate(1.2) drop-shadow(0 5px 2px rgba(4,2,18,.5));
+}
+
+.mercy-road {
+  background:
+    linear-gradient(90deg, transparent 0 8%, rgba(255,255,255,.06) 8.5% 9%, transparent 9.5% 18%),
+    linear-gradient(180deg, #7862a4, #342b5f);
+  box-shadow: inset 0 5px 0 rgba(255,255,255,.12), inset 0 -12px 18px rgba(6,3,22,.3), 0 7px 0 var(--outline);
+}
+
+.foundation {
+  background:
+    repeating-linear-gradient(115deg, rgba(255,255,255,.12) 0 2px, transparent 3px 22px),
+    linear-gradient(#8f8aa4, #615b75);
+  box-shadow: inset 0 3px 0 rgba(255,255,255,.24), inset 0 -5px 0 rgba(5,3,18,.22), 0 8px 0 #171126;
+}
+
+.tower-block {
+  background:
+    radial-gradient(circle at 9px 9px, rgba(86,45,10,.5) 0 2px, rgba(255,255,255,.35) 3px, transparent 4px),
+    radial-gradient(circle at calc(100% - 9px) 9px, rgba(86,45,10,.5) 0 2px, rgba(255,255,255,.35) 3px, transparent 4px),
+    linear-gradient(145deg, #ffe07a, #ef9048);
+  box-shadow: inset 0 3px rgba(255,255,255,.38), inset 0 -4px rgba(89,42,9,.22), 0 4px 0 rgba(8,5,22,.8);
+}
+
+.listen-meter {
+  box-shadow: inset 0 3px 6px rgba(3,2,14,.55), 0 4px 0 var(--outline), 0 0 18px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.listen-fill {
+  background: repeating-linear-gradient(115deg, rgba(255,255,255,.24) 0 5px, transparent 6px 12px), linear-gradient(90deg, var(--accent), var(--warm));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 52%, transparent);
+}
+
+.speech-bubble {
+  background:
+    radial-gradient(circle at 15% 12%, rgba(255,255,255,.12), transparent 26%),
+    color-mix(in srgb, var(--panel) 85%, white 5%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.18), 0 7px 0 var(--outline), 0 13px 24px rgba(3,2,14,.23);
+}

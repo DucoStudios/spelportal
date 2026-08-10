@@ -163,6 +163,7 @@
 </style>
 <link rel="stylesheet" href="game-polish.css">
 <script src="../interaction-guard.js" defer></script>
+<script src="arcade-objects.js" defer></script>
 </head>
 <body data-game-id="blockvarlden" style="overscroll-behavior-y: contain;">
 
@@ -355,13 +356,21 @@
   scene.add(new THREE.Mesh(skyGeo, skyMat));
   scene.fog = new THREE.Fog(0x2A1750, 30, 70);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-  const sun = new THREE.DirectionalLight(0xfff2d0, 0.9);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+  const sun = new THREE.DirectionalLight(0xfff2d0, 0.72);
   sun.position.set(30, 40, 10);
   scene.add(sun);
+  const arcadeRim = new THREE.DirectionalLight(0x55eaff, 0.35);
+  arcadeRim.position.set(-24, 18, -16);
+  scene.add(arcadeRim);
+  const playerGlow = new THREE.PointLight(0xff4f9a, 0.4, 13);
+  scene.add(playerGlow);
 
   const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 200);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.NoToneMapping;
   function resize() {
     const w = gameWrap.clientWidth, h = gameWrap.clientHeight;
     renderer.setSize(w, h);
@@ -393,7 +402,7 @@
     BLOCK_TYPES.forEach(b => {
       const cells = buckets[b.id];
       if (cells.length === 0) return;
-      const mat = new THREE.MeshLambertMaterial({ color: b.color });
+      const mat = new THREE.MeshStandardMaterial({ color: b.color, roughness: 0.72, metalness: 0.04, flatShading: true });
       const mesh = new THREE.InstancedMesh(boxGeo, mat, cells.length);
       const m = new THREE.Matrix4();
       const lookup = [];
@@ -430,7 +439,7 @@
     }
   }
   const treasureGeo = new THREE.OctahedronGeometry(0.32, 0);
-  const treasureMat = new THREE.MeshStandardMaterial({ color: 0xFFD23F, emissive: 0x554000, metalness: 0.4, roughness: 0.3 });
+  const treasureMat = new THREE.MeshStandardMaterial({ color: 0xFFD23F, emissive: 0x8a5a00, emissiveIntensity: 1.25, metalness: 0.48, roughness: 0.22 });
   const treasures = TREASURE_SPOTS.map(spot => {
     const mesh = new THREE.Mesh(treasureGeo, treasureMat);
     const gy = heightAt(spot.x, spot.z) + 1.5;
@@ -592,7 +601,7 @@
     return { x: cx + 0.5, y: heightAt(cx, cz) + 2, z: cz + 0.5 };
   }
   const spawn = findSpawn();
-  const player = { x: spawn.x, y: spawn.y, z: spawn.z, vy: 0, yaw: 0, pitch: 0, grounded: false };
+  const player = { x: spawn.x, y: spawn.y, z: spawn.z, vy: 0, yaw: 0, pitch: -0.2, grounded: false };
   const PLAYER_R = 0.3, EYE_H = 1.6, GRAVITY = 22, JUMP_V = 8.2, MOVE_SPEED = 5.2;
 
   function solidAt(x, y, z) {
@@ -1018,6 +1027,7 @@
       camera.rotation.order = 'YXZ';
       camera.rotation.y = player.yaw;
       camera.rotation.x = player.pitch;
+      playerGlow.position.set(player.x, player.y + 1.15, player.z);
 
       treasures.forEach(t => {
         if (t.collected) return;

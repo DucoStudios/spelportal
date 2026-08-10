@@ -120,6 +120,7 @@
 </style>
 <link rel="stylesheet" href="game-polish.css">
 <script src="../interaction-guard.js" defer></script>
+<script src="arcade-objects.js" defer></script>
 </head>
 <body data-game-id="gardsriket">
 
@@ -270,17 +271,23 @@
   const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x6EC8FF);
-  scene.fog = new THREE.Fog(0x6EC8FF, 30, 60);
-  scene.add(new THREE.AmbientLight(0xffffff, 0.75));
-  const sun = new THREE.DirectionalLight(0xfff2d0, 0.85);
+  scene.background = new THREE.Color(0x3f91c9);
+  scene.fog = new THREE.Fog(0x58a5d0, 30, 60);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const sun = new THREE.DirectionalLight(0xfff2d0, 0.75);
   sun.position.set(10, 20, 6);
   scene.add(sun);
+  const arcadeRim = new THREE.DirectionalLight(0x72f2ff, 0.5);
+  arcadeRim.position.set(-12, 10, -9);
+  scene.add(arcadeRim);
 
   const FRUSTUM_PAD = 1.6;
   const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 200);
   const CAM_ANGLE = 55 * Math.PI / 180; // "aningen 3d" topview, som gamla RTS-spel
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.NoToneMapping;
 
   let gridW = 14, gridH = 10;
   function fitCameraToGrid() {
@@ -331,14 +338,14 @@
     for (let z = 0; z < gridH; z++) {
       for (let x = 0; x < gridW; x++) {
         const t = terrain[z][x];
-        const mat = new THREE.MeshLambertMaterial({ color: terrainColor(t) });
+        const mat = new THREE.MeshStandardMaterial({ color: terrainColor(t), roughness: 0.82, metalness: 0.02, flatShading: true });
         const mesh = new THREE.Mesh(tileGeo, mat);
         const p = tileWorldPos(x, z);
         mesh.position.set(p.x, -0.1, p.z);
         mesh.userData = { kind: 'ground', x, z };
         groundTiles.add(mesh);
         if (t === 'S') {
-          const glow = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.12, 12), new THREE.MeshStandardMaterial({ color: 0xBEEBFF, emissive: 0x2FE6D6, emissiveIntensity: 0.5 }));
+          const glow = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.12, 16), new THREE.MeshStandardMaterial({ color: 0xD8FAFF, emissive: 0x2FE6D6, emissiveIntensity: 1.25, roughness: 0.24 }));
           glow.position.set(p.x, 0.06, p.z);
           groundTiles.add(glow);
         }

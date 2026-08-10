@@ -152,8 +152,9 @@
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
-    gap: 1.15rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 238px), 1fr));
+    gap: 1.25rem;
+    align-items: stretch;
   }
 
   .card {
@@ -162,10 +163,10 @@
     --thumb-warm: var(--yellow);
     display: flex;
     flex-direction: column;
-    background: var(--panel);
-    border: 3px solid var(--outline);
-    border-radius: 14px;
-    box-shadow: 5px 5px 0 var(--outline);
+    background: linear-gradient(160deg, #342260, #211641 72%);
+    border: 2px solid color-mix(in srgb, var(--thumb-a) 34%, var(--outline));
+    border-radius: 18px;
+    box-shadow: 0 10px 0 var(--outline), 0 18px 36px rgba(3,2,12,.28);
     text-decoration: none;
     color: var(--ink);
     overflow: hidden;
@@ -173,26 +174,26 @@
   }
   .card:hover, .card:focus-visible {
     transform: translate(-2px, -2px);
-    box-shadow: 7px 7px 0 var(--outline);
+    box-shadow: 0 12px 0 var(--outline), 0 22px 42px rgba(3,2,12,.4), 0 0 24px color-mix(in srgb, var(--thumb-a) 14%, transparent);
     border-color: color-mix(in srgb, var(--thumb-a) 68%, var(--outline));
   }
   .card:active {
     transform: translate(3px, 3px);
-    box-shadow: 1px 1px 0 var(--outline);
+    box-shadow: 0 4px 0 var(--outline), 0 9px 18px rgba(3,2,12,.3);
   }
   .card-art {
     position: relative;
     isolation: isolate;
-    height: 118px;
+    height: 132px;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    border-bottom: 3px solid var(--outline);
+    border-bottom: 2px solid color-mix(in srgb, var(--thumb-a) 35%, var(--outline));
     background:
-      radial-gradient(circle at 76% 28%, color-mix(in srgb, var(--thumb-warm) 78%, white 12%) 0 5%, transparent 26%),
-      radial-gradient(circle at 24% 118%, color-mix(in srgb, var(--thumb-a) 46%, transparent), transparent 50%),
-      linear-gradient(145deg, color-mix(in srgb, var(--thumb-b) 36%, #17102e), #17102e 68%);
+      radial-gradient(circle at 78% 25%, color-mix(in srgb, var(--thumb-warm) 74%, white 16%) 0 4%, transparent 22%),
+      radial-gradient(circle at 28% 92%, color-mix(in srgb, var(--thumb-a) 38%, transparent), transparent 48%),
+      linear-gradient(145deg, color-mix(in srgb, var(--thumb-b) 30%, #17102e), #100a26 70%);
   }
   .card-art::before {
     content: '';
@@ -220,23 +221,22 @@
     z-index: 2;
     display: grid;
     place-items: center;
-    width: 72px;
-    height: 72px;
-    border: 2px solid color-mix(in srgb, var(--thumb-warm) 62%, white);
-    border-radius: 23px;
-    background:
-      linear-gradient(145deg, rgba(255,255,255,.2), transparent 45%),
-      color-mix(in srgb, var(--thumb-a) 30%, #21153f);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 12px 24px rgba(3,2,12,.45), 0 0 24px color-mix(in srgb, var(--thumb-a) 24%, transparent);
-    font-size: 2.65rem;
+    width: 86px;
+    height: 86px;
+    border: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--thumb-a) 32%, transparent), transparent 66%);
+    box-shadow: none;
+    filter: drop-shadow(0 10px 11px rgba(3,2,12,.58)) drop-shadow(0 0 16px color-mix(in srgb, var(--thumb-a) 34%, transparent));
+    font-size: 3.25rem;
     transform: rotate(-4deg);
     transition: transform .22s ease, filter .22s ease;
   }
   .thumb-secondary {
     position: absolute;
     z-index: 3;
-    right: 15%;
-    bottom: 13px;
+    right: 11%;
+    bottom: 12px;
     display: grid;
     place-items: center;
     width: 38px;
@@ -251,14 +251,14 @@
     transform: translateY(-4px) rotate(2deg) scale(1.06);
     filter: saturate(1.12) brightness(1.06);
   }
-  .card-body { padding: 0.7rem 0.75rem 0.85rem; display: flex; flex-direction: column; gap: 0.3rem; flex: 1; }
+  .card-body { padding: 0.85rem 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.4rem; flex: 1; }
   .card-title {
     font-family: 'Bungee', sans-serif;
-    font-size: 0.78rem;
+    font-size: 0.84rem;
     line-height: 1.2;
     color: var(--ink);
   }
-  .card-desc { font-size: 0.68rem; color: var(--ink-soft); line-height: 1.35; flex: 1; }
+  .card-desc { font-size: 0.74rem; color: var(--ink-soft); line-height: 1.45; flex: 1; }
   .card-tag {
     align-self: flex-start;
     font-size: 0.56rem;
@@ -288,15 +288,22 @@
 
   @media (max-width: 600px) {
     main { padding-inline: .85rem; }
-    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .72rem; }
+    .grid { grid-template-columns: 1fr; gap: .8rem; }
+    .card { display: grid; grid-template-columns: 112px minmax(0, 1fr); min-height: 122px; border-radius: 16px; box-shadow: 0 7px 0 var(--outline), 0 13px 24px rgba(3,2,12,.28); }
+    .card:hover, .card:focus-visible { box-shadow: 0 9px 0 var(--outline), 0 18px 32px rgba(3,2,12,.38); }
+    .card-art { height: 100%; min-height: 122px; border-bottom: 0; border-right: 2px solid color-mix(in srgb, var(--thumb-a) 35%, var(--outline)); }
+    .thumb-main { width: 70px; height: 70px; font-size: 2.75rem; }
+    .thumb-secondary { right: 7px; bottom: 9px; width: 32px; height: 32px; font-size: 1rem; }
+    .card-body { min-width: 0; padding: .72rem .75rem .78rem; gap: .28rem; }
+    .card-title { font-size: .76rem; }
+    .card-desc { font-size: .69rem; line-height: 1.38; }
   }
 
   @media (max-width: 380px) {
-    .card-art { height: 102px; }
-    .thumb-main { width: 62px; height: 62px; font-size: 2.25rem; }
-    .thumb-secondary { right: 10%; width: 34px; height: 34px; }
-    .card-title { font-size: .68rem; overflow-wrap: anywhere; }
-    .card-desc { font-size: .62rem; }
+    .card { grid-template-columns: 98px minmax(0, 1fr); }
+    .thumb-main { width: 62px; height: 62px; font-size: 2.35rem; }
+    .card-title { font-size: .7rem; overflow-wrap: anywhere; }
+    .card-desc { font-size: .65rem; }
   }
 
   @media (prefers-reduced-motion: reduce) {

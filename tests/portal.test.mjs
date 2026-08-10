@@ -65,14 +65,16 @@ test("Rör på dig använder tidsintervaller med paus och automatiskt byteslarm"
   assert.ok(!html.includes('id="doneBtn"'));
 });
 
-test("Ormens mat och segment använder samma responsiva 18×18-rutnät", () => {
+test("Ormens mat och sammanhängande kropp använder samma responsiva 18×18-canvas", () => {
   const html = readFileSync("games/ormen.html", "utf8");
   assert.ok(html.includes("--grid-size: 18"));
-  assert.ok(html.includes("food.x * 100 / COLS"));
-  assert.ok(html.includes("food.y * 100 / ROWS"));
-  assert.ok(html.includes("s.x * 100 / COLS"));
+  assert.ok(html.includes('id="snakeCanvas"'));
+  assert.ok(html.includes("const cell = size / COLS"));
+  assert.ok(html.includes("(point.x + .5) * cell"));
+  assert.ok(html.includes("snakeCtx.lineJoin = 'round'"));
+  assert.ok(html.includes("snakeCtx.ellipse(0, 0, cell * .52, cell * .43"));
   assert.ok(html.includes("const freeCells = []"));
-  assert.ok(!html.includes("food.x * CELL"));
+  assert.ok(!html.includes("className = 'seg'"));
 });
 
 test("Ormen kan styras med tillgängliga knappar och korta svep på spelplanen", () => {

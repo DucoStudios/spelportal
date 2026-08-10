@@ -37,12 +37,22 @@
   .hud-chip .value { font-family: 'Open Sans', sans-serif; font-weight: 800; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 
   .board-wrap { position: relative; }
-  #board { --grid-size: 18; position: relative; width: 396px; height: 396px; max-width: 92vw; max-height: 92vw; background: var(--bg2); border: 3px solid var(--outline); border-radius: 14px; box-shadow: 6px 6px 0 var(--outline); overflow: hidden; touch-action: none; cursor: grab; }
+  #board {
+    --grid-size: 18;
+    position: relative; width: 396px; height: 396px; max-width: 92vw; max-height: 92vw;
+    background:
+      radial-gradient(circle at 50% 45%, rgba(47,230,214,.1), transparent 58%),
+      linear-gradient(rgba(105,80,170,.14) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(105,80,170,.14) 1px, transparent 1px),
+      linear-gradient(145deg, #211641, #130d2c);
+    background-size: auto, calc(100% / var(--grid-size)) calc(100% / var(--grid-size)), calc(100% / var(--grid-size)) calc(100% / var(--grid-size)), auto;
+    border: 3px solid #9dff38; border-radius: 20px;
+    box-shadow: 0 0 0 5px var(--outline), 0 0 26px rgba(157,255,56,.28), inset 0 0 44px rgba(2,1,12,.64);
+    overflow: hidden; touch-action: none; cursor: grab;
+  }
   #board.is-swiping { cursor: grabbing; }
-  .seg { position: absolute; width: calc(100% / var(--grid-size)); height: calc(100% / var(--grid-size)); border-radius: 24%; background: var(--cyan); border: 2px solid var(--outline); }
-  .seg.head { background: var(--yellow); }
-  .food { position: absolute; width: calc(100% / var(--grid-size)); height: calc(100% / var(--grid-size)); display: flex; align-items: center; justify-content: center; font-size: clamp(.82rem, 4.5vw, 1.1rem); filter: drop-shadow(0 0 5px color-mix(in srgb, var(--yellow) 65%, transparent)); animation: pulse 0.8s ease-in-out infinite; }
-  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+  #board::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.025) 3px 4px); box-shadow: inset 0 0 36px rgba(0,0,0,.56); }
+  #snakeCanvas { position: absolute; inset: 0; z-index: 1; display: block; width: 100%; height: 100%; }
 
   .overlay { position: absolute; inset: 0; background: color-mix(in srgb, var(--bg2) 92%, transparent); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.8rem; text-align: center; padding: 1.4rem; z-index: 5; }
   .overlay.hidden { display: none; }
@@ -116,6 +126,7 @@
 
   <div class="board-wrap">
     <div id="board">
+      <canvas id="snakeCanvas" aria-label="Spelplan med en slingrande orm"></canvas>
       <div class="overlay" id="startOverlay">
         <h2>REDO?</h2>
         <p>Svep direkt över spelplanen eller använd de stora pilknapparna.</p>
@@ -143,6 +154,8 @@
 (function () {
   const COLS = 18, ROWS = 18;
   const boardEl = document.getElementById('board');
+  const snakeCanvas = document.getElementById('snakeCanvas');
+  const snakeCtx = snakeCanvas.getContext('2d');
   const scoreVal = document.getElementById('scoreVal');
   const lenVal = document.getElementById('lenVal');
   const bestVal = document.getElementById('bestVal');
@@ -158,7 +171,7 @@
   try { best = Math.max(0, parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0); } catch (_) {}
   bestVal.textContent = best;
 
-  let snake, dir, nextDir, food, running, score, tickHandle, speedMs, pool = [], foodEl = null;
+  let snake, dir, nextDir, food, running, score, tickHandle, speedMs;
 
   let audioCtx = null;
   function ctx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
@@ -246,27 +259,132 @@
   });
 
   function render() {
-    pool.forEach(el => el.remove());
-    pool = [];
-    if (foodEl) foodEl.remove();
+    const size = boardEl.clientWidth;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (snakeCanvas.width !== Math.round(size * dpr) || snakeCanvas.height !== Math.round(size * dpr)) {
+      snakeCanvas.width = Math.round(size * dpr);
+      snakeCanvas.height = Math.round(size * dpr);
+    }
+    snakeCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    snakeCtx.clearRect(0, 0, size, size);
+    const cell = size / COLS;
+    const center = point => ({ x: (point.x + .5) * cell, y: (point.y + .5) * cell });
+
+    // Frukten är ritad, inte en emoji, så den hör ihop med resten av arkadgrafiken.
     if (food) {
-      foodEl = document.createElement('div');
-      foodEl.className = 'food';
-      foodEl.textContent = '🌱';
-      foodEl.style.left = (food.x * 100 / COLS) + '%';
-      foodEl.style.top = (food.y * 100 / ROWS) + '%';
-      boardEl.appendChild(foodEl);
+      const f = center(food);
+      snakeCtx.save();
+      snakeCtx.shadowColor = '#ff2e93';
+      snakeCtx.shadowBlur = cell * .72;
+      const fruitGlow = snakeCtx.createRadialGradient(f.x - cell * .16, f.y - cell * .2, 1, f.x, f.y, cell * .52);
+      fruitGlow.addColorStop(0, '#fff38a');
+      fruitGlow.addColorStop(.28, '#ff7a3d');
+      fruitGlow.addColorStop(1, '#ff2e93');
+      snakeCtx.fillStyle = fruitGlow;
+      snakeCtx.beginPath();
+      snakeCtx.arc(f.x, f.y + cell * .06, cell * .34, 0, Math.PI * 2);
+      snakeCtx.fill();
+      snakeCtx.shadowBlur = 0;
+      snakeCtx.fillStyle = '#9dff38';
+      snakeCtx.beginPath();
+      snakeCtx.ellipse(f.x + cell * .12, f.y - cell * .31, cell * .18, cell * .09, -.5, 0, Math.PI * 2);
+      snakeCtx.fill();
+      snakeCtx.strokeStyle = '#120a24';
+      snakeCtx.lineWidth = Math.max(1.5, cell * .08);
+      snakeCtx.beginPath();
+      snakeCtx.moveTo(f.x, f.y - cell * .22);
+      snakeCtx.quadraticCurveTo(f.x - cell * .02, f.y - cell * .42, f.x + cell * .12, f.y - cell * .46);
+      snakeCtx.stroke();
+      snakeCtx.restore();
     }
 
-    snake.forEach((s, i) => {
-      const el = document.createElement('div');
-      el.className = 'seg' + (i === 0 ? ' head' : '');
-      el.style.left = (s.x * 100 / COLS) + '%';
-      el.style.top = (s.y * 100 / ROWS) + '%';
-      boardEl.appendChild(el);
-      pool.push(el);
+    if (!snake?.length) return;
+    const points = snake.map(center);
+    const bodyGradient = snakeCtx.createLinearGradient(0, 0, size, size);
+    bodyGradient.addColorStop(0, '#9dff38');
+    bodyGradient.addColorStop(.48, '#2fe6d6');
+    bodyGradient.addColorStop(1, '#00a7d8');
+
+    // En sammanhängande, rund kropp med mörk arkadkontur ersätter rutorna.
+    const traceBody = () => {
+      snakeCtx.beginPath();
+      snakeCtx.moveTo(points[points.length - 1].x, points[points.length - 1].y);
+      for (let i = points.length - 2; i >= 0; i--) snakeCtx.lineTo(points[i].x, points[i].y);
+    };
+    snakeCtx.save();
+    snakeCtx.lineCap = 'round';
+    snakeCtx.lineJoin = 'round';
+    traceBody();
+    snakeCtx.strokeStyle = '#09051a';
+    snakeCtx.lineWidth = cell * .92;
+    snakeCtx.shadowColor = '#2fe6d6';
+    snakeCtx.shadowBlur = cell * .55;
+    snakeCtx.stroke();
+    traceBody();
+    snakeCtx.strokeStyle = bodyGradient;
+    snakeCtx.lineWidth = cell * .68;
+    snakeCtx.shadowBlur = 0;
+    snakeCtx.stroke();
+    traceBody();
+    snakeCtx.strokeStyle = 'rgba(255,255,255,.26)';
+    snakeCtx.lineWidth = cell * .13;
+    snakeCtx.translate(-cell * .08, -cell * .09);
+    snakeCtx.stroke();
+    snakeCtx.restore();
+
+    // Små fjäll gör kroppen levande utan att störa läsbarheten i hög fart.
+    snakeCtx.save();
+    points.slice(1).forEach((p, index) => {
+      snakeCtx.fillStyle = index % 2 ? 'rgba(9,5,26,.34)' : 'rgba(255,255,255,.24)';
+      snakeCtx.beginPath();
+      snakeCtx.arc(p.x, p.y, cell * .09, 0, Math.PI * 2);
+      snakeCtx.fill();
     });
+    snakeCtx.restore();
+
+    // Huvud, blick och kluven tunga följer aktuell färdriktning.
+    const head = points[0];
+    const angle = Math.atan2(dir.y, dir.x);
+    snakeCtx.save();
+    snakeCtx.translate(head.x, head.y);
+    snakeCtx.rotate(angle);
+    snakeCtx.shadowColor = '#9dff38';
+    snakeCtx.shadowBlur = cell * .48;
+    const headGradient = snakeCtx.createLinearGradient(-cell * .45, 0, cell * .5, 0);
+    headGradient.addColorStop(0, '#2fe6d6');
+    headGradient.addColorStop(1, '#c7ff55');
+    snakeCtx.fillStyle = headGradient;
+    snakeCtx.strokeStyle = '#09051a';
+    snakeCtx.lineWidth = cell * .1;
+    snakeCtx.beginPath();
+    snakeCtx.ellipse(0, 0, cell * .52, cell * .43, 0, 0, Math.PI * 2);
+    snakeCtx.fill();
+    snakeCtx.stroke();
+    snakeCtx.shadowBlur = 0;
+    [-1, 1].forEach(side => {
+      snakeCtx.fillStyle = '#fffdf2';
+      snakeCtx.beginPath();
+      snakeCtx.arc(cell * .2, side * cell * .24, cell * .13, 0, Math.PI * 2);
+      snakeCtx.fill();
+      snakeCtx.fillStyle = '#120a24';
+      snakeCtx.beginPath();
+      snakeCtx.arc(cell * .25, side * cell * .24, cell * .065, 0, Math.PI * 2);
+      snakeCtx.fill();
+    });
+    snakeCtx.strokeStyle = '#ff4d8d';
+    snakeCtx.lineWidth = Math.max(1.4, cell * .055);
+    snakeCtx.lineCap = 'round';
+    snakeCtx.beginPath();
+    snakeCtx.moveTo(cell * .46, 0);
+    snakeCtx.lineTo(cell * .75, 0);
+    snakeCtx.lineTo(cell * .9, -cell * .12);
+    snakeCtx.moveTo(cell * .75, 0);
+    snakeCtx.lineTo(cell * .9, cell * .12);
+    snakeCtx.stroke();
+    snakeCtx.restore();
   }
+
+  window.addEventListener('resize', () => { if (snake?.length) render(); });
 
   function tick() {
     dir = nextDir;

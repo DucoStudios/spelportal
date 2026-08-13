@@ -20,6 +20,15 @@ Underlag: [Apple — Designing for games](https://developer.apple.com/design/hum
 - Blockkrossaren: poäng, rekord, våg och bollantal i toppen; fyra förklarade bollroller; döljbar bollväljare; poäng för träff, kombo, kross och ny boll; tydligare onboarding.
 - Automatiska kontroller av att samtliga 61 miniscener ritas och att alla 61 spel laddar på mobil och desktop.
 
+## Genomfört i andra passet
+
+- Klossfall: rättvis 7-kloss-påse, nästa-kloss-fönster, radkombo, nivå och lokalt rekord.
+- Kulrullaren: fyra checkpoints med portar, tid/fall/mynt i HUD, lokala tidsrekord och skicklighetsbaserade stjärnkrav.
+- Memory-plattorna: rättvis Fisher–Yates-blandning, klockstart på första draget, matchstreak och lokalt rekord på drag/tid.
+- Saftstånd-erbjudandet: träffsäkerhet i HUD, direkt förklaring av varför ett val passar eller inte passar behovet och lokalt poängrekord.
+- Ordmästaren: synligt sessionssteg och kombo, träffsäkerhet i slutsummeringen och ett positivt dagligt lektionsmål.
+- Verifierat med 31 automatiska tester och 122 riktiga Chrome-laddningar: 61 spel på mobil och desktop.
+
 ## Utvecklingskö — alla spel
 
 Statusnyckel: `KLAR 1` = första stora förbättringspasset klart. `GLOBALT` = nytt pixel-/arkadskal och unik thumbnail klart. `NÄSTA` = prioriterad mekanisk förbättring.
@@ -29,7 +38,7 @@ Statusnyckel: `KLAR 1` = första stora förbättringspasset klart. `GLOBALT` = n
 | Spel | Styrka idag | Nästa specifika förbättring | Status |
 |---|---|---|---|
 | Blockkrossaren | Tillfredsställande studs och kedjereaktioner | Banuppdrag, bollmästerskap och balansmätning efter verkliga spelrundor | KLAR 1 |
-| Klossfall | Omedelbart begriplig klassisk loop | Personbästa, nivåtempo, förhandsvisning och tydligare radkombo | GLOBALT |
+| Klossfall | Omedelbart begriplig klassisk loop | Fler uppdrag och finbalansering från verkliga rundor | KLAR 1 |
 | Ormen | Bra svepstyrning och lokal rekordlagring | Banvarianter, risk-/belöningsfrön och korta uppdrag | GLOBALT |
 | Superhjälte-språnget | Fysisk rörelse och tydligt mål | Checkpoints, tidsmedaljer och tre banprofiler | GLOBALT |
 | Flykten | Enkel tvåfilskontroll och stigande press | Nära-miss-bonus, miljöskiften och rättvisare svårighetskurva | GLOBALT |
@@ -50,14 +59,14 @@ Statusnyckel: `KLAR 1` = första stora förbättringspasset klart. `GLOBALT` = n
 | Rädda ägget | Spänning genom fallhastighet | Skademätare, materialtyper och flera räddningsstrategier | GLOBALT |
 | Sikta rätt | Bra slangbågekänsla | Vind, precisionzoner, ghost av personbästa och korta banserier | GLOBALT |
 | Kulbanan | Byggande före simulering | Lösningsfrihet, färre trial-and-error-stopp och skaparläge | GLOBALT |
-| Kulrullaren | Stark 3D-känsla på webben | Tydligare djupmarkörer, checkpoints och poäng/rekord | GLOBALT |
+| Kulrullaren | Stark 3D-känsla på webben | Kortare banprofiler och finbalansering av medaljtider | KLAR 1 |
 | Rör på dig! | Automatiska intervaller och paus fungerar | Rörelsepaket, intensitetsval och avslutande kroppskoll | GLOBALT |
 
 ### Logik, skapande och strategi
 
 | Spel | Styrka idag | Nästa specifika förbättring | Status |
 |---|---|---|---|
-| Memory-plattorna | Ren minnesloop med stora träffytor | Personbästa, tema-set och kedja för par i följd | GLOBALT |
+| Memory-plattorna | Ren minnesloop med stora träffytor | Tema-set och valbar 4×4-snabbrunda | KLAR 1 |
 | Pusselvridaren | Rotation och placering ger djup | Dragindikator, medaljer och fler bildmönster | GLOBALT |
 | Ordspråks-pusslet | Match-3 driver en språklig reveal | Tydligare målrad, specialmatchningar och slutlig betydelsefråga | GLOBALT |
 | Schack | Kompletta regler, AI och två spelare | Bättre mobilanalys, hotmarkering som val och korta schackpussel | GLOBALT |
@@ -76,13 +85,13 @@ Statusnyckel: `KLAR 1` = första stora förbättringspasset klart. `GLOBALT` = n
 | Ordracet | Snabba tvåspråkiga val | Nivåer efter ordklass och bättre felåterkoppling | GLOBALT |
 | Ordresan | Sparad resa i sex stationer | Temakartor, mästarprov och återbesök till osäkra ord | GLOBALT |
 | Ordgåtan | Bekant ordslutledning | Uttal efter gissning, temaläge och statistik över bokstavsmönster | GLOBALT |
-| Ordmästaren | Stor 1000-ordsprogression, läs/lyssna/tala | Kortare sessioner, kunskapskarta och ärligare mastery-mått än streak | GLOBALT |
+| Ordmästaren | Stor 1000-ordsprogression, läs/lyssna/tala | Kunskapskarta och adaptiv repetition från felmönster | KLAR 1 |
 
 ### Ekonomi, företagande och värdeskapande
 
 | Spel | Styrka idag | Nästa specifika förbättring | Status |
 |---|---|---|---|
-| Saftstånd-erbjudandet | Matchar behov mot erbjudande | Fler behovssamtal, värdestapling och feedback på varför erbjudandet passar | GLOBALT |
+| Saftstånd-erbjudandet | Matchar behov mot erbjudande | Fler behovssamtal och värdestapling över flera kundrundor | KLAR 1 |
 | Minimarknaden | Kundtempo och packning | Kvalitet före fart, återkommande kunder och förbättrad arbetsprocess | GLOBALT |
 | Myntmatchen | Konkret euroförståelse | Växel, flera giltiga myntlösningar och vardagliga köp | GLOBALT |
 | Spargrissprint | Smart val kontra impuls | Mål före lopp, opportunity cost och valfri efterreflektion | GLOBALT |

@@ -13,7 +13,9 @@ const viewports = [
 const screenshotCases = new Set([
   "blockvarlden-desktop", "gardsriket-desktop", "kulrullaren-desktop",
   "kubkrossaren-mobile",
-  "memory-plattorna-desktop", "poppa-ballongerna-mobile", "schack-mobile",
+  "klossfall-mobile",
+  "kulrullaren-mobile", "memory-plattorna-mobile", "memory-plattorna-desktop",
+  "saftstand-erbjudandet-mobile", "ordmastaren-mobile", "poppa-ballongerna-mobile", "schack-mobile",
   "malarboken-mobile", "brobyggarna-mobile"
 ]);
 const outputDir = "/tmp/spelportal-all-games-smoke";

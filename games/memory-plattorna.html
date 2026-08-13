@@ -31,10 +31,11 @@
   .back-link { position: relative; z-index: 2; display: block; text-align: center; margin-top: 0.5rem; font-size: 0.72rem; font-weight: 600; color: var(--cyan); text-decoration: none; }
   .back-link:hover { color: var(--ink); }
   .sub { color: var(--ink-soft); font-size: 0.85rem; font-weight: 600; margin: 0 0 1rem; text-align: center; max-width: 380px; }
-  .hud { display: flex; justify-content: space-between; width: 100%; max-width: 372px; margin-bottom: 0.7rem; }
-  .hud-chip { background: var(--panel); border: 2px solid var(--outline); border-radius: 8px; padding: 0.3rem 0.6rem; box-shadow: 3px 3px 0 var(--outline); text-align: center; min-width: 56px; }
+  .hud { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; max-width: 372px; margin-bottom: 0.5rem; }
+  .hud-chip { background: var(--panel); border: 2px solid var(--outline); border-radius: 8px; padding: 0.3rem 0.25rem; box-shadow: 3px 3px 0 var(--outline); text-align: center; min-width: 0; }
   .hud-chip .label { font-family: 'Bungee', sans-serif; font-size: 0.46rem; letter-spacing: 0.06em; color: var(--cyan); display: block; }
   .hud-chip .value { font-family: 'Open Sans', sans-serif; font-weight: 800; font-size: 1rem; font-variant-numeric: tabular-nums; }
+  .best-line { min-height: 1.1rem; margin: 0 0 0.45rem; color: var(--yellow); font-size: 0.68rem; font-weight: 800; text-align: center; }
 
   .board-wrap { position: relative; }
   #board {
@@ -105,13 +106,15 @@
     <div class="hud-chip"><span class="label">DRAG</span><span class="value" id="movesVal">0</span></div>
     <div class="hud-chip"><span class="label">TID</span><span class="value" id="timeVal">0</span></div>
     <div class="hud-chip"><span class="label">PAR</span><span class="value" id="pairsVal">0/18</span></div>
+    <div class="hud-chip"><span class="label">STREAK</span><span class="value" id="streakVal">0</span></div>
   </div>
+  <p class="best-line" id="bestLine">REKORD: –</p>
 
   <div class="board-wrap">
     <div id="board"></div>
     <div class="overlay" id="startOverlay">
       <h2>REDO?</h2>
-      <p>Hitta alla 18 par. Klockan startar på första draget.</p>
+      <p>Hitta alla 18 par. Klockan startar när du vänder första brickan. Matcha i följd för en längre streak.</p>
       <button class="cta" id="startBtn">Blanda och kör</button>
     </div>
     <div class="overlay hidden" id="endOverlay">
@@ -122,16 +125,19 @@
     </div>
   </div>
 
-  <p class="next-hint">Redan byggd. Fler spel på startsidan.</p>
+  <p class="next-hint">Färre drag slår snabb chansning — bygg en karta i huvudet och håll din streak.</p>
 </div>
 
 <script>
 (function () {
   const ICONS = ['🌱','🪙','💡','❤️','🛡️','👑','🌟','🚀','📈','🏁','✅','⚡','🎁','🤝','🕊️','🌈','🔥','🌻'];
+  const BEST_KEY = 'memory-plattorna-best-v2';
   const boardEl = document.getElementById('board');
   const movesVal = document.getElementById('movesVal');
   const timeVal = document.getElementById('timeVal');
   const pairsVal = document.getElementById('pairsVal');
+  const streakVal = document.getElementById('streakVal');
+  const bestLine = document.getElementById('bestLine');
   const startOverlay = document.getElementById('startOverlay');
   const endOverlay = document.getElementById('endOverlay');
   const startBtn = document.getElementById('startBtn');
@@ -145,6 +151,8 @@
   let moves = 0;
   let seconds = 0;
   let timerHandle = null;
+  let timerStarted = false;
+  let streak = 0;
   let running = false;
   let busy = false;
 
@@ -164,9 +172,27 @@
   function playFlip() { tone(380, 0, 0.06, 'sine', 0.06); }
   function playWin() { [523, 659, 784, 1047, 1200].forEach((f, i) => tone(f, i * 0.08, 0.2, 'triangle')); }
 
+  function loadBest() {
+    try { return JSON.parse(localStorage.getItem(BEST_KEY)) || null; } catch (e) { return null; }
+  }
+  function renderBest() {
+    const best = loadBest();
+    bestLine.textContent = best ? 'REKORD: ' + best.moves + ' DRAG · ' + best.seconds + 'S' : 'REKORD: –';
+  }
+
   function buildDeck() {
-    const deck = [...ICONS, ...ICONS].sort(() => Math.random() - 0.5);
+    const deck = [...ICONS, ...ICONS];
+    for (let i = deck.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
     return deck.map((icon, i) => ({ id: i, icon, matched: false }));
+  }
+
+  function startTimer() {
+    if (timerStarted) return;
+    timerStarted = true;
+    timerHandle = setInterval(() => { seconds++; timeVal.textContent = seconds; }, 1000);
   }
 
   function render() {
@@ -185,6 +211,7 @@
 
   function onCardClick(card) {
     if (!running || busy || card.matched || flipped.includes(card.id) || flipped.length >= 2) return;
+    startTimer();
     flipped.push(card.id);
     playFlip();
     render();
@@ -197,6 +224,8 @@
         setTimeout(() => {
           a.matched = true; b.matched = true;
           matchedCount++;
+          streak++;
+          streakVal.textContent = streak;
           pairsVal.textContent = matchedCount + '/18';
           flipped = [];
           busy = false;
@@ -205,21 +234,23 @@
           if (matchedCount === 18) endGame();
         }, 350);
       } else {
-        setTimeout(() => { flipped = []; busy = false; render(); }, 750);
+        streak = 0;
+        streakVal.textContent = '0';
+        setTimeout(() => { flipped = []; busy = false; render(); }, 650);
       }
     }
   }
 
   function startGame() {
     cards = buildDeck();
-    flipped = []; matchedCount = 0; moves = 0; seconds = 0; running = true; busy = false;
+    flipped = []; matchedCount = 0; moves = 0; seconds = 0; streak = 0; running = true; busy = false; timerStarted = false;
     movesVal.textContent = 0;
     timeVal.textContent = 0;
     pairsVal.textContent = '0/18';
+    streakVal.textContent = '0';
     startOverlay.classList.add('hidden');
     endOverlay.classList.add('hidden');
     clearInterval(timerHandle);
-    timerHandle = setInterval(() => { seconds++; timeVal.textContent = seconds; }, 1000);
     render();
   }
 
@@ -227,13 +258,20 @@
     running = false;
     clearInterval(timerHandle);
     playWin();
+    const previous = loadBest();
+    const isRecord = !previous || moves < previous.moves || (moves === previous.moves && seconds < previous.seconds);
+    if (isRecord) {
+      try { localStorage.setItem(BEST_KEY, JSON.stringify({ moves, seconds })); } catch (e) {}
+      renderBest();
+    }
     finalTime.textContent = seconds + 's';
-    finalStats.textContent = moves + ' drag för alla 18 par.';
+    finalStats.textContent = moves + ' drag för alla 18 par.' + (isRecord ? ' Nytt rekord!' : '');
     endOverlay.classList.remove('hidden');
   }
 
   startBtn.addEventListener('click', startGame);
   restartBtn.addEventListener('click', startGame);
+  renderBest();
 })();
 </script>
 

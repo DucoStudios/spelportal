@@ -32,13 +32,17 @@
   #gameWrap { position: relative; width: 100%; height: calc(100% - 46px); height: calc(100dvh - 46px); touch-action: none; }
   #gameCanvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
-  .hud { position: absolute; top: 10px; left: 10px; right: 10px; z-index: 3; display: flex; justify-content: space-between; pointer-events: none; }
-  .pill { background: rgba(23,15,46,0.75); border: 2px solid var(--outline); border-radius: 8px; padding: 0.3rem 0.6rem; font-weight: 800; font-size: 0.85rem; }
+  #gameWrap > .hud { position: absolute; top: 10px; left: 10px; right: 10px; z-index: 3; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; pointer-events: none; }
+  .pill { min-width: 0; background: rgba(23,15,46,0.82); border: 2px solid var(--outline); border-radius: 8px; padding: 0.28rem 0.35rem; font-weight: 800; font-size: 0.72rem; text-align: center; white-space: nowrap; }
   .pill.coins { color: var(--yellow); }
-  .pill.level { color: var(--cyan); }
+  .pill.checkpoint { color: var(--cyan); }
+  .pill.time { color: #fff; }
+  .pill.falls { color: var(--pink); }
 
   .progress-wrap { position: absolute; top: 46px; left: 10px; right: 10px; z-index: 3; height: 8px; background: rgba(23,15,46,0.55); border: 2px solid var(--outline); border-radius: 6px; overflow: hidden; pointer-events: none; }
   .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--pink), var(--yellow)); transition: width 0.1s linear; }
+  .checkpoint-markers { position: absolute; inset: 0; display: flex; justify-content: space-evenly; }
+  .checkpoint-markers i { width: 2px; height: 100%; background: rgba(255,255,255,0.8); box-shadow: 0 0 3px var(--cyan); }
 
   .toast { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); z-index: 4; background: rgba(255,46,80,0.9); border: 2px solid var(--outline); border-radius: 8px; padding: 0.4rem 0.9rem; font-weight: 800; font-size: 0.8rem; opacity: 0; transition: opacity 0.2s ease; pointer-events: none; }
   .toast.show { opacity: 1; }
@@ -73,6 +77,13 @@
   .level-btn small { font-size: 0.6rem; }
   .level-btn.locked { background: #4A3E6B; color: #9481BE; cursor: not-allowed; }
   .level-btn .lvl-stars { font-size: 0.6rem; color: var(--yellow); }
+  .level-btn .best-time { font-size: 0.48rem; color: var(--cyan); }
+
+  @media (max-width: 420px) {
+    #gameWrap > .hud { left: 6px; right: 6px; gap: 3px; }
+    .pill { padding-inline: 0.18rem; font-size: 0.62rem; }
+    .progress-wrap { left: 6px; right: 6px; }
+  }
 </style>
 <link rel="stylesheet" href="game-polish.css">
 <script src="../interaction-guard.js" defer></script>
@@ -90,10 +101,13 @@
 
   <div class="hud" id="hud" style="display:none;">
     <div class="pill coins">🪙 <span id="coinsVal">0</span>/<span id="coinsTotal">0</span></div>
-    <div class="pill level" id="levelPill">Bana 1</div>
+    <div class="pill checkpoint">🚩 <span id="checkpointVal">0</span>/4</div>
+    <div class="pill time">⏱ <span id="timeVal">0:00</span></div>
+    <div class="pill falls">↻ <span id="fallsVal">0</span></div>
   </div>
   <div class="progress-wrap" id="progressWrap" style="display:none;">
     <div class="progress-bar" id="progressBar"></div>
+    <div class="checkpoint-markers" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
   </div>
   <div class="toast" id="toast"></div>
 
@@ -104,7 +118,7 @@
 
   <div class="overlay" id="startOverlay">
     <h2>KULRULLAREN</h2>
-    <p>Styr bollen längs den svängande banan. Dra med fingret, tryck på pilarna eller använd ←/→ på tangentbordet. Samla mynten och åk inte av kanten!</p>
+    <p>Styr bollen längs den svängande banan. Fyra kontrollpunkter gör varje försök rättvist. Samla minst 90% av mynten och klara dig med högst ett fall för tre stjärnor.</p>
     <div class="level-grid" id="levelGrid"></div>
   </div>
 
@@ -129,6 +143,7 @@
   'use strict';
 
   const PROGRESS_KEY = 'kulrullaren-progress-v1';
+  const CHECKPOINTS = [0.2, 0.4, 0.6, 0.8];
 
   // points/coinCount skalade 2026-08-08 sa varje bana tar ~2 minuter i stallet
   // for ~15-20 sekunder (curveLength ~= points * 15, tid = curveLength / speed
@@ -144,9 +159,12 @@
   function loadProgress() {
     try {
       const raw = localStorage.getItem(PROGRESS_KEY);
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        return { unlocked: saved.unlocked || 1, stars: saved.stars || {}, bestTimes: saved.bestTimes || {} };
+      }
     } catch (e) {}
-    return { unlocked: 1, stars: {} };
+    return { unlocked: 1, stars: {}, bestTimes: {} };
   }
   function saveProgress(p) {
     try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); } catch (e) {}
@@ -295,6 +313,9 @@
   let lateral = 0;
   let checkpointDistance = 0;
   let checkpointLateral = 0;
+  let checkpointIndex = 0;
+  let elapsedTime = 0;
+  let fallCount = 0;
   let coins = [];
   let coinsCollected = 0;
   let levelIndex = 0;
@@ -438,10 +459,9 @@
     trackGroup.add(buildRailMesh(frames, halfWidth, -1, level.railColor, curveLength));
     trackGroup.add(buildRailMesh(frames, halfWidth, 1, level.railColor, curveLength));
 
-    if (frames.length > 20) {
-      trackGroup.add(buildArch(frames, 0.32, halfWidth, level.railColor));
-      trackGroup.add(buildArch(frames, 0.68, halfWidth, '#FF6EC7'));
-    }
+    if (frames.length > 20) CHECKPOINTS.forEach((t, i) => {
+      trackGroup.add(buildArch(frames, t, halfWidth, i % 2 ? '#2FE6D6' : '#FF6EC7'));
+    });
 
     coins = buildCoins(frames, halfWidth, level.coinCount, rnd);
     coinsCollected = 0;
@@ -457,12 +477,22 @@
     lateral = 0;
     checkpointDistance = 0;
     checkpointLateral = 0;
+    checkpointIndex = 0;
+    elapsedTime = 0;
+    fallCount = 0;
     dragLateral = null;
 
     document.getElementById('coinsVal').textContent = '0';
     document.getElementById('coinsTotal').textContent = String(level.coinCount);
-    document.getElementById('levelPill').textContent = 'Bana ' + (idx + 1) + ' · ' + level.name;
+    document.getElementById('checkpointVal').textContent = '0';
+    document.getElementById('timeVal').textContent = '0:00';
+    document.getElementById('fallsVal').textContent = '0';
     document.getElementById('progressBar').style.width = '0%';
+  }
+
+  function formatTime(seconds) {
+    const whole = Math.max(0, Math.floor(seconds));
+    return Math.floor(whole / 60) + ':' + String(whole % 60).padStart(2, '0');
   }
 
   function frameAt(t) {
@@ -487,6 +517,8 @@
 
   function triggerFall() {
     running = false;
+    fallCount++;
+    document.getElementById('fallsVal').textContent = String(fallCount);
     document.getElementById('fallOverlay').classList.remove('hidden');
   }
 
@@ -494,13 +526,17 @@
     running = false;
     const pct = level.coinCount > 0 ? coinsCollected / level.coinCount : 1;
     let stars = 1;
-    if (pct >= 0.9) stars = 3; else if (pct >= 0.5) stars = 2;
+    if (pct >= 0.9 && fallCount <= 1) stars = 3;
+    else if (pct >= 0.7 && fallCount <= 3) stars = 2;
     progress.stars[levelIndex] = Math.max(progress.stars[levelIndex] || 0, stars);
+    const oldBest = progress.bestTimes[levelIndex];
+    const isRecord = !oldBest || elapsedTime < oldBest;
+    if (isRecord) progress.bestTimes[levelIndex] = Math.round(elapsedTime * 10) / 10;
     if (levelIndex + 1 >= progress.unlocked && levelIndex + 1 < LEVELS.length) progress.unlocked = levelIndex + 2;
     saveProgress(progress);
 
     document.getElementById('winStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
-    document.getElementById('winText').textContent = coinsCollected + ' av ' + level.coinCount + ' mynt samlade.';
+    document.getElementById('winText').textContent = coinsCollected + ' av ' + level.coinCount + ' mynt · ' + formatTime(elapsedTime) + ' · ' + fallCount + ' fall' + (isRecord ? ' · NYTT TIDSREKORD!' : '');
     document.getElementById('nextLevelBtn').style.display = levelIndex + 1 < LEVELS.length ? 'inline-block' : 'none';
     document.getElementById('winOverlay').classList.remove('hidden');
   }
@@ -562,7 +598,8 @@
       btn.className = 'level-btn' + (locked ? ' locked' : '');
       const st = progress.stars[i] || 0;
       btn.setAttribute('aria-label', locked ? 'Bana ' + (i + 1) + ', låst' : 'Spela bana ' + (i + 1) + ': ' + lvl.name);
-      btn.innerHTML = (locked ? '🔒' : String(i + 1)) + (locked ? '' : '<span class="lvl-stars">' + '⭐'.repeat(st) + '☆'.repeat(3 - st) + '</span>') + '<small>' + lvl.name + '</small>';
+      const best = progress.bestTimes[i];
+      btn.innerHTML = (locked ? '🔒' : String(i + 1)) + (locked ? '' : '<span class="lvl-stars">' + '⭐'.repeat(st) + '☆'.repeat(3 - st) + '</span>') + '<small>' + lvl.name + '</small>' + (!locked && best ? '<span class="best-time">⏱ ' + formatTime(best) + '</span>' : '');
       if (!locked) {
         btn.addEventListener('click', () => startLevel(i));
       }
@@ -611,6 +648,8 @@
     if (!running) return;
     const dt = Math.min(0.05, (ts - lastTime) / 1000);
     lastTime = ts;
+    elapsedTime += dt;
+    document.getElementById('timeVal').textContent = formatTime(elapsedTime);
 
     const steerSpeed = halfWidth * 1.7;
     let desired = (dragLateral != null ? dragLateral : lateral) + (dragLateral == null ? steerInput * steerSpeed * dt : 0);
@@ -620,9 +659,13 @@
     const t = distance / curveLength;
 
     if (t >= 1) { completeLevel(); return; }
-    if (t >= (checkpointDistance / curveLength) + 0.25) {
-      checkpointDistance = distance;
-      checkpointLateral = 0;
+    if (checkpointIndex < CHECKPOINTS.length && t >= CHECKPOINTS[checkpointIndex]) {
+      checkpointIndex++;
+      checkpointDistance = curveLength * CHECKPOINTS[checkpointIndex - 1];
+      checkpointLateral = lateral;
+      document.getElementById('checkpointVal').textContent = String(checkpointIndex);
+      showToast('KONTROLLPUNKT ' + checkpointIndex + '/4');
+      if (navigator.vibrate) navigator.vibrate(35);
     }
 
     const margin = halfWidth - ballRadius * 0.55;

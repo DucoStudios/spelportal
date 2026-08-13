@@ -180,6 +180,54 @@ test("Blockkrossaren förklarar bollroller, har poäng-HUD och döljbar bollväl
   assert.ok(index.includes("title: 'Blockkrossaren'"));
 });
 
+test("Klossfall har rättvis 7-kloss-påse, nästa kloss, kombo och lokalt rekord", () => {
+  const html = readFileSync("games/klossfall.html", "utf8");
+  assert.ok(html.includes("const BEST_KEY = 'klossfall-best-v2'"));
+  assert.ok(html.includes("function refillBag()"));
+  assert.ok(html.includes("bag = NAMES.slice()"));
+  assert.ok(html.includes('id="nextPiece"'));
+  assert.ok(html.includes("function renderNextPiece()"));
+  assert.ok(html.includes('id="comboVal"'));
+  assert.ok(html.includes("const comboBonus"));
+  assert.ok(html.includes('id="bestVal"'));
+  assert.ok(html.includes("localStorage.setItem(BEST_KEY"));
+});
+
+test("Kulrullaren visar fyra kontrollpunkter, tid, fall och lokala rekord", () => {
+  const html = readFileSync("games/kulrullaren.html", "utf8");
+  assert.ok(html.includes("const CHECKPOINTS = [0.2, 0.4, 0.6, 0.8]"));
+  for (const id of ["checkpointVal", "timeVal", "fallsVal"]) assert.ok(html.includes(`id="${id}"`));
+  assert.ok(html.includes("bestTimes"));
+  assert.ok(html.includes("KONTROLLPUNKT "));
+  assert.ok(html.includes("pct >= 0.9 && fallCount <= 1"));
+});
+
+test("Memory sparar rekord, startar tiden på första brickan och visar streak", () => {
+  const html = readFileSync("games/memory-plattorna.html", "utf8");
+  assert.ok(html.includes("const BEST_KEY = 'memory-plattorna-best-v2'"));
+  assert.ok(html.includes("function startTimer()"));
+  assert.ok(html.includes("startTimer();"));
+  assert.ok(html.includes('id="streakVal"'));
+  assert.ok(html.includes("for (let i = deck.length - 1; i > 0; i--)"));
+});
+
+test("Saftståndet lär ut behovsmatchning och visar träffsäkerhet och rekord", () => {
+  const html = readFileSync("games/saftstand-erbjudandet.html", "utf8");
+  assert.ok(html.includes('id="accuracyVal"'));
+  assert.ok(html.includes("BÄTTRE VAL:"));
+  assert.ok(html.includes("TRÄFF! Du mötte kundens behov:"));
+  assert.ok(html.includes("const BEST_KEY = 'saftstand-erbjudandet-best-v2'"));
+});
+
+test("Ordmästaren visar sessionssteg, kombo, träffsäkerhet och dagligt mål", () => {
+  const html = readFileSync("games/ordmastaren.html", "utf8");
+  assert.ok(html.includes('id="sessionCount"'));
+  assert.ok(html.includes('id="sessionCombo"'));
+  assert.ok(html.includes("answerCount"));
+  assert.ok(html.includes("progress.daily.sessions"));
+  assert.ok(html.includes("Dagens mål är klart!"));
+});
+
 test("alla franska lyssningsspel använder samma förbättrade röstmotor", () => {
   const speechEngine = readFileSync("french-speech.js", "utf8");
   assert.ok(speechEngine.includes("function voiceScore(voice)"));

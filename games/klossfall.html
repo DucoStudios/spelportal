@@ -31,12 +31,19 @@
   .back-link { position: relative; z-index: 2; display: block; text-align: center; margin-top: 0.5rem; font-size: 0.72rem; font-weight: 600; color: var(--cyan); text-decoration: none; }
   .back-link:hover { color: var(--ink); }
   .sub { color: var(--ink-soft); font-size: 0.88rem; font-weight: 600; margin: 0 0 1.1rem; text-align: center; max-width: 380px; }
-  .hud { display: flex; justify-content: space-between; width: 100%; max-width: 300px; margin-bottom: 0.7rem; }
-  .hud-chip { background: var(--panel); border: 2px solid var(--outline); border-radius: 8px; padding: 0.3rem 0.6rem; box-shadow: 3px 3px 0 var(--outline); text-align: center; min-width: 56px; }
+  .hud { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; width: 100%; max-width: 360px; margin-bottom: 0.55rem; }
+  .hud-chip { background: var(--panel); border: 2px solid var(--outline); border-radius: 8px; padding: 0.3rem 0.25rem; box-shadow: 3px 3px 0 var(--outline); text-align: center; min-width: 0; }
   .hud-chip .label { font-family: 'Bungee', sans-serif; font-size: 0.46rem; letter-spacing: 0.06em; color: var(--cyan); display: block; }
   .hud-chip .value { font-family: 'Open Sans', sans-serif; font-weight: 800; font-size: 1rem; font-variant-numeric: tabular-nums; }
 
   .board-wrap { position: relative; }
+  .preview-row { display: flex; align-items: center; justify-content: space-between; gap: .6rem; width: 230px; max-width: 92vw; margin: 0 auto .5rem; }
+  .next-box { display: grid; grid-template-columns: 34px 1fr; align-items: center; gap: 6px; min-width: 112px; padding: 5px 7px; border: 2px solid var(--outline); background: var(--panel); box-shadow: 3px 3px 0 var(--outline); }
+  .next-label { color: var(--cyan); font-family: 'Bungee', sans-serif; font-size: .43rem; line-height: 1.25; }
+  #nextPiece { position: relative; width: 52px; height: 38px; }
+  .preview-cell { position: absolute; width: 9px; height: 9px; border: 1px solid var(--outline); background: var(--yellow); }
+  .combo-callout { min-width: 102px; color: var(--ink-soft); font-size: .62rem; font-weight: 800; line-height: 1.25; text-align: right; }
+  .combo-callout strong { display: block; color: var(--yellow); font-family: 'Bungee', sans-serif; font-size: .62rem; }
   #board {
     position: relative; width: 230px; max-width: 92vw; height: 414px;
     background: var(--bg2); border: 3px solid var(--outline); border-radius: 10px; box-shadow: 6px 6px 0 var(--outline);
@@ -58,6 +65,11 @@
   .tbtn { width: 56px; height: 52px; padding: 0; border-radius: 11px; border: 2px solid var(--outline); background: var(--panel); color: var(--ink); font-family: inherit; font-size: 1.2rem; box-shadow: 3px 3px 0 var(--outline); display: flex; align-items: center; justify-content: center; user-select: none; touch-action: none; cursor: pointer; }
   .tbtn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--outline); }
   .next-hint { margin-top: 1.1rem; font-size: 0.75rem; font-weight: 600; color: var(--ink-faint); text-align: center; max-width: 406px; }
+
+  @media (max-width: 359px) {
+    .hud-chip .label { font-size: .38rem; }
+    .hud-chip .value { font-size: .82rem; }
+  }
 
   .fixed-back {
     position: fixed;
@@ -103,13 +115,20 @@
     <div class="hud-chip"><span class="label">POÄNG</span><span class="value" id="scoreVal">0</span></div>
     <div class="hud-chip"><span class="label">RADER</span><span class="value" id="linesVal">0</span></div>
     <div class="hud-chip"><span class="label">NIVÅ</span><span class="value" id="levelVal">1</span></div>
+    <div class="hud-chip"><span class="label">KOMBO</span><span class="value" id="comboVal">—</span></div>
+    <div class="hud-chip"><span class="label">REKORD</span><span class="value" id="bestVal">0</span></div>
+  </div>
+
+  <div class="preview-row">
+    <div class="next-box"><span class="next-label">NÄSTA<br>KLOSS</span><div id="nextPiece" aria-label="Nästa kloss"></div></div>
+    <div class="combo-callout" id="comboCallout" aria-live="polite"><strong>BYGG SMART</strong>Rensa rad efter rad.</div>
   </div>
 
   <div class="board-wrap">
     <div id="board">
       <div class="overlay" id="startOverlay">
         <h2>REDO?</h2>
-        <p>Fyll rader för att rensa dem. Går det för högt är det slut.</p>
+        <p>Fyll rader, planera med nästa kloss och bygg kombo genom att rensa igen.</p>
         <button class="cta" id="startBtn">Kör igång</button>
       </div>
       <div class="overlay hidden" id="endOverlay">
@@ -135,6 +154,7 @@
 <script>
 (function () {
   const COLS = 10, ROWS = 18, CELL = 23;
+  const BEST_KEY = 'klossfall-best-v2';
   const COLORS = { I: 'var(--cyan)', O: 'var(--yellow)', T: 'var(--purple)', S: 'var(--pink)', Z: 'var(--orange)', J: 'var(--cyan)', L: 'var(--orange)' };
 
   const SHAPES = {
@@ -159,6 +179,10 @@
   const scoreVal = document.getElementById('scoreVal');
   const linesVal = document.getElementById('linesVal');
   const levelVal = document.getElementById('levelVal');
+  const comboVal = document.getElementById('comboVal');
+  const bestVal = document.getElementById('bestVal');
+  const nextPieceEl = document.getElementById('nextPiece');
+  const comboCallout = document.getElementById('comboCallout');
   const startOverlay = document.getElementById('startOverlay');
   const endOverlay = document.getElementById('endOverlay');
   const startBtn = document.getElementById('startBtn');
@@ -166,12 +190,45 @@
   const finalScore = document.getElementById('finalScore');
   const finalStats = document.getElementById('finalStats');
 
-  let grid, piece, running, score, lines, level, dropHandle, cellPool = [];
+  let grid, piece, nextPiece, running, score, lines, level, combo, best, dropHandle, cellPool = [], bag = [];
+  best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10);
+  bestVal.textContent = best;
+
+  function refillBag() {
+    bag = NAMES.slice();
+    for (let i = bag.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [bag[i], bag[j]] = [bag[j], bag[i]];
+    }
+  }
 
   function newPiece() {
-    const name = NAMES[Math.floor(Math.random() * NAMES.length)];
+    if (!bag.length) refillBag();
+    const name = bag.pop();
     const shape = SHAPES[name].map(r => r.slice());
     return { name, shape, row: 0, col: Math.floor((COLS - shape.length) / 2) };
+  }
+
+  function renderNextPiece() {
+    nextPieceEl.innerHTML = '';
+    if (!nextPiece) return;
+    const occupied = [];
+    nextPiece.shape.forEach((row, y) => row.forEach((v, x) => { if (v) occupied.push({ x, y }); }));
+    const minX = Math.min(...occupied.map(cell => cell.x));
+    const maxX = Math.max(...occupied.map(cell => cell.x));
+    const minY = Math.min(...occupied.map(cell => cell.y));
+    const maxY = Math.max(...occupied.map(cell => cell.y));
+    const width = (maxX - minX + 1) * 9;
+    const height = (maxY - minY + 1) * 9;
+    occupied.forEach(cell => {
+      const el = document.createElement('span');
+      el.className = 'preview-cell';
+      el.style.background = COLORS[nextPiece.name];
+      el.style.left = (26 - width / 2 + (cell.x - minX) * 9) + 'px';
+      el.style.top = (19 - height / 2 + (cell.y - minY) * 9) + 'px';
+      nextPieceEl.appendChild(el);
+    });
+    nextPieceEl.setAttribute('aria-label', 'Nästa kloss: ' + nextPiece.name);
   }
 
   function collides(shape, row, col) {
@@ -203,12 +260,20 @@
     }
     if (cleared) {
       const pts = [0, 100, 300, 500, 800][cleared] || 800;
-      score += pts * level;
+      combo++;
+      const comboBonus = combo > 1 ? (combo - 1) * 75 * level : 0;
+      score += pts * level + comboBonus;
       lines += cleared;
       level = 1 + Math.floor(lines / 5);
+      comboCallout.innerHTML = '<strong>' + (combo > 1 ? 'KOMBO ×' + combo : cleared + ' RAD' + (cleared > 1 ? 'ER' : '')) + '</strong>' + (comboBonus ? '+' + comboBonus + ' kombobonus' : 'Rensa igen för kombo');
       playClear(cleared);
+    } else {
+      combo = 0;
+      comboCallout.innerHTML = '<strong>BYGG SMART</strong>Rensa rad efter rad.';
     }
-    piece = newPiece();
+    piece = nextPiece;
+    nextPiece = newPiece();
+    renderNextPiece();
     if (collides(piece.shape, piece.row, piece.col)) {
       endGame();
       return;
@@ -267,6 +332,8 @@
     scoreVal.textContent = score;
     linesVal.textContent = lines;
     levelVal.textContent = level;
+    comboVal.textContent = combo > 1 ? '×' + combo : '—';
+    bestVal.textContent = Math.max(best, score);
   }
 
   function render() {
@@ -311,15 +378,21 @@
     running = false;
     clearInterval(dropHandle);
     playOver();
+    const isRecord = score > best;
+    if (isRecord) { best = score; localStorage.setItem(BEST_KEY, String(best)); }
+    updateHud();
     finalScore.textContent = score;
-    finalStats.textContent = lines + ' rader rensade, nivå ' + level;
+    finalStats.textContent = lines + ' rader · nivå ' + level + (isRecord ? ' · NYTT REKORD!' : ' · rekord ' + best);
     endOverlay.classList.remove('hidden');
   }
 
   function startGame() {
     grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-    score = 0; lines = 0; level = 1; running = true;
+    score = 0; lines = 0; level = 1; combo = 0; running = true; bag = [];
     piece = newPiece();
+    nextPiece = newPiece();
+    renderNextPiece();
+    comboCallout.innerHTML = '<strong>BYGG SMART</strong>Rensa rad efter rad.';
     updateHud();
     startOverlay.classList.add('hidden');
     endOverlay.classList.add('hidden');

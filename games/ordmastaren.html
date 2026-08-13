@@ -66,6 +66,9 @@
   .session-hud .bar-bg { flex: 1; height: 10px; border-radius: 5px; background: rgba(0,0,0,0.35); overflow: hidden; }
   .session-hud .bar-fill { height: 100%; background: var(--green); border-radius: 5px; transition: width 0.25s; }
   .session-hud .xp-pop { font-weight: 800; font-size: 0.8rem; color: var(--yellow); min-width: 44px; text-align: right; }
+  .session-hud .session-count, .session-hud .session-combo { font-weight: 800; font-size: 0.72rem; white-space: nowrap; }
+  .session-hud .session-count { color: var(--cyan); }
+  .session-hud .session-combo { color: var(--orange); }
   .session-hud .back-btn { background: none; border: none; color: var(--ink-soft); font-size: 1.2rem; cursor: pointer; padding: 0 4px; }
 
   #cardArea { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; gap: 14px; overflow-y: auto; }
@@ -203,7 +206,9 @@
   <div id="sessionView">
     <div class="session-hud">
       <button class="back-btn" id="backBtn">✕</button>
+      <div class="session-count" id="sessionCount">1/14</div>
       <div class="bar-bg"><div class="bar-fill" id="sessionBar" style="width:0%"></div></div>
+      <div class="session-combo" id="sessionCombo">🔥0</div>
       <div class="xp-pop" id="xpVal">0 XP</div>
     </div>
     <div id="cardArea"></div>
@@ -498,6 +503,7 @@
     if (!p || typeof p !== 'object') p = {};
     if (!p.words) p.words = {};
     if (!p.streak) p.streak = { count: 0, lastDate: null };
+    if (!p.daily || p.daily.date !== todayStr()) p.daily = { date: todayStr(), sessions: 0 };
     if (typeof p.xp !== 'number') p.xp = 0;
     if (!p.sessionsPlayed) p.sessionsPlayed = new Array(PACKS.length).fill(0);
     return p;
@@ -683,6 +689,9 @@
   // bara "ratt pa en fraga".
   function celebrateCorrect(anchorEl, justMastered) {
     session.combo = (session.combo || 0) + 1;
+    session.correctCount++;
+    session.answerCount++;
+    document.getElementById('sessionCombo').textContent = '🔥' + session.combo;
     const bonus = 10 + Math.min(session.combo - 1, 6) * 3;
     awardXp(bonus);
     spawnBurst(anchorEl, justMastered ? '#FFD23F' : null);
@@ -706,6 +715,8 @@
   }
   function registerWrongAnswer() {
     session.combo = 0;
+    session.answerCount++;
+    document.getElementById('sessionCombo').textContent = '🔥0';
     playWrongSound();
   }
 
@@ -716,6 +727,8 @@
   const sessionView = document.getElementById('sessionView');
   const cardArea = document.getElementById('cardArea');
   const sessionBar = document.getElementById('sessionBar');
+  const sessionCount = document.getElementById('sessionCount');
+  const sessionCombo = document.getElementById('sessionCombo');
   const xpValEl = document.getElementById('xpVal');
   const backBtn = document.getElementById('backBtn');
   const summaryOverlay = document.getElementById('summaryOverlay');
@@ -749,7 +762,8 @@
     statRow.innerHTML =
       '<div class="stat-pill streak">🔥 dagar<span class="big">' + progress.streak.count + '</span></div>' +
       '<div class="stat-pill xp">⭐ XP<span class="big">' + progress.xp + '</span></div>' +
-      '<div class="stat-pill words">📖 ord<span class="big">' + totalMasteredWords() + '/' + TOTAL_WORDS + '</span></div>';
+      '<div class="stat-pill words">📖 ord<span class="big">' + totalMasteredWords() + '/' + TOTAL_WORDS + '</span></div>' +
+      '<div class="stat-pill words">🎯 idag<span class="big">' + Math.min(progress.daily.sessions, 1) + '/1</span></div>';
   }
 
   function renderPackGrid() {
@@ -846,17 +860,19 @@
   }
 
   function startSession(packIdx) {
-    session = { packIdx, queue: buildSessionQueue(packIdx), cardIdx: 0, correctCount: 0, xpEarned: 0, combo: 0 };
+    session = { packIdx, queue: buildSessionQueue(packIdx), cardIdx: 0, correctCount: 0, answerCount: 0, xpEarned: 0, combo: 0 };
     if (session.queue.length === 0) { showPackView(); return; }
     packView.style.display = 'none';
     sessionView.style.display = 'flex';
     xpValEl.textContent = progress.xp + ' XP';
+    sessionCombo.textContent = '🔥0';
     renderCurrentCard();
   }
 
   function updateSessionBar() {
     const pct = session.queue.length ? (session.cardIdx / session.queue.length) * 100 : 100;
     sessionBar.style.width = pct + '%';
+    sessionCount.textContent = Math.min(session.cardIdx + 1, session.queue.length) + '/' + session.queue.length;
   }
 
   function buildMcOptions(correctSv, packIdx) {
@@ -1088,11 +1104,15 @@
 
   function finishSession() {
     bumpStreak();
+    progress.daily = progress.daily && progress.daily.date === todayStr() ? progress.daily : { date: todayStr(), sessions: 0 };
+    progress.daily.sessions++;
+    saveProgress(progress);
     playSessionCompleteSound();
     const pct = packMasteryPct(session.packIdx);
     const stars = packStars(pct);
     summaryTitle.textContent = 'Bra jobbat!';
-    summaryText.textContent = 'Du fick ' + session.xpEarned + ' XP i "' + PACKS[session.packIdx].name + '". Paketet är ' + Math.round(pct * 100) + '% bemästrat.';
+    const accuracy = session.answerCount ? Math.round((session.correctCount / session.answerCount) * 100) : 100;
+    summaryText.textContent = 'Du fick ' + session.xpEarned + ' XP med ' + accuracy + '% rätt i "' + PACKS[session.packIdx].name + '". Paketet är ' + Math.round(pct * 100) + '% bemästrat. Dagens mål är klart!';
     summaryStars.textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
     sessionView.style.display = 'none';
     summaryOverlay.classList.remove('hidden');

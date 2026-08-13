@@ -52,8 +52,12 @@ test("delade visuella resurser finns", () => {
 test("alla spel har en unik, spelanpassad thumbnail", () => {
   const thumbnailIds = [...index.matchAll(/^\s+'([^']+)': \['/gm)].map(match => match[1]).sort();
   assert.deepEqual(thumbnailIds, gameFiles.map(file => file.replace(/\.html$/, "")));
-  assert.ok(index.includes('class="thumb-main"'));
-  assert.ok(index.includes('class="thumb-secondary"'));
+  assert.ok(index.includes('class="thumb-canvas"'));
+  assert.ok(index.includes('pixel-thumbnails.js'));
+  assert.ok(index.includes("window.PixelThumbnails.draw"));
+  const pixelScenes = readFileSync("pixel-thumbnails.js", "utf8");
+  for (const id of thumbnailIds) assert.ok(pixelScenes.includes(`case '${id}':`), `${id} saknar individuell pixelscen`);
+  assert.equal((pixelScenes.match(/case '[a-z0-9-]+':/g) || []).length, gameFiles.length);
 });
 
 test("synliga varumärkesreferenser är borttagna", () => {
@@ -153,6 +157,27 @@ test("centrala spelval och nivåkort fungerar med tangentbord", () => {
     assert.ok(html.includes(buttonCode), `${file} skapar inga knappar`);
     assert.ok(html.includes(label), `${file} saknar tillgängligt namn`);
   }
+});
+
+test("Blockkrossaren förklarar bollroller, har poäng-HUD och döljbar bollväljare", () => {
+  const html = readFileSync("games/kubkrossaren.html", "utf8");
+  assert.ok(html.includes("<title>Blockkrossaren</title>"));
+  assert.ok(html.includes('id="scoreVal"'));
+  assert.ok(html.includes('id="ballCountVal"'));
+  assert.ok(html.includes('id="turnVal"'));
+  assert.ok(html.includes('id="bestVal"'));
+  assert.ok(html.includes('id="ballToggle"'));
+  assert.ok(html.includes("function setBallPanel(open)"));
+  assert.ok(html.includes("aria-expanded"));
+  for (const explanation of [
+    "Jämn fart · 1 skada · lätt att styra",
+    "Långsam · 2 skada · stor träffyta",
+    "Snabbast · 1 skada · liten träffyta",
+    "1 skada · skadar block bredvid"
+  ]) assert.ok(html.includes(explanation), `bollförklaring saknas: ${explanation}`);
+  assert.ok(html.includes("const SCORE_BEST_KEY"));
+  assert.ok(html.includes("function addScore(points"));
+  assert.ok(index.includes("title: 'Blockkrossaren'"));
 });
 
 test("alla franska lyssningsspel använder samma förbättrade röstmotor", () => {

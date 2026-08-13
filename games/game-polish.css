@@ -466,6 +466,40 @@ body[data-game-id="superhjalte-spranget"] { --polish-primary:#48ddff; --polish-s
 body[data-game-id="traffa-ratt"] { --polish-primary:#47e6db; --polish-secondary:#ff5c9c; --polish-warm:#ffd84f; --polish-icon:"✏️"; }
 body[data-game-id="vishetens-vag"] { --polish-primary:#58dfb5; --polish-secondary:#8f63e8; --polish-warm:#f4cb59; --polish-icon:"📜"; }
 
+/* Gemensam 80/90-tals arkadriktning. Behåller varje spels egen palett och
+   mekanik, men gör skalet pixelbyggt i stället för generiskt rundat. */
+body[data-game-id] {
+  image-rendering: pixelated;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--polish-primary) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--polish-primary) 7%, transparent) 1px, transparent 1px),
+    var(--polish-pattern, none),
+    radial-gradient(circle at 50% -18%, color-mix(in srgb, var(--polish-secondary) 20%, transparent), transparent 44%);
+  background-size: 16px 16px, 16px 16px, auto, auto;
+}
+body[data-game-id]::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: .07;
+  background: repeating-linear-gradient(0deg, transparent 0 3px, #120a24 3px 4px);
+}
+body[data-game-id] :is(.topbar, .hero-band, .hud-chip, .pill, .stat-pill, .mix-chip, .bible-chip, .card, .pack-card, .preset-card, .map-card, .menu-panel, .catalog-panel, .hotbar, .controls-row, .overlay > :is(button,.cta), button, .btn) {
+  border-radius: 3px !important;
+}
+body[data-game-id] :is(.hud-chip, .pill, .stat-pill, .mix-chip, .bible-chip, .card, .pack-card, .preset-card, .map-card) {
+  box-shadow: 4px 4px 0 var(--outline, #120a24) !important;
+}
+body[data-game-id] :is(button, .btn, .cta, .preset-card, .map-card):active {
+  transform: translate(3px, 3px) !important;
+  box-shadow: 1px 1px 0 var(--outline, #120a24) !important;
+}
+body[data-game-id] :is(h1, h2, .card-title, .preset-title, .map-title) {
+  text-shadow: 2px 0 var(--outline, #120a24), -2px 0 var(--outline, #120a24), 0 2px var(--outline, #120a24), 2px 2px 0 var(--polish-secondary);
+}
+
 @keyframes polish-float {
   0%, 100% { transform: translateY(-50%) rotate(-9deg) scale(1); }
   50% { transform: translateY(calc(-50% - 6px)) rotate(-5deg) scale(1.025); }

@@ -12,6 +12,7 @@ const viewports = [
 ];
 const screenshotCases = new Set([
   "blockvarlden-desktop", "gardsriket-desktop", "kulrullaren-desktop",
+  "kubkrossaren-mobile",
   "memory-plattorna-desktop", "poppa-ballongerna-mobile", "schack-mobile",
   "malarboken-mobile", "brobyggarna-mobile"
 ]);
@@ -85,6 +86,27 @@ for (const viewport of viewports) {
     width: viewport.width, height: viewport.height, deviceScaleFactor: 1, mobile: viewport.mobile,
     screenWidth: viewport.width, screenHeight: viewport.height
   });
+  exceptions = [];
+  await call("Page.navigate", { url: pathToFileURL(resolve("index.html")).href });
+  for (let attempt = 0; attempt < 50; attempt++) {
+    if (await evaluate("document.readyState === 'complete'")) break;
+    await pause(50);
+  }
+  await pause(100);
+  const portal = await evaluate(`({
+    cards: document.querySelectorAll('.card').length,
+    canvases: document.querySelectorAll('.thumb-canvas').length,
+    painted: [...document.querySelectorAll('.thumb-canvas')].every(canvas => canvas.width === 240 && canvas.height === 132),
+    fits: document.documentElement.scrollWidth <= innerWidth + 1
+  })`);
+  assert.equal(portal.cards, ids.length, `portalen/${viewport.name}: fel antal spelkort`);
+  assert.equal(portal.canvases, ids.length, `portalen/${viewport.name}: pixelscener saknas`);
+  assert.ok(portal.painted, `portalen/${viewport.name}: en eller flera pixelscener ritades inte`);
+  assert.ok(portal.fits, `portalen/${viewport.name}: horisontell overflow`);
+  assert.deepEqual(exceptions, [], `portalen/${viewport.name}: körfel ${exceptions.join(", ")}`);
+  const portalShot = await call("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
+  writeFileSync(`${outputDir}/portal-${viewport.name}.png`, Buffer.from(portalShot.data, "base64"));
+
   for (const id of ids) {
     exceptions = [];
     await call("Page.navigate", { url: pathToFileURL(resolve(`games/${id}.html`)).href });
@@ -115,12 +137,35 @@ for (const viewport of viewports) {
           document.dispatchEvent(new Event('pointerlockchange'));
           return Promise.resolve();
         };
-        const button = document.querySelector('#startBtn, #playBtn, #startOverlay .level-btn:not(:disabled), #mapGrid .map-card, button.start-btn, .overlay:not(.hidden) button.cta, .start-overlay button');
+        const button = document.querySelector('#startBtn, #playBtn, #startOverlay .level-btn:not(:disabled), #startOverlay .preset-card, #mapGrid .map-card, button.start-btn, .overlay:not(.hidden) button.cta, .start-overlay button');
         button?.click();
         return true;
       })()`);
       await pause(500);
       assert.deepEqual(exceptions, [], `${id}/${viewport.name}: körfel efter start ${exceptions.join(", ")}`);
+      if (id === "kubkrossaren") {
+        const crusherUi = await evaluate(`(() => {
+          const hud = document.querySelector('#hud');
+          const toggle = document.querySelector('#ballToggle');
+          const hudRect = hud.getBoundingClientRect();
+          const toggleRect = toggle.getBoundingClientRect();
+          toggle.click();
+          const panel = document.querySelector('#ballSelect');
+          const panelRect = panel.getBoundingClientRect();
+          return {
+            hudVisible: getComputedStyle(hud).display === 'grid' && hudRect.top >= 0 && hudRect.bottom <= innerHeight,
+            stats: ['scoreVal','ballCountVal','turnVal','bestVal'].every(statId => document.getElementById(statId)?.textContent !== ''),
+            toggleVisible: !toggle.hidden && toggleRect.width >= 44 && toggleRect.height >= 44,
+            panelOpen: !panel.hidden && panelRect.width > 0 && panelRect.height > 0,
+            options: panel.querySelectorAll('.ball-opt').length,
+            explained: [...panel.querySelectorAll('.ball-effect')].every(el => el.textContent.trim().length > 8)
+          };
+        })()`);
+        assert.ok(crusherUi.hudVisible && crusherUi.stats, `${id}/${viewport.name}: HUD syns inte korrekt`);
+        assert.ok(crusherUi.toggleVisible && crusherUi.panelOpen, `${id}/${viewport.name}: bollväljaren kan inte öppnas`);
+        assert.equal(crusherUi.options, 4, `${id}/${viewport.name}: fel antal bolltyper`);
+        assert.ok(crusherUi.explained, `${id}/${viewport.name}: bollförklaringar saknas`);
+      }
       const shot = await call("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
       writeFileSync(`${outputDir}/${id}-${viewport.name}.png`, Buffer.from(shot.data, "base64"));
     }

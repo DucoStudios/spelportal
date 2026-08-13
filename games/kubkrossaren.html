@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#170F2E">
 <link rel="apple-touch-icon" href="../icon-180.png">
 <link rel="icon" href="../icon-512.png">
-<title>Kubkrossaren</title>
+<title>Blockkrossaren</title>
 <style>
   :root {
     --bg: #170F2E; --bg2: #241A44; --panel: #2C1F52; --outline: #120A24;
@@ -23,35 +23,58 @@
 
   .topbar {
     position: relative; z-index: 5; display: flex; align-items: center; justify-content: space-between;
-    padding: 0.6rem 1rem; background: linear-gradient(180deg, #2A1750 0%, #170F2E 100%);
+    min-height: 48px; padding: 0.45rem 0.8rem; background: linear-gradient(180deg, #2A1750 0%, #170F2E 100%);
     border-bottom: 3px solid var(--outline);
   }
-  .topbar h1 { font-weight: 800; font-size: 1.05rem; margin: 0; }
-  .topbar a { font-size: 0.72rem; font-weight: 700; color: var(--cyan); text-decoration: none; }
+  .topbar h1 { font-weight: 900; font-size: 0.98rem; letter-spacing: 0.04em; margin: 0; }
+  .topbar a { font-size: 0.68rem; font-weight: 800; color: var(--cyan); text-decoration: none; }
 
-  #gameWrap { position: relative; width: 100%; height: calc(100% - 44px); height: calc(100dvh - 44px); touch-action: none; }
+  #gameWrap { position: relative; width: 100%; height: calc(100% - 48px); height: calc(100dvh - 48px); touch-action: none; }
   #gameCanvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
-  .hud { position: absolute; top: 8px; left: 8px; right: 8px; z-index: 3; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; justify-content: space-between; }
+  #gameWrap > .hud { position: absolute; top: 8px; left: 8px; right: 8px; z-index: 3; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; pointer-events: none; }
   .pill {
-    background: rgba(23,15,46,0.8); border: 2px solid var(--outline); border-radius: 8px;
-    padding: 0.28rem 0.6rem; font-weight: 800; font-size: 0.8rem; white-space: nowrap;
+    min-width: 0; background: rgba(17,9,38,0.84); border: 1px solid rgba(84,240,220,.28); border-radius: 9px;
+    padding: 0.34rem 0.45rem; text-align: center; box-shadow: inset 0 1px rgba(255,255,255,.08), 0 6px 18px rgba(4,2,16,.28);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   }
-  .pill.turn { color: var(--cyan); }
-  .pill.balls { color: var(--yellow); }
-  .pill.best { color: var(--ink-soft); }
+  .stat-label { display: block; overflow: hidden; color: var(--ink-soft); font-size: 0.48rem; font-weight: 900; letter-spacing: 0.09em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+  .stat-value { display: block; margin-top: 1px; color: var(--ink); font-size: 0.9rem; font-weight: 950; line-height: 1; }
+  .pill.score .stat-value { color: var(--yellow); }
+  .pill.balls .stat-value { color: var(--cyan); }
 
   .ball-select {
-    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 4;
-    display: flex; gap: 8px; background: rgba(23,15,46,0.8); border: 2px solid var(--outline);
-    border-radius: 12px; padding: 6px 8px;
+    position: absolute; bottom: calc(64px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 5;
+    display: grid; grid-template-columns: repeat(4, minmax(112px, 1fr)); gap: 7px; width: min(640px, calc(100% - 16px));
+    background: rgba(17,9,38,0.94); border: 1px solid rgba(84,240,220,.36); border-radius: 15px; padding: 8px;
+    box-shadow: 0 18px 50px rgba(2,1,10,.58), inset 0 1px rgba(255,255,255,.08);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   }
+  .ball-select[hidden] { display: none; }
   .ball-opt {
-    width: 46px; height: 46px; border-radius: 50%; border: 3px solid var(--outline); cursor: pointer;
-    box-shadow: 2px 2px 0 var(--outline); position: relative; display: flex; align-items: center; justify-content: center;
+    min-height: 76px; border-radius: 10px; border: 1px solid rgba(255,255,255,.12); cursor: pointer;
+    color: var(--ink); background: rgba(255,255,255,.055); padding: 8px; position: relative; display: grid;
+    grid-template-columns: 30px 1fr; grid-template-rows: auto 1fr; column-gap: 7px; text-align: left; font-family: inherit;
+    box-shadow: inset 0 1px rgba(255,255,255,.06);
   }
-  .ball-opt.selected { outline: 3px solid var(--yellow); outline-offset: 2px; transform: translateY(-4px); }
-  .ball-opt .dmg { position: absolute; bottom: -7px; right: -4px; background: var(--outline); color: var(--yellow); font-size: 0.5rem; font-weight: 800; border-radius: 6px; padding: 1px 3px; }
+  .ball-opt:active { transform: translateY(1px); }
+  .ball-opt.selected { border-color: var(--ball-color); background: color-mix(in srgb, var(--ball-color) 15%, rgba(255,255,255,.04)); box-shadow: inset 0 0 0 1px var(--ball-color), 0 0 20px color-mix(in srgb, var(--ball-color) 20%, transparent); }
+  .ball-opt:disabled { cursor: default; opacity: .6; }
+  .ball-orb { grid-row: 1 / 3; align-self: center; width: 28px; height: 28px; border: 2px solid #09051a; border-radius: 50%; background: var(--ball-color); box-shadow: 0 0 12px var(--ball-color), inset 6px 6px rgba(255,255,255,.25); }
+  .ball-name { align-self: end; font-size: 0.67rem; font-weight: 950; line-height: 1.1; }
+  .ball-effect { color: var(--ink-soft); font-size: 0.56rem; font-weight: 750; line-height: 1.25; }
+  .ball-toggle {
+    position: absolute; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 5; min-height: 46px;
+    border: 1px solid rgba(84,240,220,.42); border-radius: 999px; padding: 0.52rem 0.82rem; cursor: pointer;
+    color: var(--ink); background: rgba(17,9,38,.92); font-family: inherit; font-size: .68rem; font-weight: 900;
+    box-shadow: 0 10px 28px rgba(2,1,10,.48), inset 0 1px rgba(255,255,255,.1);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .ball-toggle .toggle-orb { display: inline-block; width: 13px; height: 13px; margin-right: 5px; border: 1px solid #09051a; border-radius: 50%; background: var(--selected-color, #fff); box-shadow: 0 0 7px var(--selected-color, #fff); vertical-align: -2px; }
+  .ball-toggle:active { transform: translateY(1px); }
+
+  .score-pop { position: absolute; z-index: 4; pointer-events: none; color: var(--yellow); font-size: .72rem; font-weight: 950; text-shadow: 0 2px 0 #09051a; animation: score-rise .72s ease-out forwards; }
+  @keyframes score-rise { to { transform: translateY(-30px) scale(1.08); opacity: 0; } }
 
   .overlay {
     position: absolute; inset: 0; background: color-mix(in srgb, var(--bg2) 92%, transparent);
@@ -61,6 +84,13 @@
   .overlay.hidden { display: none; }
   .overlay h2 { font-weight: 900; font-size: 1.5rem; margin: 0; color: var(--yellow); text-shadow: 2px 2px 0 var(--outline); }
   .overlay p { max-width: 380px; font-size: 0.86rem; font-weight: 600; color: var(--ink-soft); margin: 0; line-height: 1.6; }
+  .eyebrow { color: var(--cyan); font-size: .56rem; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
+  .how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; width: min(460px, 100%); }
+  .how-card { border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: rgba(255,255,255,.045); padding: 8px; }
+  .how-card strong { display: block; color: var(--ink); font-size: .66rem; }
+  .how-card span { display: block; margin-top: 2px; color: var(--ink-soft); font-size: .56rem; line-height: 1.25; }
+  .block-key { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: min(460px, 100%); }
+  .block-chip { border-radius: 999px; padding: 5px 8px; background: rgba(255,255,255,.06); color: var(--ink-soft); font-size: .57rem; font-weight: 800; }
   .preset-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; max-width: 460px; }
   .preset-card {
     width: 150px; background: var(--panel); border: 3px solid var(--outline); border-radius: 12px;
@@ -76,6 +106,26 @@
     box-shadow: 4px 4px 0 var(--outline); padding: 0.6rem 1.4rem; cursor: pointer;
   }
   button.cta:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--outline); }
+
+  @media (max-width: 600px) {
+    .topbar h1 { flex: 0 0 auto; min-width: 0; max-width: none !important; overflow: visible; font-size: .64rem !important; line-height: 1.1; text-align: left; white-space: nowrap; }
+    .topbar a { max-width: 92px; text-align: right; font-size: .57rem; line-height: 1.1; }
+    .hud { gap: 4px; }
+    .pill { padding: .3rem .2rem; }
+    .stat-label { font-size: .42rem; }
+    .stat-value { font-size: .78rem; }
+    .ball-select { grid-template-columns: repeat(2, 1fr); }
+    .ball-opt { min-height: 64px; }
+    .overlay { justify-content: flex-start; padding-top: max(1rem, env(safe-area-inset-top)); gap: .65rem; }
+    .overlay h2 { font-size: 1.28rem; }
+    .overlay p { font-size: .73rem; line-height: 1.45; }
+    .preset-card { width: min(142px, calc(50vw - 25px)); padding: 9px; }
+  }
+  @media (max-height: 680px) {
+    .how-grid, .block-key { display: none; }
+    .overlay { gap: .5rem; }
+    .preset-card .icon { font-size: 1.2rem; }
+  }
 </style>
 <link rel="stylesheet" href="game-polish.css">
 <script src="../interaction-guard.js" defer></script>
@@ -84,24 +134,38 @@
 <body data-game-id="kubkrossaren">
 
 <div class="topbar">
-  <h1>🧱 KUBKROSSAREN</h1>
-  <a href="../index.html">&larr; HELA SPELKATALOGEN</a>
+  <h1>💥 BLOCKKROSSAREN</h1>
+  <a href="../index.html">&larr; SPELKATALOGEN</a>
 </div>
 
 <div id="gameWrap">
   <canvas id="gameCanvas"></canvas>
 
   <div class="hud" id="hud" style="display:none;">
-    <div class="pill turn">🧱 Rad <span id="turnVal">1</span></div>
-    <div class="pill balls">⚪ <span id="ballCountVal">1</span> bollar</div>
-    <div class="pill best">🏆 <span id="bestVal">0</span></div>
+    <div class="pill score"><span class="stat-label">Poäng</span><span class="stat-value" id="scoreVal">0</span></div>
+    <div class="pill balls"><span class="stat-label">Bollar</span><span class="stat-value" id="ballCountVal">1</span></div>
+    <div class="pill turn"><span class="stat-label">Våg</span><span class="stat-value" id="turnVal">1</span></div>
+    <div class="pill best"><span class="stat-label">Rekord</span><span class="stat-value" id="bestVal">0</span></div>
   </div>
 
-  <div class="ball-select" id="ballSelect" style="display:none;"></div>
+  <div class="ball-select" id="ballSelect" hidden aria-label="Välj boll till nästa salva"></div>
+  <button class="ball-toggle" id="ballToggle" type="button" aria-expanded="false" aria-controls="ballSelect" hidden></button>
 
   <div class="overlay" id="startOverlay">
-    <h2>KUBKROSSAREN</h2>
-    <p>Sikta och släpp för att skjuta iväg dina bollar. De studsar mellan väggarna och krossar kuberna — de flesta tål två studsar. Röda kuber dubblerar bollen vid varje träff och small till slut sönder i en hel skur av bollar. Kuberna sjunker neråt för varje omgång — se till att inte bli nedtryckt!</p>
+    <span class="eyebrow">Modern retro · sikta · bygg kedjor</span>
+    <h2>BLOCKKROSSAREN</h2>
+    <p>Dra för att sikta och släpp. Krossa blocken innan de når den röda linjen. Mellan varje salva väljer du bollen som passar din plan.</p>
+    <div class="how-grid" aria-label="Så spelar du">
+      <div class="how-card"><strong>1 · Sikta</strong><span>Dra direkt på spelplanen.</span></div>
+      <div class="how-card"><strong>2 · Släpp</strong><span>Alla dina bollar skjuts iväg.</span></div>
+      <div class="how-card"><strong>3 · Anpassa</strong><span>Byt boll inför nästa salva.</span></div>
+    </div>
+    <div class="block-key" aria-label="Blocktyper">
+      <span class="block-chip">🟦 Blå: 2 träffar</span>
+      <span class="block-chip">🟥 Röda: delar bollar</span>
+      <span class="block-chip">📦 Lådor: mycket tåliga</span>
+      <span class="block-chip">💎 +1: fler bollar</span>
+    </div>
     <div class="preset-grid" id="presetGrid"></div>
   </div>
 
@@ -116,14 +180,15 @@
 (function () {
   'use strict';
 
-  const BEST_KEY = 'kubkrossaren-best-v1';
+  const ROW_BEST_KEY = 'kubkrossaren-best-v1';
+  const SCORE_BEST_KEY = 'kubkrossaren-score-best-v2';
 
   // ================= Bolltyper =================
   const BALL_TYPES = [
-    { id: 'standard', name: 'Standard', color: '#FFF6FB', dmg: 1, speed: 430, r: 9, splash: false },
-    { id: 'heavy', name: 'Tungviktaren', color: '#C98A2E', dmg: 2, speed: 340, r: 12, splash: false },
-    { id: 'fast', name: 'Blixtbollen', color: '#2FE6D6', dmg: 1, speed: 560, r: 7, splash: false },
-    { id: 'splash', name: 'Sprängbollen', color: '#8B5CF6', dmg: 1, speed: 400, r: 10, splash: true }
+    { id: 'standard', icon: '⚪', name: 'Standard', effect: 'Jämn fart · 1 skada · lätt att styra', color: '#FFF6FB', dmg: 1, speed: 430, r: 9, splash: false },
+    { id: 'heavy', icon: '🟠', name: 'Tung', effect: 'Långsam · 2 skada · stor träffyta', color: '#C98A2E', dmg: 2, speed: 340, r: 12, splash: false },
+    { id: 'fast', icon: '🔹', name: 'Blixt', effect: 'Snabbast · 1 skada · liten träffyta', color: '#2FE6D6', dmg: 1, speed: 560, r: 7, splash: false },
+    { id: 'splash', icon: '🟣', name: 'Spräng', effect: '1 skada · skadar block bredvid', color: '#8B5CF6', dmg: 1, speed: 400, r: 10, splash: true }
   ];
   let selectedBallType = BALL_TYPES[0];
 
@@ -140,8 +205,10 @@
   const hud = document.getElementById('hud');
   const turnVal = document.getElementById('turnVal');
   const ballCountVal = document.getElementById('ballCountVal');
+  const scoreVal = document.getElementById('scoreVal');
   const bestVal = document.getElementById('bestVal');
   const ballSelectEl = document.getElementById('ballSelect');
+  const ballToggle = document.getElementById('ballToggle');
   const startOverlay = document.getElementById('startOverlay');
   const overOverlay = document.getElementById('overOverlay');
   const overText = document.getElementById('overText');
@@ -218,8 +285,11 @@
   let balls = [];        // {x, y, vx, vy, r, dmg, splash, color}
   let pickups = [];      // {x, y, vy}
   let particles = [];    // enkla visuella krosspartiklar
+  let scorePops = [];    // {x, y, text, life, maxLife}
   let turn = 1;
   let ballCount = 1;
+  let score = 0;
+  let combo = 0;
   let queuedToFire = 0;
   let fireTimer = 0;
   let turnTimer = 0;
@@ -229,8 +299,10 @@
   let aiming = false;
   let aimAngle = -Math.PI / 2; // rakt upp
   let running = false;
+  let ballPanelOpen = false;
   let preset = PRESETS[1];
-  let best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10);
+  let rowBest = parseInt(localStorage.getItem(ROW_BEST_KEY) || '0', 10);
+  let best = parseInt(localStorage.getItem(SCORE_BEST_KEY) || '0', 10);
 
   function rowY(row) { return ARENA_TOP + row * CELL; }
 
@@ -263,12 +335,14 @@
   function setupGame(p) {
     resize();
     preset = p;
-    bricks = []; balls = []; pickups = []; particles = [];
-    turn = 1; ballCount = 1; queuedToFire = 0; turnActive = false; recallPending = false; aiming = false;
+    bricks = []; balls = []; pickups = []; particles = []; scorePops = [];
+    turn = 1; ballCount = 1; score = 0; combo = 0; queuedToFire = 0; turnActive = false; recallPending = false; aiming = false;
     aimAngle = -Math.PI / 2;
     for (let r = 0; r < preset.startRows; r++) spawnRow(r, 0);
-    hud.style.display = 'flex';
-    ballSelectEl.style.display = 'flex';
+    hud.style.display = 'grid';
+    ballToggle.hidden = false;
+    setBallPanel(false);
+    renderBallSelect();
     updateHud();
     running = true;
     lastTs = performance.now();
@@ -278,7 +352,14 @@
   function updateHud() {
     turnVal.textContent = turn;
     ballCountVal.textContent = ballCount;
+    scoreVal.textContent = score.toLocaleString('sv-SE');
     bestVal.textContent = best;
+  }
+
+  function addScore(points, x, y, label) {
+    score += points;
+    scorePops.push({ x, y, text: label || '+' + points, life: .72, maxLife: .72 });
+    updateHud();
   }
 
   // ================= Rendering =================
@@ -515,6 +596,20 @@
       ctx.globalAlpha = 1;
     });
 
+    scorePops.forEach(pop => {
+      const progress = 1 - pop.life / pop.maxLife;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, pop.life / pop.maxLife);
+      ctx.fillStyle = '#ffd23f';
+      ctx.font = '950 15px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = '#09051a';
+      ctx.shadowBlur = 4;
+      ctx.fillText(pop.text, pop.x, pop.y - progress * 28);
+      ctx.restore();
+    });
+
     if (!turnActive) {
       ctx.save();
       ctx.translate(LAUNCHER_X, LAUNCHER_Y);
@@ -600,7 +695,7 @@
       x, y,
       vx: Math.cos(angle) * type.speed,
       vy: Math.sin(angle) * type.speed,
-      r: type.r, dmg: type.dmg, splash: type.splash, color: type.color
+      r: type.r, dmg: type.dmg, splash: type.splash, color: type.color, ballType: type
     });
   }
 
@@ -624,22 +719,27 @@
   function destroyBrick(b) {
     bricks.splice(bricks.indexOf(b), 1);
     spawnParticles(b.x + b.w / 2, b.y + b.h / 2, b.type === 'red' ? '#FF4D5E' : (b.type === 'crate' ? '#C98A2E' : '#5CB85C'));
+    addScore(50, b.x + b.w / 2, b.y + b.h / 2, '+50 KROSS');
     if (Math.random() < 0.10) {
       pickups.push({ x: b.x + b.w / 2, y: b.y + b.h / 2, vy: 130 });
     }
   }
 
   function damageBrick(b, ball) {
+    const dealt = Math.min(b.hp, ball.dmg);
     b.hp -= ball.dmg;
     b.hitFlash = 0.08;
+    combo++;
+    const hitPoints = dealt * 10 + Math.min(Math.max(combo - 1, 0), 10) * 2;
+    addScore(hitPoints, b.x + b.w / 2, b.y + b.h / 2, '+' + hitPoints + (combo >= 3 ? ' ×' + combo : ''));
     if (b.type === 'red') {
       if (b.hp > 0) {
         // Rott tegel: varje traff (utom sista) duplicerar bollen som traffade den.
         const a2 = Math.atan2(ball.vy, ball.vx) + (Math.random() - 0.5) * 0.6;
-        spawnBall(b.x + b.w / 2, b.y + b.h / 2, a2, selectedBallType);
+        spawnBall(b.x + b.w / 2, b.y + b.h / 2, a2, ball.ballType || selectedBallType);
       } else {
         // Sista traffen: exploderar i en hel skur av bollar.
-        spawnBurst(b.x + b.w / 2, b.y + b.h / 2, 5, selectedBallType);
+        spawnBurst(b.x + b.w / 2, b.y + b.h / 2, 5, ball.ballType || selectedBallType);
       }
     }
     if (b.hp <= 0) destroyBrick(b);
@@ -661,7 +761,7 @@
     }
     damageBrick(b, ball);
     if (ball.splash) {
-      bricks.filter(ob => ob !== b && ob.row === b.row && Math.abs(ob.col - b.col) === 1).forEach(ob => damageBrick(ob, { dmg: 1 }));
+      bricks.filter(ob => ob !== b && ob.row === b.row && Math.abs(ob.col - b.col) === 1).forEach(ob => damageBrick(ob, { dmg: 1, ballType: ball.ballType }));
     }
     return true;
   }
@@ -715,12 +815,15 @@
       if (p.y > RETURN_Y) {
         pickups.splice(pickups.indexOf(p), 1);
         ballCount++;
+        addScore(100, LAUNCHER_X, LAUNCHER_Y - 28, '+100 · NY BOLL');
         updateHud();
       }
     }
 
     for (const pt of particles) { pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.life -= dt; }
     particles = particles.filter(pt => pt.life > 0);
+    scorePops.forEach(pop => { pop.life -= dt; });
+    scorePops = scorePops.filter(pop => pop.life > 0);
 
     bricks.forEach(b => { if (b.hitFlash > 0) b.hitFlash -= dt; });
 
@@ -758,10 +861,12 @@
 
   function endTurn() {
     turnActive = false;
+    combo = 0;
     turn++;
     bricks.forEach(b => { b.row += 1; b.y = rowY(b.row); });
     spawnRow(0, turn);
     updateHud();
+    renderBallSelect();
     const gameOver = bricks.some(b => b.y + b.h > LAUNCH_Y);
     if (gameOver) triggerGameOver();
   }
@@ -769,8 +874,12 @@
   function triggerGameOver() {
     running = false;
     const scoreRows = turn - 1;
-    if (scoreRows > best) { best = scoreRows; localStorage.setItem(BEST_KEY, String(best)); }
-    overText.textContent = 'Du nådde rad ' + turn + ' (bästa: ' + best + ' rader).';
+    if (scoreRows > rowBest) { rowBest = scoreRows; localStorage.setItem(ROW_BEST_KEY, String(rowBest)); }
+    if (score > best) { best = score; localStorage.setItem(SCORE_BEST_KEY, String(best)); }
+    updateHud();
+    setBallPanel(false);
+    ballToggle.hidden = true;
+    overText.textContent = score.toLocaleString('sv-SE') + ' poäng · ' + scoreRows + ' vågor · rekord ' + best.toLocaleString('sv-SE') + '.';
     overOverlay.classList.remove('hidden');
   }
 
@@ -796,24 +905,47 @@
     turnActive = true;
     queuedToFire = ballCount;
     fireTimer = 0;
+    combo = 0;
+    setBallPanel(false);
+    renderBallSelect();
   });
 
   // ================= Bollval =================
+  function updateBallToggle() {
+    ballToggle.style.setProperty('--selected-color', selectedBallType.color);
+    ballToggle.setAttribute('aria-expanded', String(ballPanelOpen));
+    ballToggle.setAttribute('aria-label', (ballPanelOpen ? 'Dölj' : 'Visa') + ' bollväljaren. Vald boll: ' + selectedBallType.name);
+    ballToggle.innerHTML = '<span class="toggle-orb" aria-hidden="true"></span>Boll: ' + selectedBallType.name + ' ' + (ballPanelOpen ? '▼' : '▲');
+  }
+
+  function setBallPanel(open) {
+    ballPanelOpen = Boolean(open);
+    ballSelectEl.hidden = !ballPanelOpen;
+    updateBallToggle();
+  }
+
   function renderBallSelect() {
     ballSelectEl.innerHTML = '';
     BALL_TYPES.forEach(t => {
-      const el = document.createElement('div');
+      const el = document.createElement('button');
+      el.type = 'button';
       el.className = 'ball-opt' + (t === selectedBallType ? ' selected' : '');
-      el.style.background = t.color;
-      el.innerHTML = '<span class="dmg">' + t.dmg + '×</span>';
-      el.title = t.name;
+      el.style.setProperty('--ball-color', t.color);
+      el.setAttribute('aria-pressed', String(t === selectedBallType));
+      el.setAttribute('aria-label', t.name + ': ' + t.effect);
+      el.disabled = turnActive;
+      el.innerHTML = '<span class="ball-orb" aria-hidden="true"></span><span class="ball-name">' + t.icon + ' ' + t.name + '</span><span class="ball-effect">' + t.effect + '</span>';
       el.addEventListener('click', () => {
         selectedBallType = t;
+        navigator.vibrate?.(8);
         renderBallSelect();
+        setBallPanel(false);
       });
       ballSelectEl.appendChild(el);
     });
+    updateBallToggle();
   }
+  ballToggle.addEventListener('click', () => setBallPanel(!ballPanelOpen));
   renderBallSelect();
 
   // ================= Overlays =================
@@ -838,6 +970,7 @@
   restartBtn.addEventListener('click', () => {
     overOverlay.classList.add('hidden');
     startOverlay.classList.remove('hidden');
+    ballToggle.hidden = true;
   });
 
   // ================= Loop =================

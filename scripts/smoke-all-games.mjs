@@ -16,7 +16,8 @@ const screenshotCases = new Set([
   "klossfall-mobile",
   "kulrullaren-mobile", "memory-plattorna-mobile", "memory-plattorna-desktop",
   "saftstand-erbjudandet-mobile", "ordmastaren-mobile", "poppa-ballongerna-mobile", "schack-mobile",
-  "malarboken-mobile", "brobyggarna-mobile"
+  "malarboken-mobile", "brobyggarna-mobile", "ormen-mobile",
+  "superhjalte-spranget-mobile", "flykten-mobile", "reaktionsraketen-mobile", "dansstopp-mobile"
 ]);
 const outputDir = "/tmp/spelportal-all-games-smoke";
 mkdirSync(outputDir, { recursive: true });

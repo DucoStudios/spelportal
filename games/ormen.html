@@ -31,8 +31,8 @@
   .back-link { position: relative; z-index: 2; display: block; text-align: center; margin-top: 0.5rem; font-size: 0.72rem; font-weight: 600; color: var(--cyan); text-decoration: none; }
   .back-link:hover { color: var(--ink); }
   .sub { color: var(--ink-soft); font-size: 0.88rem; font-weight: 600; margin: 0 0 1.1rem; text-align: center; max-width: 380px; }
-  .hud { display: flex; justify-content: space-between; width: 100%; max-width: 396px; margin-bottom: 0.7rem; }
-  .hud-chip { background: var(--panel); border: 2px solid var(--outline); border-radius: 8px; padding: 0.35rem 0.7rem; box-shadow: 3px 3px 0 var(--outline); text-align: center; min-width: 64px; }
+  .hud { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; max-width: 396px; margin-bottom: 0.7rem; }
+  .hud-chip { background: var(--panel); border: 2px solid var(--outline); border-radius: 8px; padding: 0.35rem 0.2rem; box-shadow: 3px 3px 0 var(--outline); text-align: center; min-width: 0; }
   .hud-chip .label { font-family: 'Bungee', sans-serif; font-size: 0.5rem; letter-spacing: 0.06em; color: var(--cyan); display: block; }
   .hud-chip .value { font-family: 'Open Sans', sans-serif; font-weight: 800; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 
@@ -117,11 +117,12 @@
     </div>
   </div>
 
-  <p class="sub">Svep över spelplanen eller använd pilarna. Ät framstegsfröna, väx dig lång och undvik krockar.</p>
+  <p class="sub">Svep över spelplanen. Klara korta uppdrag och våga ta det glödande bonusfröet var femte måltid.</p>
 
   <div class="hud">
     <div class="hud-chip"><span class="label">POÄNG</span><span class="value" id="scoreVal">0</span></div>
     <div class="hud-chip"><span class="label">LÄNGD</span><span class="value" id="lenVal">3</span></div>
+    <div class="hud-chip"><span class="label">UPPDRAG</span><span class="value" id="missionVal">0/5</span></div>
     <div class="hud-chip"><span class="label">BÄSTA</span><span class="value" id="bestVal">0</span></div>
   </div>
 
@@ -130,7 +131,7 @@
       <canvas id="snakeCanvas" aria-label="Spelplan med en slingrande orm"></canvas>
       <div class="overlay" id="startOverlay">
         <h2>REDO?</h2>
-        <p>Svep direkt över spelplanen eller använd de stora pilknapparna.</p>
+        <p>Svep direkt över spelplanen eller använd pilarna. Vart femte frö är ett snabbare bonusfrö värt 25 poäng.</p>
         <button class="cta" id="startBtn">Kör igång</button>
       </div>
       <div class="overlay hidden" id="endOverlay">
@@ -148,7 +149,7 @@
     <button class="tbtn" id="btnLeft" type="button" aria-label="Styr vänster">◀</button><button class="tbtn" id="btnDown" type="button" aria-label="Styr nedåt">▼</button><button class="tbtn" id="btnRight" type="button" aria-label="Styr höger">▶</button>
   </div>
 
-  <p class="next-hint">Nästa: Ordracet (franska).</p>
+  <p class="next-hint">Risk och belöning: bonusfröet ger mer poäng men höjer tempot extra.</p>
 </div>
 
 <script>
@@ -159,6 +160,7 @@
   const snakeCtx = snakeCanvas.getContext('2d');
   const scoreVal = document.getElementById('scoreVal');
   const lenVal = document.getElementById('lenVal');
+  const missionVal = document.getElementById('missionVal');
   const bestVal = document.getElementById('bestVal');
   const startOverlay = document.getElementById('startOverlay');
   const endOverlay = document.getElementById('endOverlay');
@@ -168,11 +170,14 @@
   const finalStats = document.getElementById('finalStats');
 
   const BEST_KEY = 'ormen-best-v1';
+  const MISSIONS_KEY = 'ormen-missions-v1';
   let best = 0;
   try { best = Math.max(0, parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0); } catch (_) {}
   bestVal.textContent = best;
 
-  let snake, dir, nextDir, food, running, score, tickHandle, speedMs;
+  let completedMissions = 0;
+  try { completedMissions = Math.max(0, parseInt(localStorage.getItem(MISSIONS_KEY) || '0', 10) || 0); } catch (_) {}
+  let snake, dir, nextDir, food, running, score, tickHandle, speedMs, eaten, missionTarget, missionDone;
 
   let audioCtx = null;
   function ctx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
@@ -198,7 +203,7 @@
         if (!occupied.has(x + ',' + y)) freeCells.push({ x, y });
       }
     }
-    food = freeCells.length ? freeCells[Math.floor(Math.random() * freeCells.length)] : null;
+    food = freeCells.length ? { ...freeCells[Math.floor(Math.random() * freeCells.length)], kind: eaten > 0 && (eaten + 1) % 5 === 0 ? 'boost' : 'normal' } : null;
     return !!food;
   }
 
@@ -275,12 +280,12 @@
     if (food) {
       const f = center(food);
       snakeCtx.save();
-      snakeCtx.shadowColor = '#ff2e93';
+      snakeCtx.shadowColor = food.kind === 'boost' ? '#ffd23f' : '#ff2e93';
       snakeCtx.shadowBlur = cell * .72;
       const fruitGlow = snakeCtx.createRadialGradient(f.x - cell * .16, f.y - cell * .2, 1, f.x, f.y, cell * .52);
-      fruitGlow.addColorStop(0, '#fff38a');
-      fruitGlow.addColorStop(.28, '#ff7a3d');
-      fruitGlow.addColorStop(1, '#ff2e93');
+      fruitGlow.addColorStop(0, '#ffffff');
+      fruitGlow.addColorStop(.28, food.kind === 'boost' ? '#ffd23f' : '#ff7a3d');
+      fruitGlow.addColorStop(1, food.kind === 'boost' ? '#2fe6d6' : '#ff2e93');
       snakeCtx.fillStyle = fruitGlow;
       snakeCtx.beginPath();
       snakeCtx.arc(f.x, f.y + cell * .06, cell * .34, 0, Math.PI * 2);
@@ -396,7 +401,16 @@
     }
     snake.unshift(head);
     if (head.x === food.x && head.y === food.y) {
-      score += 10;
+      const boost = food.kind === 'boost';
+      score += boost ? 25 : 10;
+      eaten++;
+      if (!missionDone && eaten >= missionTarget) {
+        missionDone = true;
+        completedMissions++;
+        score += 50;
+        try { localStorage.setItem(MISSIONS_KEY, String(completedMissions)); } catch (_) {}
+        missionVal.textContent = 'KLAR!';
+      } else missionVal.textContent = Math.min(eaten, missionTarget) + '/' + missionTarget;
       if (score > best) {
         best = score;
         bestVal.textContent = best;
@@ -404,7 +418,7 @@
       }
       playEat();
       spawnFood();
-      speedMs = Math.max(70, speedMs - 3);
+      speedMs = Math.max(70, speedMs - (boost ? 8 : 3));
       clearInterval(tickHandle);
       tickHandle = setInterval(tick, speedMs);
     } else {
@@ -420,7 +434,7 @@
     clearInterval(tickHandle);
     playOver();
     finalScore.textContent = score;
-    finalStats.textContent = 'Längd ' + snake.length;
+    finalStats.textContent = 'Längd ' + snake.length + ' · ' + eaten + ' frön' + (missionDone ? ' · uppdrag klart!' : '');
     endOverlay.classList.remove('hidden');
   }
 
@@ -429,11 +443,15 @@
     dir = { x: 1, y: 0 };
     nextDir = dir;
     score = 0;
+    eaten = 0;
+    missionTarget = 5 + (completedMissions % 3);
+    missionDone = false;
     speedMs = 150;
     running = true;
     spawnFood();
     scoreVal.textContent = 0;
     lenVal.textContent = snake.length;
+    missionVal.textContent = '0/' + missionTarget;
     startOverlay.classList.add('hidden');
     endOverlay.classList.add('hidden');
     render();

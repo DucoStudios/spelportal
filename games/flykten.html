@@ -31,8 +31,8 @@
   .back-link { position: relative; z-index: 2; display: block; text-align: center; margin-top: 0.5rem; font-size: 0.72rem; font-weight: 600; color: var(--cyan); text-decoration: none; }
   .back-link:hover { color: var(--ink); }
   .sub { color: var(--ink-soft); font-size: 0.88rem; font-weight: 600; margin: 0 0 1.1rem; text-align: center; max-width: 380px; }
-  .hud { display: flex; justify-content: space-between; width: 100%; max-width: 406px; margin-bottom: 0.7rem; }
-  .hud-chip { background: var(--panel); border: 2px solid var(--outline); border-radius: 8px; padding: 0.35rem 0.7rem; box-shadow: 3px 3px 0 var(--outline); text-align: center; min-width: 64px; }
+  .hud { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; max-width: 406px; margin-bottom: 0.7rem; }
+  .hud-chip { background: var(--panel); border: 2px solid var(--outline); border-radius: 8px; padding: 0.35rem 0.2rem; box-shadow: 3px 3px 0 var(--outline); text-align: center; min-width: 0; }
   .hud-chip .label { font-family: 'Bungee', sans-serif; font-size: 0.5rem; letter-spacing: 0.06em; color: var(--cyan); display: block; }
   .hud-chip .value { font-family: 'Open Sans', sans-serif; font-weight: 800; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 
@@ -43,6 +43,9 @@
   .player { position: absolute; bottom: 66px; width: 40px; height: 40px; border-radius: 50%; background: var(--yellow); border: 3px solid var(--outline); box-shadow: 3px 3px 0 var(--outline); transition: left 0.15s ease; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
   .wave { position: absolute; left: 0; right: 0; bottom: 0; height: 40px; background: linear-gradient(180deg, transparent 0%, var(--pink) 100%); border-top: 3px solid var(--outline); transition: height 0.3s ease; }
   .wave-label { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 0.55rem; color: var(--ink); z-index: 3; }
+  .near-flash { position: absolute; left: 50%; top: 24%; transform: translate(-50%,-50%) scale(.8); color: var(--yellow); font-family: 'Bungee', sans-serif; font-size: 1rem; text-shadow: 2px 2px 0 var(--outline); opacity: 0; z-index: 4; pointer-events: none; }
+  .near-flash.show { animation: nearPop .65s ease-out; }
+  @keyframes nearPop { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.6); } 25% { opacity: 1; transform: translate(-50%,-50%) scale(1.15); } 100% { opacity: 0; transform: translate(-50%,-75%) scale(1); } }
 
   .overlay { position: absolute; inset: 0; background: color-mix(in srgb, var(--bg2) 92%, transparent); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.8rem; text-align: center; padding: 1.4rem; z-index: 5; }
   .overlay.hidden { display: none; }
@@ -95,10 +98,12 @@
     </div>
   </div>
 
-  <p class="sub">Vågen ligger tätt bakom dig. Byt fil, undvik hindren, håll den borta så länge du kan.</p>
+  <p class="sub">Vågen ligger bakom dig. Smeta förbi hinder i filen bredvid för nära-miss-flow som pressar tillbaka vågen.</p>
 
   <div class="hud">
     <div class="hud-chip"><span class="label">TID</span><span class="value" id="timeVal">0.0</span></div>
+    <div class="hud-chip"><span class="label">NÄRA</span><span class="value" id="nearVal">0</span></div>
+    <div class="hud-chip"><span class="label">FLOW</span><span class="value" id="flowVal">0</span></div>
     <div class="hud-chip"><span class="label">BÄST</span><span class="value" id="bestVal">0.0</span></div>
   </div>
 
@@ -111,10 +116,11 @@
       <div class="wave" id="wave"></div>
       <div class="wave-label" id="waveLabel">VÅGEN 0%</div>
       <div class="player" id="player">😮</div>
+      <div class="near-flash" id="nearFlash">NÄRA!</div>
 
       <div class="overlay" id="startOverlay">
         <h2>REDO?</h2>
-        <p>Byt fil för att undvika hindren. Krockar du växer vågen — når den dig är det slut.</p>
+        <p>Byt fil för att undvika hindren. Passera i filen bredvid för en nära-miss som sänker vågen. Spelet ökar tempot stegvis och ger andrum efter en krock.</p>
         <button class="cta" id="startBtn">Spring!</button>
       </div>
       <div class="overlay hidden" id="endOverlay">
@@ -131,7 +137,7 @@
     <button class="tbtn" id="btnRight" type="button" aria-label="Byt ett spår åt höger">▶</button>
   </div>
 
-  <p class="next-hint">Redan byggd. Fler spel på startsidan.</p>
+  <p class="next-hint">Nära-miss-flow belönar mod, men en krock nollställer följden.</p>
 </div>
 
 <script>
@@ -146,6 +152,9 @@
   const waveLabel = document.getElementById('waveLabel');
   const timeVal = document.getElementById('timeVal');
   const bestVal = document.getElementById('bestVal');
+  const nearVal = document.getElementById('nearVal');
+  const flowVal = document.getElementById('flowVal');
+  const nearFlash = document.getElementById('nearFlash');
   const startOverlay = document.getElementById('startOverlay');
   const endOverlay = document.getElementById('endOverlay');
   const startBtn = document.getElementById('startBtn');
@@ -157,8 +166,14 @@
   let lane = 2;
   let wave = 0;
   let elapsed = 0;
+  const BEST_KEY = 'flykten-best-v1';
   let best = 0;
+  try { best = Number(localStorage.getItem(BEST_KEY) || 0); } catch (_) {}
+  bestVal.textContent = best ? best.toFixed(1) : '0.0';
   let hits = 0;
+  let nearMisses = 0;
+  let nearStreak = 0;
+  let lastSpawnLane = -1;
   let obstacles = [];
   let spawnTimeout = null;
   let rafHandle = null;
@@ -203,7 +218,9 @@
 
   function spawnObstacle() {
     if (!running) return;
-    const laneIdx = Math.floor(Math.random() * 5);
+    const choices = [0,1,2,3,4].filter(index => index !== lastSpawnLane);
+    const laneIdx = choices[Math.floor(Math.random() * choices.length)];
+    lastSpawnLane = laneIdx;
     const el = document.createElement('div');
     el.className = 'obstacle';
     el.textContent = '💢';
@@ -213,7 +230,7 @@
     void el.offsetHeight;
 
     const progress = Math.min(1, elapsed / 45);
-    const fallMs = lerp(2000, 950, progress);
+    const fallMs = lerp(2100, 1050, progress) + wave * 3;
     el.style.transitionDuration = fallMs + 'ms';
     el.style.top = FALL_ZONE_H + 'px';
 
@@ -221,7 +238,7 @@
     obstacles.push(ob);
     setTimeout(() => resolveObstacle(ob), fallMs);
 
-    const interval = lerp(950, 380, progress);
+    const interval = lerp(980, 430, progress) + Math.min(180, wave * 2);
     spawnTimeout = setTimeout(spawnObstacle, interval);
   }
 
@@ -231,11 +248,24 @@
     if (ob.lane === lane) {
       wave = Math.min(100, wave + 22);
       hits++;
+      nearStreak = 0;
+      flowVal.textContent = '0';
       playHit();
       boardEl.style.transform = 'translateX(-4px)';
       setTimeout(() => { boardEl.style.transform = ''; }, 80);
       updateWave();
       if (wave >= 100) { endGame(); return; }
+    } else if (Math.abs(ob.lane - lane) === 1) {
+      nearMisses++;
+      nearStreak++;
+      wave = Math.max(0, wave - Math.min(12, 4 + nearStreak));
+      nearVal.textContent = String(nearMisses);
+      flowVal.textContent = String(nearStreak);
+      nearFlash.textContent = 'NÄRA ×' + nearStreak;
+      nearFlash.classList.remove('show');
+      void nearFlash.offsetWidth;
+      nearFlash.classList.add('show');
+      tone(620 + Math.min(nearStreak, 6) * 45, 0, .08, 'triangle', .06);
     }
     ob.el.remove();
     obstacles = obstacles.filter(o => o !== ob);
@@ -262,18 +292,24 @@
     clearTimeout(spawnTimeout);
     cancelAnimationFrame(rafHandle);
     playCaught();
-    if (elapsed > best) { best = elapsed; bestVal.textContent = best.toFixed(1); }
+    if (elapsed > best) {
+      best = elapsed;
+      bestVal.textContent = best.toFixed(1);
+      try { localStorage.setItem(BEST_KEY, String(best)); } catch (_) {}
+    }
     finalTime.textContent = elapsed.toFixed(1) + 's';
-    finalStats.textContent = hits + ' krockar innan vågen tog dig.';
+    finalStats.textContent = hits + ' krockar · ' + nearMisses + ' nära-missar.';
     endOverlay.classList.remove('hidden');
   }
 
   function startGame() {
     running = true;
-    lane = 2; wave = 0; elapsed = 0; hits = 0;
+    lane = 2; wave = 0; elapsed = 0; hits = 0; nearMisses = 0; nearStreak = 0; lastSpawnLane = -1;
     movePlayer();
     updateWave();
     timeVal.textContent = '0.0';
+    nearVal.textContent = '0';
+    flowVal.textContent = '0';
     startOverlay.classList.add('hidden');
     endOverlay.classList.add('hidden');
     obstacles.forEach(o => o.el.remove());

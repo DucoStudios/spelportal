@@ -228,6 +228,54 @@ test("Ordmästaren visar sessionssteg, kombo, träffsäkerhet och dagligt mål",
   assert.ok(html.includes("Dagens mål är klart!"));
 });
 
+test("Ormen har korta uppdrag och ett glödande risk- och belöningsfrö", () => {
+  const html = readFileSync("games/ormen.html", "utf8");
+  assert.ok(html.includes('id="missionVal"'));
+  assert.ok(html.includes("const MISSIONS_KEY = 'ormen-missions-v1'"));
+  assert.ok(html.includes("kind: eaten > 0 && (eaten + 1) % 5 === 0 ? 'boost'"));
+  assert.ok(html.includes("score += boost ? 25 : 10"));
+  assert.ok(html.includes("score += 50"));
+});
+
+test("Superhjälte-språnget har checkpoints, tidsrekord och medaljkrav", () => {
+  const html = readFileSync("games/superhjalte-spranget.html", "utf8");
+  assert.ok(html.includes("const CHECKPOINTS = [{ x: 640"));
+  assert.ok(html.includes('id="checkpointVal"'));
+  assert.ok(html.includes("const BEST_KEY = 'superhjalte-spranget-best-v1'"));
+  assert.ok(html.includes("elapsed <= 22 && starsCollected === 6 && falls <= 1"));
+  assert.ok(html.includes('id="finalMedal"'));
+});
+
+test("Flykten belönar nära-miss-flow, balanserar press och sparar rekord", () => {
+  const html = readFileSync("games/flykten.html", "utf8");
+  assert.ok(html.includes('id="nearVal"'));
+  assert.ok(html.includes('id="flowVal"'));
+  assert.ok(html.includes("Math.abs(ob.lane - lane) === 1"));
+  assert.ok(html.includes("wave = Math.max(0, wave - Math.min(12, 4 + nearStreak))"));
+  assert.ok(html.includes("const BEST_KEY = 'flykten-best-v1'"));
+});
+
+test("Reaktionsraketen har precisa millisekundfönster och snabbaste träff", () => {
+  const engine = readFileSync("games/kids-mix.js", "utf8");
+  const html = readFileSync("games/reaktionsraketen.html", "utf8");
+  assert.ok(html.includes('id="extraVal"'));
+  assert.ok(engine.includes("reactionMs < 250"));
+  assert.ok(engine.includes("reactionMs < 450"));
+  assert.ok(engine.includes("spelportal-fastest-reaktionsraketen-v1"));
+  assert.ok(engine.includes("Tidsfönstret stängdes"));
+});
+
+test("Dansstopp har tre rytmnivåer och säkra rörelsekort", () => {
+  const engine = readFileSync("games/kids-mix.js", "utf8");
+  const html = readFileSync("games/dansstopp.html", "utf8");
+  assert.ok(html.includes('id="extraVal"'));
+  assert.ok(engine.includes("SIDSTEG"));
+  assert.ok(engine.includes("ROBOT"));
+  assert.ok(engine.includes("Rulla axlarna utan hopp"));
+  assert.ok(engine.includes("level = Math.min(3"));
+  assert.ok(engine.includes("frigör plats runt kroppen"));
+});
+
 test("alla franska lyssningsspel använder samma förbättrade röstmotor", () => {
   const speechEngine = readFileSync("french-speech.js", "utf8");
   assert.ok(speechEngine.includes("function voiceScore(voice)"));

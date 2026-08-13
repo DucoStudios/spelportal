@@ -29,6 +29,15 @@ Underlag: [Apple — Designing for games](https://developer.apple.com/design/hum
 - Ordmästaren: synligt sessionssteg och kombo, träffsäkerhet i slutsummeringen och ett positivt dagligt lektionsmål.
 - Verifierat med 31 automatiska tester och 122 riktiga Chrome-laddningar: 61 spel på mobil och desktop.
 
+## Genomfört i tredje passet
+
+- Ormen: roterande korta mål, lokal uppdragsprogress och ett glödande bonusfrö med högre poäng och större tempohöjning.
+- Superhjälte-språnget: två checkpoints, fallräknare, lokalt tidsrekord och tre skicklighetsbaserade medaljnivåer.
+- Flykten: nära-miss-flow som pressar tillbaka vågen, tydligare HUD, mjukare återhämtning efter krock och sparat rekord.
+- Reaktionsraketen: perfekt/snabb/normal-fönster i millisekunder, tidsgräns per kärna, precisionskombo och lokalt snabbaste träff.
+- Dansstopp: tre stigande rytmnivåer, varierade säkra rörelsekort och tydligare säker onboarding.
+- Verifierat med 36 automatiska tester och 122 riktiga Chrome-laddningar: 61 spel på mobil och desktop.
+
 ## Utvecklingskö — alla spel
 
 Statusnyckel: `KLAR 1` = första stora förbättringspasset klart. `GLOBALT` = nytt pixel-/arkadskal och unik thumbnail klart. `NÄSTA` = prioriterad mekanisk förbättring.
@@ -39,11 +48,11 @@ Statusnyckel: `KLAR 1` = första stora förbättringspasset klart. `GLOBALT` = n
 |---|---|---|---|
 | Blockkrossaren | Tillfredsställande studs och kedjereaktioner | Banuppdrag, bollmästerskap och balansmätning efter verkliga spelrundor | KLAR 1 |
 | Klossfall | Omedelbart begriplig klassisk loop | Fler uppdrag och finbalansering från verkliga rundor | KLAR 1 |
-| Ormen | Bra svepstyrning och lokal rekordlagring | Banvarianter, risk-/belöningsfrön och korta uppdrag | GLOBALT |
-| Superhjälte-språnget | Fysisk rörelse och tydligt mål | Checkpoints, tidsmedaljer och tre banprofiler | GLOBALT |
-| Flykten | Enkel tvåfilskontroll och stigande press | Nära-miss-bonus, miljöskiften och rättvisare svårighetskurva | GLOBALT |
-| Reaktionsraketen | Stark kort reflexrunda | Perfekt-träff-fönster, raketdelar och veckans lokala rekord | GLOBALT |
-| Dansstopp | Kroppslig, social och lätt att starta | Rytmnivåer, säkra rörelsekort och lagläge på samma skärm | GLOBALT |
+| Ormen | Bra svepstyrning och lokal rekordlagring | Banvarianter och förfining från verkliga rundor | KLAR 1 |
+| Superhjälte-språnget | Fysisk rörelse och tydligt mål | Tre separata banprofiler | KLAR 1 |
+| Flykten | Enkel filkontroll och stigande press | Miljöskiften och ljudprofil per svårighetsfas | KLAR 1 |
+| Reaktionsraketen | Stark kort reflexrunda | Raketdelar och veckans lokala utmaning | KLAR 1 |
+| Dansstopp | Kroppslig, social och lätt att starta | Lagläge på samma skärm | KLAR 1 |
 | Balansbanan | Finmotorisk kontroll och störningar | Adaptiv vind, precisionstid och tillgängligt lugnt läge | GLOBALT |
 | Molnhoppet | Vertikal progression och luftstyrning | Molntyper, räddningshopp och tydlig höjdmätare | GLOBALT |
 | Tornverkstan | Ren timingmekanik | Perfektkedja, tornmiljöer och dagliga tre-försök-utmaningar utan straff | GLOBALT |

@@ -46,11 +46,11 @@
     },
     "dansstopp": {
       mode: "movement", variant: "dance", icon: "🕺", kicker: "RÖRELSE · MUSIKLEK", title: "Dansstopp",
-      intro: "Dansa när färgen lyser – frys blixtsnabbt när den slocknar.", instructions: "Ställ enheten säkert. Tryck TAKT medan du dansar. När det står FRYS ska hela kroppen stå still.", duration: 45
+      intro: "Tre rytmnivåer med tydliga, säkra rörelsekort – dansa och frys på signal.", instructions: "Ställ enheten säkert och frigör plats runt kroppen. Följ rörelsekortet, tryck TAKT på pulsen och frys när signalen slocknar.", duration: 45
     },
     "reaktionsraketen": {
       mode: "reaction", icon: "🚀", kicker: "RÖRELSE · REAKTION", title: "Reaktionsraketen",
-      intro: "Träffa energikärnorna och bygg en snabb kombo.", instructions: "Tryck på kärnan så fort den dyker upp. Den blir mindre ju längre du kommer.", duration: 35
+      intro: "Träffa energikärnorna i perfekt-, snabb- eller normalfönstret.", instructions: "Tryck så fort kärnan dyker upp. Under 250 ms ger perfektträff och fem poäng. Missar du tidsfönstret flyttar kärnan.", duration: 35
     },
     "balansbanan": {
       mode: "balance", icon: "🏄", kicker: "RÖRELSE · KONTROLL", title: "Balansbanan",
@@ -153,6 +153,8 @@
   const scoreEl = $("#scoreVal");
   const timeEl = $("#timeVal");
   const bestEl = $("#bestVal");
+  const extraLabelEl = $("#extraLabel");
+  const extraValEl = $("#extraVal");
   const statusEl = $("#mixStatus");
   const soundBtn = $("#soundBtn");
   const BEST_KEY = `spelportal-best-${id}-v1`;
@@ -487,10 +489,15 @@
   }
 
   function reactionMode() {
-    stage.innerHTML = `<h2 class="mode-title">Träffa kärnan!</h2><div class="reaction-field" id="reactionField"></div>`;
+    stage.innerHTML = `<h2 class="mode-title">Träffa kärnan!</h2><p class="mode-subtitle">PERFEKT &lt;250 ms · SNABB &lt;450 ms</p><div class="reaction-field" id="reactionField"></div>`;
     const field = stage.querySelector("#reactionField");
-    let born = performance.now();
+    const FAST_KEY = "spelportal-fastest-reaktionsraketen-v1";
+    let fastest = Number(localStorage.getItem(FAST_KEY) || 0);
+    let born = performance.now(), spawnId = 0, combo = 0;
+    if (extraLabelEl) extraLabelEl.textContent = "Snabbast";
+    if (extraValEl) extraValEl.textContent = fastest ? `${Math.round(fastest)}ms` : "–";
     const place = () => {
+      const idNow = ++spawnId;
       field.replaceChildren();
       const button = makeButton("⚡", "reaction-target");
       const size = Math.max(48, 76 - state.score * .65);
@@ -500,13 +507,28 @@
       button.style.top = `${Math.random() * 72}%`;
       born = performance.now();
       button.addEventListener("click", () => {
-        const quick = performance.now() - born < 520;
-        updateScore(quick ? 3 : 2, quick ? "BLIXTSNABBT!" : "Träff!");
+        if (idNow !== spawnId) return;
+        const reactionMs = performance.now() - born;
+        const perfect = reactionMs < 250;
+        const quick = reactionMs < 450;
+        combo = perfect ? combo + 1 : 0;
+        updateScore(perfect ? 5 + Math.min(combo - 1, 3) : quick ? 3 : 1, perfect ? `PERFEKT ${Math.round(reactionMs)} ms · ×${combo}` : quick ? `SNABB ${Math.round(reactionMs)} ms` : `${Math.round(reactionMs)} ms`);
+        if (!fastest || reactionMs < fastest) {
+          fastest = reactionMs;
+          localStorage.setItem(FAST_KEY, String(fastest));
+          if (extraValEl) extraValEl.textContent = `${Math.round(fastest)}ms`;
+        }
         tone(540 + state.score * 8, .06, "square");
         vibrate(8);
         place();
       });
       field.appendChild(button);
+      later(() => {
+        if (!state.running || idNow !== spawnId) return;
+        combo = 0;
+        toast("Tidsfönstret stängdes");
+        place();
+      }, 1200);
     };
     place();
     startCountdown(config.duration);
@@ -521,14 +543,30 @@
       let moving = true;
       let phaseEnds = performance.now() + 6000;
       let lastTap = 0;
+      let level = 1;
+      let freezeCount = 0;
+      const moves = [
+        { name: "SIDSTEG", icon: "↔️", hint: "Mjuka steg sida till sida" },
+        { name: "ROBOT", icon: "🤖", hint: "Små kantiga rörelser" },
+        { name: "AXLAR", icon: "🕺", hint: "Rulla axlarna utan hopp" },
+        { name: "FRISTIL", icon: "🪩", hint: "Din egen rörelse – håll platsen fri" }
+      ];
+      if (extraLabelEl) extraLabelEl.textContent = "Nivå";
+      if (extraValEl) extraValEl.textContent = "1";
       const beat = makeButton("👏 TAKT", "mix-btn accent");
       controls.appendChild(beat);
       const setPhase = next => {
         moving = next;
-        phaseEnds = performance.now() + (moving ? 6000 : 2300);
-        command.textContent = moving ? "DANSA!" : "FRYS!";
-        hint.textContent = moving ? "Hela kroppen – hitta din egen stil" : "Stå helt stilla…";
-        orb.textContent = moving ? random(["🕺", "💃", "🤸", "🪩"]) : "🧊";
+        if (!moving) freezeCount++;
+        if (moving && freezeCount > 0) {
+          level = Math.min(3, 1 + Math.floor(freezeCount / 2));
+          if (extraValEl) extraValEl.textContent = String(level);
+        }
+        const move = random(moves);
+        phaseEnds = performance.now() + (moving ? 6500 - level * 700 : 2300);
+        command.textContent = moving ? move.name + " · NIVÅ " + level : "FRYS!";
+        hint.textContent = moving ? move.hint : "Stå stadigt och helt stilla…";
+        orb.textContent = moving ? move.icon : "🧊";
         orb.style.background = moving ? "radial-gradient(circle at 35% 25%, white 0 6%, var(--accent) 30%, var(--accent2))" : "linear-gradient(145deg,#bceeff,#3f8fd5)";
         tone(moving ? 620 : 190, .13, moving ? "sine" : "square");
       };

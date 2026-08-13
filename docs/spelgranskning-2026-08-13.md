@@ -38,6 +38,15 @@ Underlag: [Apple — Designing for games](https://developer.apple.com/design/hum
 - Dansstopp: tre stigande rytmnivåer, varierade säkra rörelsekort och tydligare säker onboarding.
 - Verifierat med 36 automatiska tester och 122 riktiga Chrome-laddningar: 61 spel på mobil och desktop.
 
+## Genomfört i fjärde passet
+
+- Balansbanan: adaptiv vind efter avstånd från centrum, exakt centertid, flowbonus och valbart lugnt läge med oförändrad poäng.
+- Molnhoppet: tre läsbara molntyper, höjdmätare, två räddningsvingar och garanterad introduktion av boost- och skörmoln.
+- Tornverkstan: perfektkedja som bevarar bredd, tydlig byggprogress och tre retrovärldar som byts vid våning 4 och 8.
+- Tålamodstornet: synliga gula lockbeten, separat perfektzon, lugn kedja och en kort reflektion efter rundan.
+- Färgfusion: förhandsvisning av nästa bricka, färgkedja och prismakrafter som förtjänas efter tre lyckade fusioner i följd.
+- Verifierat med 41 automatiska tester och 122 riktiga Chrome-laddningar: 61 spel på mobil och desktop.
+
 ## Utvecklingskö — alla spel
 
 Statusnyckel: `KLAR 1` = första stora förbättringspasset klart. `GLOBALT` = nytt pixel-/arkadskal och unik thumbnail klart. `NÄSTA` = prioriterad mekanisk förbättring.
@@ -53,11 +62,11 @@ Statusnyckel: `KLAR 1` = första stora förbättringspasset klart. `GLOBALT` = n
 | Flykten | Enkel filkontroll och stigande press | Miljöskiften och ljudprofil per svårighetsfas | KLAR 1 |
 | Reaktionsraketen | Stark kort reflexrunda | Raketdelar och veckans lokala utmaning | KLAR 1 |
 | Dansstopp | Kroppslig, social och lätt att starta | Lagläge på samma skärm | KLAR 1 |
-| Balansbanan | Finmotorisk kontroll och störningar | Adaptiv vind, precisionstid och tillgängligt lugnt läge | GLOBALT |
-| Molnhoppet | Vertikal progression och luftstyrning | Molntyper, räddningshopp och tydlig höjdmätare | GLOBALT |
-| Tornverkstan | Ren timingmekanik | Perfektkedja, tornmiljöer och dagliga tre-försök-utmaningar utan straff | GLOBALT |
-| Tålamodstornet | Timing kopplad till tålamod | Synlig rytm, falska lockbeten och reflektion efter rundan | GLOBALT |
-| Färgfusion | Begriplig merge-progression | Förhandsplanering, specialbrickor som tjänas via skicklighet och slutmål | GLOBALT |
+| Balansbanan | Finmotorisk kontroll och störningar | Fler vindprofiler och finbalansering från verkliga rundor | KLAR 1 |
+| Molnhoppet | Vertikal progression och luftstyrning | Banprofiler och finbalansering av räddningsvingar | KLAR 1 |
+| Tornverkstan | Ren timingmekanik | Lokala tredagarsutmaningar utan straff och fler tornmiljöer | KLAR 1 |
+| Tålamodstornet | Timing kopplad till tålamod | Fler rytmprofiler och valbar längre fokusrunda | KLAR 1 |
+| Färgfusion | Begriplig merge-progression | Nya brädformer och balans av prismaladdning från verkliga rundor | KLAR 1 |
 | Fruktfångaren | Språk och rörelse i samma loop | Felvänlig adaptiv ordpool och kombo för säkert hörande | GLOBALT |
 | Bistroblixten | Tempo och ordningsbyggande | Kundpersonligheter, kvalitetsbonus och mindre läsning per beslut | GLOBALT |
 | Accentjakten | Kort och skarp stavningsövning | Felmönster som återkommer smart och tydlig accentförklaring | GLOBALT |

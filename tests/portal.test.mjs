@@ -276,6 +276,59 @@ test("Dansstopp har tre rytmnivåer och säkra rörelsekort", () => {
   assert.ok(engine.includes("frigör plats runt kroppen"));
 });
 
+test("Balansbanan mäter centertid och erbjuder adaptiv vind samt lugnt läge", () => {
+  const engine = readFileSync("games/kids-mix.js", "utf8");
+  const html = readFileSync("games/balansbanan.html", "utf8");
+  assert.ok(html.includes("<title>Balansbanan · Spelportalen</title>"));
+  assert.ok(html.includes('id="extraVal"'));
+  assert.ok(engine.includes('extraLabelEl.textContent = "Centertid"'));
+  assert.ok(engine.includes('makeButton("🌿 LUGNT LÄGE"'));
+  assert.ok(engine.includes("(.7 + distance * .75)"));
+  assert.ok(engine.includes("flow >= 3 ? `FLOW ×${flow}`"));
+});
+
+test("Molnhoppet har tre molntyper, höjdmätare och två räddningshopp", () => {
+  const engine = readFileSync("games/kids-mix.js", "utf8");
+  const html = readFileSync("games/molnhoppet.html", "utf8");
+  assert.ok(html.includes("<title>Molnhoppet · Spelportalen</title>"));
+  assert.ok(html.includes('id="extraVal"'));
+  assert.ok(engine.includes('const cloudType=()=>'));
+  assert.ok(engine.includes('roll<.14?"boost":roll<.28?"crumble":"normal"'));
+  assert.ok(engine.includes("let platforms=[],rescues=2,height=0"));
+  assert.ok(engine.includes('extraValEl.textContent=`${Math.floor(height)}m`'));
+});
+
+test("Tornverkstan belönar perfekta träffar och byter värld under bygget", () => {
+  const engine = readFileSync("games/kids-mix.js", "utf8");
+  const html = readFileSync("games/tornverkstan.html", "utf8");
+  assert.ok(html.includes("<title>Tornverkstan · Spelportalen</title>"));
+  assert.ok(engine.includes("precision>=.94"));
+  assert.ok(engine.includes('toast(`PERFEKT ×${perfectChain}`)'));
+  assert.ok(engine.includes('{at:8,id:"space",name:"STJÄRNRYMD"}'));
+  assert.ok(engine.includes('current.classList.toggle("is-perfect",perfect)'));
+});
+
+test("Tålamodstornet skiljer lockbeten från perfekt lugn precision", () => {
+  const engine = readFileSync("games/kids-mix.js", "utf8");
+  const html = readFileSync("games/talamodstornet.html", "utf8");
+  assert.ok(html.includes("<title>Tålamodstornet · Spelportalen</title>"));
+  assert.ok(engine.includes('class="patience-decoy first"'));
+  assert.ok(engine.includes("position>=.47&&position<=.53"));
+  assert.ok(engine.includes('decoy?"Lockbete – vänta på det gröna."'));
+  assert.ok(engine.includes("Bästa lugna kedjan blev ×${bestStreak}"));
+});
+
+test("Färgfusion visar nästa bricka och förtjänade prismakrafter", () => {
+  const engine = readFileSync("games/kids-mix.js", "utf8");
+  const html = readFileSync("games/fargfusion.html", "utf8");
+  assert.ok(html.includes("<title>Färgfusion · Spelportalen</title>"));
+  assert.ok(engine.includes('const isFusion = id === "fargfusion"'));
+  assert.ok(engine.includes('id="mergeNext"'));
+  assert.ok(engine.includes("if(chain%3===0){prisms+=1"));
+  assert.ok(engine.includes('makeButton("✨ PRISMA LADDAS"'));
+  assert.ok(engine.includes('finish("Du skapade regnbågsstjärnan!")'));
+});
+
 test("alla franska lyssningsspel använder samma förbättrade röstmotor", () => {
   const speechEngine = readFileSync("french-speech.js", "utf8");
   assert.ok(speechEngine.includes("function voiceScore(voice)"));

@@ -54,7 +54,7 @@
     },
     "balansbanan": {
       mode: "balance", icon: "🏄", kicker: "RÖRELSE · KONTROLL", title: "Balansbanan",
-      intro: "Håll energiklotet i mitten trots vindpustarna.", instructions: "Dra på banan eller använd pilarna för att luta åt motsatt håll. Tid i målzonen ger poäng.", duration: 40
+      intro: "Bygg flow i mitten, läs vinden och välj ett lugnare tempo när du vill.", instructions: "Dra på banan eller håll pilarna för att styra mot mitten. Varje sekund i centrum ger poäng. LUGNT LÄGE ger mjukare vind.", duration: 40
     },
     "andningsdykaren": {
       mode: "movement", variant: "breathe", icon: "🤿", kicker: "HÄLSA · LUGN FOKUS", title: "Andningsdykaren",
@@ -66,16 +66,16 @@
     },
     "fargfusion": {
       mode: "merge", icon: "🎨", kicker: "LOGIK · MERGE", title: "Färgfusion",
-      intro: "Slå ihop lika färger och upptäck nya glödande former.", instructions: "Tryck på två likadana brickor. De smälter ihop till nästa nivå. Nå regnbågsstjärnan!", duration: 60,
+      intro: "Planera nästa bricka, bygg färgkedjor och förtjäna prismakrafter.", instructions: "Tryck på två likadana brickor. Tre fusioner i rad laddar en prisma som kan uppgradera en vald bricka. Nå regnbågsstjärnan!", duration: 60,
       tiers: ["🔴", "🟠", "🟡", "🟢", "🔵", "🌈", "⭐"]
     },
     "molnhoppet": {
       mode: "jumper", icon: "☁️", kicker: "SKICKLIGHET · HINDERBANA", title: "Molnhoppet",
-      intro: "Studsa uppåt från moln till moln och jaga stjärnor.", instructions: "Håll vänster eller höger för att styra i luften. Figuren hoppar automatiskt när den landar.", duration: 60
+      intro: "Läs molntyperna, ta höjd och använd två räddningshopp klokt.", instructions: "Håll vänster eller höger för att styra i luften. Guldmoln ger extra fart, rosa moln försvinner och två vingar räddar missade hopp.", duration: 60
     },
     "tornverkstan": {
       mode: "stack", icon: "🏗️", kicker: "SKAPA · TIMING", title: "Tornverkstan",
-      intro: "Släpp varje våning rakt och bygg högre än molnen.", instructions: "Tryck SLÄPP när blocket ligger över tornet. Dålig träff gör nästa våning smalare.", duration: 60
+      intro: "Bygg genom tre retrovärldar och håll en perfekt precisionskedja.", instructions: "Tryck SLÄPP när blocket ligger över tornet. Nästan helt centrerade våningar ger perfektbonus och bevarar tornets bredd.", duration: 60
     },
     "minimarknaden": {
       mode: "sequence", icon: "🛒", kicker: "FÖRETAGANDE · SERVICE", title: "Minimarknaden",
@@ -126,7 +126,7 @@
     },
     "talamodstornet": {
       mode: "timing", icon: "⏳", kicker: "KLOKA VAL · TÅLAMOD", title: "Tålamodstornet",
-      intro: "Vänta in rätt ögonblick – snabbast är inte alltid bäst.", instructions: "Markören rör sig fram och tillbaka. Tryck när den är i det gröna lugna fältet.", duration: 50
+      intro: "Se förbi lockbetena och bygg en lugn kedja, ett genomtänkt val i taget.", instructions: "Markören rör sig fram och tillbaka. Gula blinkningar är lockbeten – tryck bara i det gröna fältet. Mitten ger perfekt tålamod.", duration: 50
     },
     "tacksamhetstradet": {
       mode: "catcher", icon: "🌳", kicker: "VÄLMÅENDE · SE DET GODA", title: "Tacksamhetsträdet",
@@ -607,10 +607,13 @@
   }
 
   function balanceMode() {
-    stage.innerHTML = `<h2 class="mode-title">Stanna i den gula cirkeln</h2><div class="balance-board" id="balanceBoard"><div class="balance-zone"></div><div class="balance-orb" id="balanceOrb">⚪</div></div>`;
+    stage.innerHTML = `<h2 class="mode-title">Bygg flow i centrum</h2><p class="mode-subtitle" id="balanceHint">Vinden växer när du driver långt ut</p><div class="balance-board" id="balanceBoard"><div class="balance-rings" aria-hidden="true"></div><div class="balance-zone"></div><div class="balance-orb" id="balanceOrb">⚪</div></div>`;
     const board = stage.querySelector("#balanceBoard");
     const orb = stage.querySelector("#balanceOrb");
-    let x = .5, y = .5, vx = 0, vy = 0, ax = 0, ay = 0, last = performance.now(), insideMs = 0, lastPoint = 0;
+    const hint = stage.querySelector("#balanceHint");
+    let x = .5, y = .5, vx = 0, vy = 0, ax = 0, ay = 0, last = performance.now(), insideMs = 0, lastPoint = 0, flow = 0, outsideMs = 0, calm = false;
+    if (extraLabelEl) extraLabelEl.textContent = "Centertid";
+    if (extraValEl) extraValEl.textContent = "0s";
     const setTilt = (nx, ny) => { ax = nx * .42; ay = ny * .42; };
     const buttons = [["←", -1, 0], ["↑", 0, -1], ["↓", 0, 1], ["→", 1, 0]].map(([label, dx, dy]) => {
       const button = makeButton(label, "mix-btn alt");
@@ -620,6 +623,16 @@
       return button;
     });
     controls.append(...buttons);
+    const calmButton = makeButton("🌿 LUGNT LÄGE", "mix-btn calm-toggle");
+    calmButton.setAttribute("aria-pressed", "false");
+    calmButton.addEventListener("click", () => {
+      calm = !calm;
+      calmButton.setAttribute("aria-pressed", String(calm));
+      calmButton.textContent = calm ? "🌿 LUGNT: PÅ" : "🌿 LUGNT LÄGE";
+      hint.textContent = calm ? "Mjukare vind · samma poäng" : "Vinden växer när du driver långt ut";
+      tone(calm ? 420 : 520, .06);
+    });
+    controls.appendChild(calmButton);
     board.addEventListener("pointerdown", event => {
       const rect = board.getBoundingClientRect();
       setTilt(((event.clientX - rect.left) / rect.width - .5) * 2, ((event.clientY - rect.top) / rect.height - .5) * 2);
@@ -634,14 +647,23 @@
     startCountdown(config.duration);
     animate(now => {
       const dt = Math.min(.035, (now - last) / 1000); last = now;
-      const wind = Math.sin(now / 1250) * .08;
-      vx = (vx + (ax + wind) * dt) * .994; vy = (vy + (ay + Math.cos(now / 1700) * .06) * dt) * .994;
+      const distance = Math.min(1, Math.hypot(x - .5, y - .5) / .5);
+      const windScale = (calm ? .42 : 1) * (.7 + distance * .75);
+      const wind = Math.sin(now / 1250) * .08 * windScale;
+      vx = (vx + (ax + wind) * dt) * .994; vy = (vy + (ay + Math.cos(now / 1700) * .06 * windScale) * dt) * .994;
       x = clamp(x + vx, .06, .94); y = clamp(y + vy, .08, .92);
       if (x <= .061 || x >= .939) vx *= -.7; if (y <= .081 || y >= .919) vy *= -.7;
       orb.style.transform = `translate(calc(${x * 100}% - 26px), calc(${y * 100}% - 26px))`;
       const inside = Math.hypot(x - .5, y - .5) < .14;
-      if (inside) insideMs += dt * 1000;
-      if (insideMs - lastPoint >= 1000) { lastPoint += 1000; updateScore(2, "Stabilt!"); tone(520, .04); }
+      board.classList.toggle("is-centered", inside);
+      if (inside) { insideMs += dt * 1000; outsideMs = 0; }
+      else { outsideMs += dt * 1000; if (outsideMs > 900) flow = 0; }
+      if (extraValEl) extraValEl.textContent = `${Math.floor(insideMs / 1000)}s`;
+      if (insideMs - lastPoint >= 1000) {
+        lastPoint += 1000; flow += 1;
+        updateScore(2 + Math.min(3, Math.floor(flow / 3)), flow >= 3 ? `FLOW ×${flow}` : "Stabilt!");
+        tone(500 + Math.min(flow, 8) * 24, .04);
+      }
     });
   }
 
@@ -696,10 +718,24 @@
   }
 
   function mergeMode() {
-    stage.innerHTML = `<h2 class="mode-title">Nå ${config.tiers.at(-1)}</h2><p class="mode-subtitle">Välj två likadana brickor</p><div class="merge-grid" id="mergeGrid"></div>`;
+    const isFusion = id === "fargfusion";
+    let incoming = Math.random() < .78 ? 0 : 1, chain = 0, prisms = 0;
+    stage.innerHTML = `<h2 class="mode-title">Nå ${config.tiers.at(-1)}</h2><div class="merge-tools"><span>Välj två lika</span>${isFusion ? `<span>NÄSTA <b id="mergeNext">${config.tiers[incoming]}</b></span><span>PRISMA <b id="prismCount">0</b></span>` : ""}</div><div class="merge-grid" id="mergeGrid"></div>`;
     const grid = stage.querySelector("#mergeGrid");
     const values = Array.from({length:16},()=>Math.random()<.72?0:1);
     let selected = -1;
+    let prismButton;
+    const updateMeta = () => {
+      const highest = Math.max(...values);
+      if (extraLabelEl) extraLabelEl.textContent = "Högsta";
+      if (extraValEl) extraValEl.textContent = config.tiers[highest];
+      stage.querySelector("#mergeNext") && (stage.querySelector("#mergeNext").textContent = config.tiers[incoming]);
+      stage.querySelector("#prismCount") && (stage.querySelector("#prismCount").textContent = String(prisms));
+      if (prismButton) {
+        prismButton.disabled = prisms < 1;
+        prismButton.textContent = prisms ? `✨ ANVÄND PRISMA ×${prisms}` : "✨ PRISMA LADDAS";
+      }
+    };
     const render = () => {
       grid.replaceChildren();
       values.forEach((value,index)=>{
@@ -709,43 +745,71 @@
         button.addEventListener("click",()=>{
           if(selected<0){selected=index;tone(360,.04);render();return;}
           if(selected===index){selected=-1;render();return;}
-          if(values[selected]===value){const next=Math.min(config.tiers.length-1,value+1);values[index]=next;values[selected]=Math.random()<.78?0:1;selected=-1;updateScore((next+1)*2,"Fusion!");successSound();if(next===config.tiers.length-1)finish("Du nådde mästarnivån!");else render();}
-          else{failSound();toast("Välj två likadana");selected=index;render();}
+          if(values[selected]===value){
+            const next=Math.min(config.tiers.length-1,value+1);
+            values[index]=next; values[selected]=isFusion ? incoming : Math.random()<.78?0:1;
+            if (isFusion) { incoming=Math.random()<.78?0:1; chain+=1; if(chain%3===0){prisms+=1;toast("PRISMA LADDAD!");} }
+            selected=-1; updateScore((next+1)*2 + (isFusion ? Math.min(chain, 4) : 0),isFusion && chain>1?`FÄRGKEDJA ×${chain}`:"Fusion!"); successSound(); updateMeta();
+            if(next===config.tiers.length-1)finish("Du skapade regnbågsstjärnan!");else render();
+          }
+          else{chain=0;failSound();toast("Välj två likadana");selected=index;updateMeta();render();}
         });grid.appendChild(button);
       });
+      updateMeta();
     };
+    if (isFusion) {
+      prismButton = makeButton("✨ PRISMA LADDAS", "mix-btn accent");
+      prismButton.disabled = true;
+      prismButton.addEventListener("click", () => {
+        if (!state.running || prisms < 1) return;
+        if (selected < 0) { toast("Välj först en bricka att uppgradera"); return; }
+        const next = Math.min(config.tiers.length - 1, values[selected] + 1);
+        values[selected] = next; selected = -1; prisms -= 1; chain = 0;
+        updateScore((next + 1) * 2, "Prisman förstärkte färgen!"); successSound(); updateMeta();
+        if (next === config.tiers.length - 1) finish("Du skapade regnbågsstjärnan!"); else render();
+      });
+      controls.appendChild(prismButton);
+    }
     render(); startCountdown(config.duration);
   }
 
   function jumperMode() {
-    stage.innerHTML = `<h2 class="mode-title">Hoppa högre!</h2><canvas class="jump-canvas" id="jumpCanvas" aria-label="Molnhoppets spelplan"></canvas>`;
+    stage.innerHTML = `<h2 class="mode-title">Hoppa högre! <span class="jump-rescues" id="jumpRescues">🪽 ×2</span></h2><p class="mode-subtitle">VITT = tryggt · GULD = boost · ROSA = skört</p><canvas class="jump-canvas" id="jumpCanvas" aria-label="Molnhoppets spelplan"></canvas>`;
     const canvas=stage.querySelector("#jumpCanvas"),ctx=canvas.getContext("2d"); let W,H,dir=0,last=performance.now();
-    const player={x:80,y:0,vx:0,vy:-420,r:15}; let platforms=[];
-    const resize=()=>{const r=canvas.getBoundingClientRect();W=canvas.width=Math.max(300,Math.round(r.width));H=canvas.height=Math.max(240,Math.round(r.height));player.y ||= H-70; if(!platforms.length){platforms=[{x:30,y:H-35,w:120}];for(let i=1;i<9;i++)platforms.push({x:20+Math.random()*(W-120),y:H-35-i*62,w:80+Math.random()*45});}};
+    const rescuesEl=stage.querySelector("#jumpRescues"); const player={x:80,y:0,vx:0,vy:-420,r:15}; let platforms=[],rescues=2,height=0;
+    if (extraLabelEl) extraLabelEl.textContent = "Höjd";
+    if (extraValEl) extraValEl.textContent = "0m";
+    const cloudType=()=>{const roll=Math.random();return roll<.14?"boost":roll<.28?"crumble":"normal";};
+    const makeCloud=(x,y,w,type=cloudType())=>({x,y,w,type,seen:false,dead:false});
+    const resize=()=>{const r=canvas.getBoundingClientRect();W=canvas.width=Math.max(300,Math.round(r.width));H=canvas.height=Math.max(240,Math.round(r.height));player.y ||= H-70; if(!platforms.length){platforms=[makeCloud(30,H-35,120,"normal")];for(let i=1;i<9;i++)platforms.push(makeCloud(20+Math.random()*(W-120),H-35-i*62,80+Math.random()*45,i===3?"boost":i===6?"crumble":cloudType()));}};
     const setDir=value=>{dir=value;};
     [["◀",-1],["▶",1]].forEach(([label,value])=>{const b=makeButton(label,"mix-btn alt");b.setAttribute("aria-label",value<0?"Styr vänster":"Styr höger");b.addEventListener("pointerdown",e=>{setDir(value);b.setPointerCapture?.(e.pointerId)});["pointerup","pointercancel","lostpointercapture"].forEach(t=>b.addEventListener(t,()=>setDir(0)));controls.appendChild(b);});
     canvas.addEventListener("pointerdown",e=>{const r=canvas.getBoundingClientRect();setDir(e.clientX<r.left+r.width/2?-1:1);canvas.setPointerCapture?.(e.pointerId)});["pointerup","pointercancel"].forEach(t=>canvas.addEventListener(t,()=>setDir(0)));
-    const drawCloud=(p)=>{ctx.save();ctx.shadowColor="rgba(14,8,42,.42)";ctx.shadowBlur=8;ctx.shadowOffsetY=6;const cloud=ctx.createLinearGradient(0,p.y-12,0,p.y+18);cloud.addColorStop(0,"#ffffff");cloud.addColorStop(.5,"#c9fbff");cloud.addColorStop(1,"#72bde9");ctx.fillStyle=cloud;ctx.strokeStyle="#130b2b";ctx.lineWidth=4;ctx.beginPath();ctx.roundRect(p.x,p.y,p.w,18,9);ctx.fill();ctx.stroke();ctx.shadowColor="transparent";ctx.strokeStyle="rgba(255,255,255,.8)";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(p.x+10,p.y+5);ctx.lineTo(p.x+p.w-12,p.y+5);ctx.stroke();ctx.restore();};
+    const drawCloud=(p)=>{if(p.dead)return;ctx.save();ctx.shadowColor=p.type==="boost"?"rgba(255,223,79,.7)":"rgba(14,8,42,.42)";ctx.shadowBlur=p.type==="boost"?16:8;ctx.shadowOffsetY=6;const cloud=ctx.createLinearGradient(0,p.y-12,0,p.y+18);if(p.type==="boost"){cloud.addColorStop(0,"#fffbd0");cloud.addColorStop(.5,"#ffdf4f");cloud.addColorStop(1,"#ff8c42");}else if(p.type==="crumble"){cloud.addColorStop(0,"#fff0fa");cloud.addColorStop(.5,"#ff93c5");cloud.addColorStop(1,"#b858ba");}else{cloud.addColorStop(0,"#ffffff");cloud.addColorStop(.5,"#c9fbff");cloud.addColorStop(1,"#72bde9");}ctx.fillStyle=cloud;ctx.strokeStyle="#130b2b";ctx.lineWidth=4;ctx.beginPath();ctx.roundRect(p.x,p.y,p.w,18,9);ctx.fill();ctx.stroke();ctx.shadowColor="transparent";ctx.strokeStyle="rgba(255,255,255,.8)";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(p.x+10,p.y+5);ctx.lineTo(p.x+p.w-12,p.y+5);ctx.stroke();ctx.restore();};
     const drawHero=()=>{ctx.save();ctx.translate(player.x,player.y);ctx.shadowColor="rgba(12,7,35,.48)";ctx.shadowBlur=7;ctx.shadowOffsetY=5;ctx.fillStyle="#ff4f9a";ctx.strokeStyle="#130b2b";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-9,-5);ctx.lineTo(-18,12);ctx.lineTo(-4,9);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle="#48e8db";ctx.beginPath();ctx.roundRect(-10,-5,20,23,7);ctx.fill();ctx.stroke();ctx.fillStyle="#f2b98e";ctx.beginPath();ctx.arc(0,-12,10,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle="#130b2b";ctx.beginPath();ctx.arc(-3,-13,1.4,0,Math.PI*2);ctx.arc(3,-13,1.4,0,Math.PI*2);ctx.fill();ctx.restore();};
     requestAnimationFrame(resize); startCountdown(config.duration);
     animate(now=>{if(!W)return;const dt=Math.min(.03,(now-last)/1000);last=now;player.vx+=(dir*620-player.vx*5)*dt;player.vy+=920*dt;const oldY=player.y;player.x+=player.vx*dt;player.y+=player.vy*dt;if(player.x<-player.r)player.x=W+player.r;if(player.x>W+player.r)player.x=-player.r;
-      if(player.vy>0)for(const p of platforms){if(oldY+player.r<=p.y&&player.y+player.r>=p.y&&player.x>p.x-player.r&&player.x<p.x+p.w+player.r){player.y=p.y-player.r;player.vy=-470;updateScore(2,"Boing!");tone(520,.04);break;}}
-      if(player.y<H*.38&&player.vy<0){const shift=(H*.38-player.y);player.y=H*.38;platforms.forEach(p=>p.y+=shift);platforms=platforms.filter(p=>p.y<H+40);while(platforms.length<9){const top=Math.min(...platforms.map(p=>p.y));platforms.push({x:15+Math.random()*(W-115),y:top-58-Math.random()*18,w:72+Math.random()*55});}}
-      if(player.y>H+40){finish("Du föll – men nådde högt!");return;}
-      ctx.clearRect(0,0,W,H);const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#5148d9");g.addColorStop(.55,"#508eea");g.addColorStop(1,"#5de6f1");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.fillStyle="rgba(255,255,255,.12)";for(let x=20;x<W;x+=42){ctx.beginPath();ctx.arc(x,(x*1.7)%H,2,0,Math.PI*2);ctx.fill();}platforms.forEach(drawCloud);drawHero();});
+      if(player.vy>0)for(const p of platforms){if(!p.dead&&oldY+player.r<=p.y&&player.y+player.r>=p.y&&player.x>p.x-player.r&&player.x<p.x+p.w+player.r){player.y=p.y-player.r;player.vy=p.type==="boost"?-610:-470;if(!p.seen){p.seen=true;updateScore(p.type==="boost"?5:2,p.type==="boost"?"BOOSTMOLN!":"Boing!");}tone(p.type==="boost"?720:520,.04);if(p.type==="crumble")later(()=>{p.dead=true;},140);break;}}
+      if(player.y<H*.38&&player.vy<0){const shift=(H*.38-player.y);player.y=H*.38;height+=shift/18;if(extraValEl)extraValEl.textContent=`${Math.floor(height)}m`;platforms.forEach(p=>p.y+=shift);platforms=platforms.filter(p=>!p.dead&&p.y<H+40);while(platforms.length<9){const top=Math.min(...platforms.map(p=>p.y));platforms.push(makeCloud(15+Math.random()*(W-115),top-58-Math.random()*18,72+Math.random()*55));}}
+      if(player.y>H+40){if(rescues>0){rescues-=1;rescuesEl.textContent=`🪽 ×${rescues}`;const rescue=platforms.filter(p=>!p.dead&&p.y<H-20).sort((a,b)=>b.y-a.y)[0]||makeCloud(W*.35,H*.72,110,"normal");if(!platforms.includes(rescue))platforms.push(rescue);player.x=rescue.x+rescue.w/2;player.y=rescue.y-player.r;player.vx=0;player.vy=-520;updateScore(-2,"Räddningsvinge!");tone(330,.12,"square");vibrate([15,30,15]);}else{finish("Vingarna är slut – höjdresan är klar!");return;}}
+      ctx.clearRect(0,0,W,H);const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#5148d9");g.addColorStop(.55,"#508eea");g.addColorStop(1,"#5de6f1");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.fillStyle="rgba(255,255,255,.12)";for(let x=20;x<W;x+=42){ctx.beginPath();ctx.arc(x,(x*1.7)%H,2,0,Math.PI*2);ctx.fill();}platforms.forEach(drawCloud);drawHero();ctx.save();ctx.font="900 18px system-ui";ctx.textAlign="right";ctx.lineWidth=4;ctx.strokeStyle="#130b2b";ctx.strokeText(`🪽 ${rescues}`,W-12,26);ctx.fillStyle="#fff17c";ctx.fillText(`🪽 ${rescues}`,W-12,26);ctx.restore();});
   }
 
   function stackMode() {
-    stage.innerHTML=`<h2 class="mode-title">Bygg 12 våningar</h2><div class="stack-zone" id="stackZone"></div>`;const zone=stage.querySelector("#stackZone");let width=.56,left=.22,y=0,direction=1,last=performance.now(),fixed=[];let current=document.createElement("div");
-    const buildCurrent=()=>{current=document.createElement("div");current.className="stack-block";current.style.width=`${width*100}%`;current.style.bottom=`${30+fixed.length*29}px`;zone.appendChild(current);};buildCurrent();
-    const drop=()=>{if(!state.running)return;const previous=fixed.at(-1)||{left:.22,width:.56};const overlapLeft=Math.max(left,previous.left),overlapRight=Math.min(left+width,previous.left+previous.width),overlap=overlapRight-overlapLeft;if(overlap<.055){failSound();finish("Tornet välte!");return;}width=overlap;left=overlapLeft;current.style.left=`${left*100}%`;current.style.width=`${width*100}%`;fixed.push({left,width,el:current});updateScore(3,"Stadigt!");tone(420+fixed.length*25,.06);if(fixed.length>=12){finish("Tornet når molnen!");return;}buildCurrent();};
+    stage.innerHTML=`<h2 class="mode-title" id="stackTitle">PIXELSTAD · Bygg 12 våningar</h2><div class="stack-zone" id="stackZone" data-world="city"><div class="stack-skyline" aria-hidden="true"></div></div>`;const zone=stage.querySelector("#stackZone"),title=stage.querySelector("#stackTitle");let width=.56,left=.22,direction=1,last=performance.now(),fixed=[],perfectChain=0;let current=document.createElement("div");
+    if(extraLabelEl)extraLabelEl.textContent="Perfekt";if(extraValEl)extraValEl.textContent="×0";
+    const worlds=[{at:0,id:"city",name:"PIXELSTAD"},{at:4,id:"sunset",name:"SOLNIVÅ"},{at:8,id:"space",name:"STJÄRNRYMD"}];
+    const updateWorld=()=>{const world=[...worlds].reverse().find(item=>fixed.length>=item.at);zone.dataset.world=world.id;title.textContent=`${world.name} · ${fixed.length}/12 VÅNINGAR`;};
+    const buildCurrent=()=>{current=document.createElement("div");current.className="stack-block";current.style.width=`${width*100}%`;current.style.bottom=`${30+fixed.length*27}px`;zone.appendChild(current);};buildCurrent();updateWorld();
+    const drop=()=>{if(!state.running)return;const previous=fixed.at(-1)||{left:.22,width:.56};const overlapLeft=Math.max(left,previous.left),overlapRight=Math.min(left+width,previous.left+previous.width),overlap=overlapRight-overlapLeft;if(overlap<.055){failSound();finish("Tornet välte!");return;}const precision=overlap/previous.width,perfect=precision>=.94;if(perfect){perfectChain+=1;width=previous.width;left=previous.left;toast(`PERFEKT ×${perfectChain}`);}else{perfectChain=0;width=overlap;left=overlapLeft;}if(extraValEl)extraValEl.textContent=`×${perfectChain}`;current.classList.toggle("is-perfect",perfect);current.style.left=`${left*100}%`;current.style.width=`${width*100}%`;fixed.push({left,width,el:current});updateScore(perfect?5+Math.min(perfectChain,4):3,perfect?"Precision bevarar bredden!":"Stadigt!");tone((perfect?620:420)+fixed.length*25,.06);updateWorld();if(fixed.length>=12){finish(perfectChain>=3?"Perfektkedjan nådde stjärnorna!":"Tornet når stjärnorna!");return;}buildCurrent();};
     const button=makeButton("SLÄPP!","mix-btn accent");button.addEventListener("click",drop);controls.appendChild(button);zone.addEventListener("pointerdown",drop);startCountdown(config.duration);animate(now=>{const dt=Math.min(.04,(now-last)/1000);last=now;left+=direction*(.28+fixed.length*.012)*dt;if(left<0){left=0;direction=1;}if(left+width>1){left=1-width;direction=-1;}current.style.left=`${left*100}%`;});
   }
 
   function timingMode() {
-    stage.innerHTML=`<h2 class="mode-title">Vänta in grönt</h2><div class="patience-track"><div class="patience-sweet"></div><div class="patience-marker" id="marker"></div></div><div class="patience-tower" id="patienceTower"></div>`;const marker=stage.querySelector("#marker"),tower=stage.querySelector("#patienceTower");let position=0,direction=1,last=performance.now(),streak=0;
-    const stop=()=>{const good=position>=.41&&position<=.59;if(good){streak++;updateScore(3+Math.min(streak,3),streak>1?`Tålmodighetskombo ×${streak}!`:"Precis rätt ögonblick!");tower.textContent="🧱".repeat(Math.floor(Math.min(12,state.score/3)));successSound();}else{streak=0;updateScore(-1,"Lite för tidigt eller sent – försök igen.");failSound();}position=direction>0?0:1;};
-    const button=makeButton("NU!","mix-btn accent");button.addEventListener("click",stop);controls.appendChild(button);startCountdown(config.duration);animate(now=>{const dt=Math.min(.04,(now-last)/1000);last=now;position+=direction*.52*dt;if(position>=1){position=1;direction=-1;}if(position<=0){position=0;direction=1;}marker.style.left=`calc(${position*100}% - 7px)`;});
+    stage.innerHTML=`<h2 class="mode-title">Vänta på det verkligt gröna</h2><p class="mode-subtitle">Gula pulser lockar – mitten belönar lugn precision</p><div class="patience-track"><div class="patience-decoy first"></div><div class="patience-sweet"><span>PERFEKT</span></div><div class="patience-decoy second"></div><div class="patience-marker" id="marker"></div></div><div class="patience-tower" id="patienceTower"></div>`;const marker=stage.querySelector("#marker"),tower=stage.querySelector("#patienceTower");let position=0,direction=1,last=performance.now(),streak=0,bestStreak=0,round=0;
+    if(extraLabelEl)extraLabelEl.textContent="Lugn kedja";if(extraValEl)extraValEl.textContent="×0";
+    const stop=()=>{const good=position>=.41&&position<=.59,perfect=position>=.47&&position<=.53,decoy=(position>=.18&&position<=.30)||(position>=.70&&position<=.82);round+=1;if(good){streak++;bestStreak=Math.max(bestStreak,streak);updateScore((perfect?6:3)+Math.min(streak,3),perfect?`PERFEKT TÅLAMOD ×${streak}`:streak>1?`LUGN KEDJA ×${streak}`:"Precis rätt ögonblick!");tower.textContent="🧱".repeat(Math.floor(Math.min(12,state.score/3)));successSound();}else{streak=0;updateScore(-1,decoy?"Lockbete – vänta på det gröna.":"Lite för tidigt eller sent – försök igen.");failSound();}if(extraValEl)extraValEl.textContent=`×${streak}`;position=direction>0?0:1;};
+    const button=makeButton("VÄNTA… NU!","mix-btn accent");button.addEventListener("click",stop);controls.appendChild(button);startCountdown(config.duration,()=>{finish(bestStreak>=5?"Du höll en stark lugn kedja!":"Tålamod byggs ett val i taget.");overlayText.textContent=`Bästa lugna kedjan blev ×${bestStreak}. Det viktiga var att se förbi lockbetet och välja rätt ögonblick.`;});animate(now=>{const dt=Math.min(.04,(now-last)/1000);last=now;const speed=.46+Math.min(.18,round*.008);position+=direction*speed*dt;if(position>=1){position=1;direction=-1;}if(position<=0){position=0;direction=1;}marker.style.left=`calc(${position*100}% - 7px)`;});
   }
 
   function coinsMode() {

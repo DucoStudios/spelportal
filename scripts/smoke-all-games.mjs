@@ -17,7 +17,8 @@ const screenshotCases = new Set([
   "kulrullaren-mobile", "memory-plattorna-mobile", "memory-plattorna-desktop",
   "saftstand-erbjudandet-mobile", "ordmastaren-mobile", "poppa-ballongerna-mobile", "schack-mobile",
   "malarboken-mobile", "brobyggarna-mobile", "ormen-mobile",
-  "superhjalte-spranget-mobile", "flykten-mobile", "reaktionsraketen-mobile", "dansstopp-mobile"
+  "superhjalte-spranget-mobile", "flykten-mobile", "reaktionsraketen-mobile", "dansstopp-mobile",
+  "balansbanan-mobile", "molnhoppet-mobile", "tornverkstan-mobile", "talamodstornet-mobile", "fargfusion-mobile"
 ]);
 const outputDir = "/tmp/spelportal-all-games-smoke";
 mkdirSync(outputDir, { recursive: true });
@@ -171,6 +172,37 @@ for (const viewport of viewports) {
       }
       const shot = await call("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
       writeFileSync(`${outputDir}/${id}-${viewport.name}.png`, Buffer.from(shot.data, "base64"));
+      if (["balansbanan", "molnhoppet", "tornverkstan", "talamodstornet", "fargfusion"].includes(id)) {
+        const mechanic = await evaluate(`(() => {
+          const extra = document.querySelector('#extraVal');
+          if (!extra) return { ok: false, reason: 'extra HUD saknas' };
+          if ('${id}' === 'balansbanan') {
+            const toggle = document.querySelector('.calm-toggle');
+            toggle?.click();
+            return { ok: toggle?.getAttribute('aria-pressed') === 'true', extra: extra.textContent };
+          }
+          if ('${id}' === 'molnhoppet') {
+            return { ok: Boolean(document.querySelector('#jumpCanvas')) && document.querySelector('#jumpRescues')?.textContent.includes('×2'), extra: extra.textContent };
+          }
+          if ('${id}' === 'tornverkstan') {
+            document.querySelector('.mix-controls .accent')?.click();
+            return { ok: Number(document.querySelector('#scoreVal')?.textContent) > 0 && document.querySelectorAll('.stack-block').length > 1, extra: extra.textContent };
+          }
+          if ('${id}' === 'talamodstornet') {
+            document.querySelector('.mix-controls .accent')?.click();
+            return { ok: document.querySelector('#patienceTower') !== null && extra.textContent.startsWith('×'), extra: extra.textContent };
+          }
+          const cells = [...document.querySelectorAll('.merge-cell')];
+          const pair = cells.find((cell, index) => cells.findIndex(other => other.textContent === cell.textContent) !== index);
+          pair?.click();
+          const match = [...document.querySelectorAll('.merge-cell')].find(cell => !cell.classList.contains('selected') && cell.textContent === pair?.textContent);
+          match?.click();
+          return { ok: Number(document.querySelector('#scoreVal')?.textContent) > 0 && document.querySelector('#mergeNext') !== null, extra: extra.textContent };
+        })()`);
+        assert.ok(mechanic.ok, `${id}/${viewport.name}: den nya kärnmekaniken svarar inte (${mechanic.reason || mechanic.extra})`);
+        await pause(80);
+        assert.deepEqual(exceptions, [], `${id}/${viewport.name}: körfel i den nya kärnmekaniken ${exceptions.join(", ")}`);
+      }
     }
     checks += 1;
   }

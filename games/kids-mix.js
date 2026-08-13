@@ -4,7 +4,7 @@
   const CONFIGS = {
     "fruktfangaren": {
       mode: "catcher", icon: "🍓", kicker: "FRANSKA · SNABBLYSSNING", title: "Fruktfångaren",
-      intro: "Hör och läs ordet – fånga rätt frukt innan den landar.", instructions: "Flytta korgen med fingret eller pilarna. Fånga bara frukten som det franska ordet ber om.", duration: 45,
+      intro: "Lyssna säkert, bygg hörselkombo och låt svåra ord komma tillbaka smart.", instructions: "Flytta korgen med fingret eller pilarna. Fånga bara frukten du hör. Missade ord återkommer oftare tills de sitter.", duration: 45,
       targeted: true, speakTarget: true, player: "🧺", pool: [
         { label: "la pomme", emoji: "🍎" }, { label: "la poire", emoji: "🍐" }, { label: "la fraise", emoji: "🍓" },
         { label: "le citron", emoji: "🍋" }, { label: "la banane", emoji: "🍌" }, { label: "le raisin", emoji: "🍇" }
@@ -12,7 +12,7 @@
     },
     "bistroblixten": {
       mode: "sequence", icon: "🥐", kicker: "FRANSKA · MINNE & TEMPO", title: "Bistroblixten",
-      intro: "Bygg gästernas beställningar i rätt ordning.", instructions: "Titta på beställningen och tryck på varorna i samma ordning. Nästa gäst väntar!", duration: 55, speakPrompt: true,
+      intro: "Läs gästens behov, servera i rätt ordning och vinn kvalitet före ren fart.", instructions: "Se och hör beställningen. Tryck på varorna i rätt ordning. Felfri, lugn service ger högst kvalitetsbetyg.", duration: 55, speakPrompt: true,
       orders: [
         [{ e: "🥐", t: "un croissant" }, { e: "🥛", t: "du lait" }],
         [{ e: "🍞", t: "du pain" }, { e: "🧀", t: "du fromage" }, { e: "🍎", t: "une pomme" }],
@@ -22,19 +22,19 @@
     },
     "accentjakten": {
       mode: "choice", icon: "É", kicker: "FRANSKA · ORDBLICK", title: "Accentjakten",
-      intro: "Se den svenska ledtråden och hitta rätt franska ord.", instructions: "Välj rätt stavning. Tryck på högtalaren om du vill höra ordet efter svaret.", duration: 50,
+      intro: "Lär dig varför accenten sitter där och säkra ord som först var svåra.", instructions: "Välj rätt stavning. Efter svaret får du en kort accentförklaring. Missade ord återkommer efter två andra frågor.", duration: 50,
       questions: [
-        { p: "Vilket ord betyder skola?", a: "l’école", o: ["l’ecole", "l’école", "l’ècole", "l’êcole"] },
-        { p: "Vilket ord betyder pappa?", a: "le père", o: ["le pere", "le pére", "le père", "le pêre"] },
-        { p: "Vilket ord betyder sommar?", a: "l’été", o: ["l’ete", "l’été", "l’ète", "l’êté"] },
-        { p: "Vilket ord betyder cykel?", a: "le vélo", o: ["le velo", "le vèlo", "le vélo", "le vêlo"] },
-        { p: "Vilket ord betyder fönster?", a: "la fenêtre", o: ["la fenetre", "la fénêtre", "la fenêtre", "la fènétre"] },
-        { p: "Vilket ord betyder jul?", a: "Noël", o: ["Noel", "Nöel", "Noël", "Nôel"] }
+        { p: "Vilket ord betyder skola?", a: "l’école", x: "é har accent aigu och låter som ett tydligt e.", o: ["l’ecole", "l’école", "l’ècole", "l’êcole"] },
+        { p: "Vilket ord betyder pappa?", a: "le père", x: "è har accent grave och markerar ett öppnare e-ljud.", o: ["le pere", "le pére", "le père", "le pêre"] },
+        { p: "Vilket ord betyder sommar?", a: "l’été", x: "Båda e-ljuden skrivs med é, accent aigu.", o: ["l’ete", "l’été", "l’ète", "l’êté"] },
+        { p: "Vilket ord betyder cykel?", a: "le vélo", x: "é i vélo är accent aigu och är en del av stavningen.", o: ["le velo", "le vèlo", "le vélo", "le vêlo"] },
+        { p: "Vilket ord betyder fönster?", a: "la fenêtre", x: "ê är accent circonflexe – den lilla hatten hör till ordet.", o: ["la fenetre", "la fénêtre", "la fenêtre", "la fènétre"] },
+        { p: "Vilket ord betyder jul?", a: "Noël", x: "ë är tréma och visar att o och e uttalas var för sig.", o: ["Noel", "Nöel", "Noël", "Nôel"] }
       ]
     },
     "ordbron": {
       mode: "choice", icon: "🌉", kicker: "FRANSKA · VÄLJ VÄGEN", title: "Ordbron",
-      intro: "Varje rätt ord lägger ut nästa sten över floden.", instructions: "Läs den svenska ledtråden och välj rätt franska sten. Bygg bron så långt du kan.", duration: 55, bridge: true,
+      intro: "Varje säkert ord bygger en brodel med en egen uppgift.", instructions: "Välj rätt franskt ord för att bygga nästa brodel. När sex delar sitter gör resenären en riktig testvandring.", duration: 55, bridge: true,
       questions: [
         { p: "hund", a: "le chien", o: ["le chat", "le chien", "la souris", "le cheval"] },
         { p: "hus", a: "la maison", o: ["la porte", "la maison", "la rue", "la ville"] },
@@ -62,7 +62,7 @@
     },
     "brobyggarna": {
       mode: "draw", icon: "✏️", kicker: "SKAPA · RITA LÖSNINGEN", title: "Brobyggarna",
-      intro: "Rita en säker bro runt hindren och hjälp resenären över.", instructions: "Dra en sammanhängande linje från den gröna starten till den gula flaggan utan att nudda klipporna.", duration: 0
+      intro: "Hitta din egen säkra väg och använd materialet klokt.", instructions: "Rita från den gröna starten till flaggan utan att nudda klipporna. Flera vägar fungerar; kortare, enklare broar får fler stjärnor.", duration: 0
     },
     "fargfusion": {
       mode: "merge", icon: "🎨", kicker: "LOGIK · MERGE", title: "Färgfusion",
@@ -316,31 +316,71 @@
   }
 
   function choiceMode() {
-    let index = 0;
+    let index = 0, rounds = 0, bridgeCount = 0;
+    const mastered = new Set();
+    const reviewQueue = [];
+    const bridgeParts = [
+      { icon: "🪨", name: "GRUNDSTEN" }, { icon: "🪵", name: "SPANN" }, { icon: "⚙️", name: "STÖDBÅGE" },
+      { icon: "🪢", name: "GREPPREP" }, { icon: "✨", name: "LJUSPORT" }, { icon: "🏁", name: "MÅL" }
+    ];
+    if (config.bridge) { if (extraLabelEl) extraLabelEl.textContent = "Bro"; if (extraValEl) extraValEl.textContent = "0/6"; }
+    if (id === "accentjakten") { if (extraLabelEl) extraLabelEl.textContent = "Säkra ord"; if (extraValEl) extraValEl.textContent = `0/${config.questions.length}`; }
     startCountdown(config.duration);
     const render = () => {
-      const q = config.questions[index % config.questions.length];
-      stage.innerHTML = `<h2 class="mode-title">${config.scenarios ? "Vad gör du?" : "Hitta rätt: " + q.p}</h2>${config.scenarios ? `<p class="mode-subtitle">${q.p}</p>` : ""}<div class="choice-grid" id="choiceGrid"></div>`;
+      let q;
+      if (id === "accentjakten") {
+        const reviewIndex = reviewQueue.findIndex(item => item.due <= rounds);
+        if (reviewIndex >= 0) q = reviewQueue.splice(reviewIndex, 1)[0].question;
+        else { q = config.questions[index % config.questions.length]; index += 1; }
+      } else { q = config.questions[index % config.questions.length]; }
+      const bridgeHtml = config.bridge ? `<div class="word-bridge" id="wordBridge" aria-label="${bridgeCount} av 6 brodelar byggda"><div class="bridge-traveler">🧒</div>${bridgeParts.map((part, partIndex) => `<div class="bridge-part ${partIndex < bridgeCount ? "built" : ""}" title="${part.name}"><b>${part.icon}</b><small>${part.name}</small></div>`).join("")}</div>` : "";
+      stage.innerHTML = `${bridgeHtml}<h2 class="mode-title">${config.scenarios ? "Vad gör du?" : "Hitta rätt: " + q.p}</h2>${config.scenarios ? `<p class="mode-subtitle">${q.p}</p>` : ""}<div class="choice-grid" id="choiceGrid"></div><div class="choice-explainer" id="choiceExplainer" aria-live="polite"></div>`;
       const grid = stage.querySelector("#choiceGrid");
       shuffle(q.o).forEach(label => {
         const button = makeButton(label, "choice-card");
         button.addEventListener("click", () => {
           if (!state.running || button.disabled) return;
           grid.querySelectorAll("button").forEach(el => { el.disabled = true; });
-          if (label === q.a) {
+          const correct = label === q.a;
+          const questionIndex = config.questions.indexOf(q);
+          const explainer = stage.querySelector("#choiceExplainer");
+          if (correct) {
             button.classList.add("correct");
-            updateScore(config.scenarios ? 4 : 3, config.scenarios ? "Ett omtänksamt steg framåt." : "Rätt väg!");
+            const bridgeBonus = config.bridge ? 2 : 0;
+            updateScore((config.scenarios ? 4 : 3) + bridgeBonus, config.scenarios ? "Ett omtänksamt steg framåt." : config.bridge ? `${bridgeParts[bridgeCount].name} på plats!` : "Rätt väg!");
             successSound();
             vibrate();
-            if (id === "accentjakten") speak(q.a);
+            if (id === "accentjakten") mastered.add(questionIndex);
+            if (config.bridge) {
+              stage.querySelectorAll(".bridge-part")[bridgeCount]?.classList.add("built");
+              bridgeCount += 1;
+              if (extraValEl) extraValEl.textContent = `${bridgeCount}/6`;
+            }
           } else {
             button.classList.add("wrong");
-            updateScore(-1, `Nästan – rätt svar är ${q.a}.`);
+            updateScore(-1, id === "accentjakten" ? `Titta på tecknet: ${q.a}.` : `Nästan – rätt svar är ${q.a}.`);
             failSound();
             [...grid.children].find(el => el.textContent === q.a)?.classList.add("correct");
+            if (id === "accentjakten") {
+              mastered.delete(questionIndex);
+              if (!reviewQueue.some(item => item.question === q)) reviewQueue.push({ question: q, due: rounds + 3 });
+            }
           }
-          index += 1;
-          later(render, 760);
+          if (id === "accentjakten") {
+            speak(q.a);
+            if (extraValEl) extraValEl.textContent = `${mastered.size}/${config.questions.length}`;
+            explainer.innerHTML = `<b>${q.a}</b><span>${q.x}</span>${correct ? "" : "<small>Ordet kommer tillbaka snart.</small>"}`;
+          }
+          rounds += 1;
+          if (id !== "accentjakten") index += 1;
+          if (config.bridge && bridgeCount >= bridgeParts.length) {
+            const bridge = stage.querySelector("#wordBridge");
+            bridge.classList.add("is-crossing");
+            bridge.setAttribute("aria-label", "Bron är klar och testas nu");
+            later(() => finish("Bron klarade testvandringen!"), 1500);
+            return;
+          }
+          later(render, id === "accentjakten" ? 1500 : config.bridge ? 900 : 760);
         });
         grid.appendChild(button);
       });
@@ -350,22 +390,39 @@
 
   function sequenceMode() {
     let orderIndex = 0;
-    let picked = 0;
+    let picked = 0, mistakes = 0, roundStarted = performance.now();
+    const isBistro = id === "bistroblixten";
+    const guests = [
+      { icon: "🚲", name: "LÉO", cue: "På väg vidare · tydlig service" },
+      { icon: "🎨", name: "AMÉLIE", cue: "Hungrig · ordning är viktig" },
+      { icon: "📚", name: "NOAH", cue: "Vill minnas uttalet" },
+      { icon: "🌻", name: "INÈS", cue: "Lugn fika · hög kvalitet" }
+    ];
+    if (isBistro) { if (extraLabelEl) extraLabelEl.textContent = "Kvalitet"; if (extraValEl) extraValEl.textContent = "–"; }
     startCountdown(config.duration);
     const render = () => {
-      picked = 0;
+      picked = 0; mistakes = 0; roundStarted = performance.now();
       const order = config.orders[orderIndex % config.orders.length];
+      const guest = guests[orderIndex % guests.length];
       const stock = shuffle([...order, ...random(config.orders)].slice(0, Math.max(order.length + 2, 5)));
-      stage.innerHTML = `<h2 class="mode-title">Beställning ${orderIndex + 1}</h2><div class="order-row">${order.map(item => `<span class="order-token">${item.e}<small>${item.t}</small></span>`).join("")}</div><div class="picked-row" id="pickedRow"><span class="mode-subtitle">Din bricka</span></div><div class="choice-grid" id="stock"></div>`;
+      stage.innerHTML = `${isBistro ? `<div class="bistro-guest"><b>${guest.icon}</b><span><strong>${guest.name}</strong><small>${guest.cue}</small></span></div>` : `<h2 class="mode-title">Beställning ${orderIndex + 1}</h2>`}<div class="order-row">${order.map(item => `<span class="order-token">${item.e}<small>${item.t}</small></span>`).join("")}</div><div class="picked-row" id="pickedRow"><span class="mode-subtitle">Din bricka</span></div><div class="choice-grid stock-grid" id="stock"></div>`;
       if (config.speakPrompt) speak(order.map(item => item.t).join(", "));
       const pickedRow = stage.querySelector("#pickedRow");
       const stockEl = stage.querySelector("#stock");
+      const resetTray = () => {
+        picked = 0;
+        pickedRow.innerHTML = '<span class="mode-subtitle">Försök igen – kvalitet före stress</span>';
+        stockEl.querySelectorAll("button").forEach(el => { el.disabled = false; });
+      };
       stock.forEach(item => {
-        const button = makeButton(`${item.e} ${item.t}`, "choice-card");
+        const button = makeButton("", "choice-card stock-card");
+        button.innerHTML = `<b>${item.e}</b><small>${item.t}</small>`;
+        button.setAttribute("aria-label", item.t);
         button.addEventListener("click", () => {
-          if (!state.running) return;
+          if (!state.running || picked >= order.length) return;
           const expected = order[picked];
           if (item.e === expected.e && item.t === expected.t) {
+            button.disabled = true;
             pickedRow.querySelector(".mode-subtitle")?.remove();
             const token = document.createElement("span");
             token.className = "order-token";
@@ -374,15 +431,19 @@
             picked += 1;
             tone(500 + picked * 80, .06);
             if (picked === order.length) {
-              updateScore(order.length * 2 + 1, "Beställningen är klar!");
+              const elapsed = performance.now() - roundStarted;
+              const quality = isBistro ? mistakes === 0 && elapsed < 8000 ? 3 : mistakes === 0 ? 2 : 1 : 1;
+              if (isBistro && extraValEl) extraValEl.textContent = "⭐".repeat(quality);
+              updateScore(order.length * 2 + quality, isBistro ? quality === 3 ? "TRE STJÄRNOR · snabb och felfri service!" : quality === 2 ? "TVÅ STJÄRNOR · felfri service!" : "EN STJÄRNA · beställningen blev rätt." : "Beställningen är klar!");
               successSound();
               orderIndex += 1;
               later(render, 650);
             }
           } else {
-            updateScore(-1, "Fel vara – börja om brickan.");
+            mistakes += 1;
+            updateScore(-1, isBistro ? "Fel vara – sakta ner och bygg om brickan." : "Fel vara – börja om brickan.");
             failSound();
-            later(render, 450);
+            later(resetTray, 420);
           }
         });
         stockEl.appendChild(button);
@@ -396,11 +457,20 @@
     const lane = stage.querySelector("#catchLane");
     const player = stage.querySelector("#catchPlayer");
     const hint = stage.querySelector("#catchHint");
-    let playerX = 50;
+    let playerX = 50, combo = 0;
+    const mastery = new Map(config.pool.map(item => [item.label, { hits: 0, misses: 0 }]));
+    const chooseTarget = previous => {
+      const choices = config.pool.filter(item => item !== previous);
+      return [...choices].sort((a, b) => {
+        const aSkill = mastery.get(a.label), bSkill = mastery.get(b.label);
+        return (bSkill.misses * 3 - bSkill.hits + Math.random()) - (aSkill.misses * 3 - aSkill.hits + Math.random());
+      })[0];
+    };
     let target = config.targeted ? random(config.pool) : null;
     const falling = [];
     let lastFrame = performance.now();
     let speed = 88;
+    if (config.targeted) { if (extraLabelEl) extraLabelEl.textContent = "Hörselkombo"; if (extraValEl) extraValEl.textContent = "×0"; }
     const setPlayer = value => {
       playerX = clamp(value, 8, 92);
       player.style.left = `${playerX}%`;
@@ -411,14 +481,17 @@
         return;
       }
       hint.innerHTML = `FÅNGA: ${target.label} 🔊`;
+      hint.setAttribute("role", "button");
+      hint.setAttribute("tabindex", "0");
       hint.onclick = () => speak(target.label);
+      hint.onkeydown = event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); speak(target.label); } };
       if (config.speakTarget) speak(target.label);
     };
     updateHint();
 
     function spawn() {
       let item;
-      if (target && Math.random() < .46) item = target;
+      if (target && Math.random() < .52 + Math.min(.18, mastery.get(target.label).misses * .04)) item = target;
       else item = random(config.pool);
       const el = document.createElement("div");
       el.className = "catch-item";
@@ -435,11 +508,16 @@
       data.dead = true;
       const good = target ? data.item.label === target.label : data.item.good;
       if (caught && good) {
-        updateScore(2, "Fin fångst!");
+        if (target) {
+          combo += 1;
+          mastery.get(target.label).hits += 1;
+          if (extraValEl) extraValEl.textContent = `×${combo}`;
+        }
+        updateScore(2 + (target ? Math.min(combo, 4) : 0), target && combo > 1 ? `SÄKER HÖRSEL ×${combo}` : "Fin fångst!");
         tone(660, .08);
         vibrate(8);
         if (target) {
-          target = random(config.pool.filter(item => item !== target));
+          target = chooseTarget(target);
           updateHint();
         }
         if (config.growth) {
@@ -448,9 +526,16 @@
           tree.style.transform = `scale(${1 + Math.min(state.score, 25) / 35})`;
         }
       } else if (caught && !good) {
+        if (target) { combo = 0; mastery.get(target.label).misses += 1; if (extraValEl) extraValEl.textContent = "×0"; later(() => speak(target.label), 320); }
         updateScore(-2, "Hoppsan – låt den falla förbi.");
         failSound();
         vibrate([20, 30, 20]);
+      } else if (!caught && target && data.item.label === target.label) {
+        combo = 0;
+        mastery.get(target.label).misses += 1;
+        if (extraValEl) extraValEl.textContent = "×0";
+        setStatus(`${target.label} landade – lyssna igen.`);
+        later(() => speak(target.label), 260);
       }
       data.el.remove();
     }
@@ -668,9 +753,11 @@
   }
 
   function drawMode() {
-    stage.innerHTML = `<h2 class="mode-title">Bana <span id="drawLevel">1</span> av 5</h2><canvas class="draw-canvas" id="drawCanvas" aria-label="Rita en bro från start till mål"></canvas>`;
+    stage.innerHTML = `<h2 class="mode-title">Bana <span id="drawLevel">1</span> av 5 · hitta din väg</h2><div class="draw-material"><span>MATERIAL</span><div><i id="materialFill"></i></div><b id="materialText">100%</b></div><canvas class="draw-canvas" id="drawCanvas" aria-label="Rita en bro från start till mål"></canvas>`;
     const canvas = stage.querySelector("#drawCanvas");
     const ctx = canvas.getContext("2d");
+    const materialFill = stage.querySelector("#materialFill");
+    const materialText = stage.querySelector("#materialText");
     const levels = [
       [{ x: .42, y: .42, w: .15, h: .23 }],
       [{ x: .27, y: .28, w: .15, h: .3 }, { x: .58, y: .56, w: .16, h: .28 }],
@@ -678,8 +765,19 @@
       [{ x: .3, y: .2, w: .12, h: .5 }, { x: .58, y: .38, w: .12, h: .5 }],
       [{ x: .2, y: .25, w: .15, h: .22 }, { x: .43, y: .47, w: .15, h: .22 }, { x: .68, y: .25, w: .14, h: .3 }]
     ];
-    let level = 0, path = [], drawing = false, traveler = -1;
-    const resize = () => { const rect = canvas.getBoundingClientRect(); canvas.width = Math.max(300, Math.round(rect.width)); canvas.height = Math.max(220, Math.round(rect.height)); draw(); };
+    const materialRatios = [1.65, 1.8, 1.95, 2.05, 2.15];
+    let level = 0, path = [], drawing = false, traveler = -1, materialUsed = 0, materialLimit = 1, totalStars = 0;
+    if (extraLabelEl) extraLabelEl.textContent = "Material";
+    const updateMaterial = () => {
+      const remaining = clamp(1 - materialUsed / materialLimit, 0, 1);
+      const percent = Math.round(remaining * 100);
+      materialFill.style.width = `${percent}%`;
+      materialFill.classList.toggle("low", percent < 24);
+      materialText.textContent = `${percent}%`;
+      if (extraValEl) extraValEl.textContent = `${percent}%`;
+    };
+    const resetPath = () => { path = []; traveler = -1; drawing = false; materialUsed = 0; updateMaterial(); draw(); };
+    const resize = () => { const rect = canvas.getBoundingClientRect(); canvas.width = Math.max(300, Math.round(rect.width)); canvas.height = Math.max(220, Math.round(rect.height)); materialLimit = canvas.width * materialRatios[level]; resetPath(); };
     const point = event => { const rect = canvas.getBoundingClientRect(); return { x: (event.clientX - rect.left) * canvas.width / rect.width, y: (event.clientY - rect.top) * canvas.height / rect.height }; };
     function draw() {
       const w = canvas.width, h = canvas.height;
@@ -705,15 +803,19 @@
       if (!start || Math.hypot(start.x-w*.08,start.y-h*.82)>45 || Math.hypot(end.x-w*.9,end.y-h*.16)>60) return true;
       return path.some(p => levels[level].some(r => p.x>r.x*w-7&&p.x<(r.x+r.w)*w+7&&p.y>r.y*h-7&&p.y<(r.y+r.h)*h+7));
     }
-    canvas.addEventListener("pointerdown", event => { if (traveler >= 0) return; drawing=true; path=[point(event)]; canvas.setPointerCapture?.(event.pointerId); draw(); });
-    canvas.addEventListener("pointermove", event => { if (!drawing) return; const p=point(event); if (!path.length || Math.hypot(p.x-path.at(-1).x,p.y-path.at(-1).y)>5) path.push(p); draw(); });
+    canvas.addEventListener("pointerdown", event => { if (traveler >= 0) return; path=[];materialUsed=0;drawing=true;path=[point(event)];updateMaterial();canvas.setPointerCapture?.(event.pointerId);draw(); });
+    canvas.addEventListener("pointermove", event => { if (!drawing) return; const p=point(event),previous=path.at(-1),segment=previous?Math.hypot(p.x-previous.x,p.y-previous.y):0;if(segment<=5)return;if(materialUsed+segment>materialLimit){drawing=false;failSound();toast("Materialet tog slut – prova en enklare väg");later(resetPath,720);return;}materialUsed+=segment;path.push(p);updateMaterial();draw(); });
     canvas.addEventListener("pointerup", () => {
       if (!drawing) return; drawing=false;
-      if (invalidPath()) { failSound(); toast("Bron måste gå från grönt till flaggan utan klippor"); later(()=>{path=[];draw();},700); return; }
-      traveler=0; successSound();
-      const walk=every(()=>{ traveler+=Math.max(1,Math.floor(path.length/35)); draw(); if(traveler>=path.length-1){ clearInterval(walk); updateScore(8+level*2,"Bron håller!"); level+=1; if(level>=levels.length){ finish("Alla broar är klara!"); } else { $("#drawLevel").textContent=level+1; traveler=-1; path=[]; later(draw,450); } } },35);
+      if (invalidPath()) { failSound(); toast("Bron måste gå från grönt till flaggan utan klippor"); later(resetPath,700); return; }
+      const efficiency = materialUsed / materialLimit;
+      const stars = efficiency <= .68 ? 3 : efficiency <= .84 ? 2 : 1;
+      totalStars += stars;
+      traveler=0;reset.disabled=true;successSound();toast(`${"⭐".repeat(stars)} · ${Math.round((1-efficiency)*100)}% material kvar`);
+      const walk=every(()=>{ traveler+=Math.max(1,Math.floor(path.length/35)); draw(); if(traveler>=path.length-1){ clearInterval(walk); updateScore(6+stars*3+level,stars===3?"En enkel och stark lösning!":"Bron håller!"); level+=1; if(level>=levels.length){ finish("Fem olika broar är klara!");overlayText.textContent=`Du hittade fungerande vägar och samlade ${totalStars} av 15 materialstjärnor.`; } else { $("#drawLevel").textContent=level+1;timeEl.textContent=`${level+1}/5`;materialLimit=canvas.width*materialRatios[level];reset.disabled=false;later(resetPath,450); } } },35);
     });
-    const reset=makeButton("↻ RITA OM","mix-btn alt"); reset.addEventListener("click",()=>{path=[];traveler=-1;draw();}); controls.appendChild(reset);
+    const reset=makeButton("↻ RITA OM","mix-btn alt"); reset.addEventListener("click",()=>{if(traveler<0)resetPath();}); controls.appendChild(reset);
+    timeEl.textContent = "1/5";
     requestAnimationFrame(resize); window.addEventListener("resize", resize, { passive: true });
   }
 

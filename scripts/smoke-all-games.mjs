@@ -18,7 +18,8 @@ const screenshotCases = new Set([
   "saftstand-erbjudandet-mobile", "ordmastaren-mobile", "poppa-ballongerna-mobile", "schack-mobile",
   "malarboken-mobile", "brobyggarna-mobile", "ormen-mobile",
   "superhjalte-spranget-mobile", "flykten-mobile", "reaktionsraketen-mobile", "dansstopp-mobile",
-  "balansbanan-mobile", "molnhoppet-mobile", "tornverkstan-mobile", "talamodstornet-mobile", "fargfusion-mobile"
+  "balansbanan-mobile", "molnhoppet-mobile", "tornverkstan-mobile", "talamodstornet-mobile", "fargfusion-mobile",
+  "fruktfangaren-mobile", "bistroblixten-mobile", "accentjakten-mobile", "ordbron-mobile"
 ]);
 const outputDir = "/tmp/spelportal-all-games-smoke";
 mkdirSync(outputDir, { recursive: true });
@@ -202,6 +203,44 @@ for (const viewport of viewports) {
         assert.ok(mechanic.ok, `${id}/${viewport.name}: den nya kärnmekaniken svarar inte (${mechanic.reason || mechanic.extra})`);
         await pause(80);
         assert.deepEqual(exceptions, [], `${id}/${viewport.name}: körfel i den nya kärnmekaniken ${exceptions.join(", ")}`);
+      }
+      if (["fruktfangaren", "bistroblixten", "accentjakten", "ordbron", "brobyggarna"].includes(id)) {
+        const learningMechanic = await evaluate(`(() => {
+          const extra = document.querySelector('#extraVal');
+          if (!extra) return { ok: false, reason: 'extra HUD saknas' };
+          if ('${id}' === 'fruktfangaren') {
+            const hint = document.querySelector('#catchHint');
+            return { ok: hint?.getAttribute('role') === 'button' && extra.textContent.startsWith('×'), extra: extra.textContent };
+          }
+          if ('${id}' === 'bistroblixten') {
+            const labels = [...document.querySelectorAll('.order-token small')].map(el => el.textContent);
+            for (const label of labels) document.querySelector('.stock-card[aria-label="' + label + '"]:not(:disabled)')?.click();
+            return { ok: Number(document.querySelector('#scoreVal')?.textContent) > 0 && extra.textContent.includes('⭐'), extra: extra.textContent };
+          }
+          if ('${id}' === 'accentjakten') {
+            document.querySelector('.choice-card')?.click();
+            return { ok: document.querySelector('#choiceExplainer')?.textContent.trim().length > 12 && extra.textContent.includes('/6'), extra: extra.textContent };
+          }
+          if ('${id}' === 'ordbron') {
+            [...document.querySelectorAll('.choice-card')].find(el => el.textContent === 'le chien')?.click();
+            return { ok: document.querySelectorAll('.bridge-part.built').length === 1 && extra.textContent === '1/6', extra: extra.textContent };
+          }
+          const canvas = document.querySelector('#drawCanvas');
+          canvas.setPointerCapture = () => {};
+          const rect = canvas.getBoundingClientRect();
+          const route = [[.08,.82],[.24,.72],[.25,.22],[.72,.2],[.9,.16]];
+          const fire = (type, x, y) => canvas.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 1, clientX: rect.left + x * rect.width, clientY: rect.top + y * rect.height }));
+          fire('pointerdown', route[0][0], route[0][1]);
+          for (let segment = 1; segment < route.length; segment++) {
+            const from = route[segment - 1], to = route[segment];
+            for (let step = 1; step <= 12; step++) fire('pointermove', from[0] + (to[0] - from[0]) * step / 12, from[1] + (to[1] - from[1]) * step / 12);
+          }
+          fire('pointerup', route.at(-1)[0], route.at(-1)[1]);
+          return { ok: document.querySelector('#materialText')?.textContent !== '100%' && document.querySelector('#timeVal')?.textContent === '1/5', extra: extra.textContent };
+        })()`);
+        assert.ok(learningMechanic.ok, `${id}/${viewport.name}: den nya lärmekaniken svarar inte (${learningMechanic.reason || learningMechanic.extra})`);
+        await pause(80);
+        assert.deepEqual(exceptions, [], `${id}/${viewport.name}: körfel i den nya lärmekaniken ${exceptions.join(", ")}`);
       }
     }
     checks += 1;

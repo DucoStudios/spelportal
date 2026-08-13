@@ -47,6 +47,15 @@ Underlag: [Apple — Designing for games](https://developer.apple.com/design/hum
 - Färgfusion: förhandsvisning av nästa bricka, färgkedja och prismakrafter som förtjänas efter tre lyckade fusioner i följd.
 - Verifierat med 41 automatiska tester och 122 riktiga Chrome-laddningar: 61 spel på mobil och desktop.
 
+## Genomfört i femte passet
+
+- Fruktfångaren: hörselkombo, tangentbordsstyrd repetition av målorden och adaptiv viktning som låter missade ord återkomma oftare.
+- Bistroblixten: gäster med olika servicebehov, mer bilddrivna varuval och ett kvalitetsbetyg som prioriterar felfri service före stress.
+- Accentjakten: korta förklaringar av accent aigu, grave, circonflexe och tréma samt automatisk återkomst av missade ord efter två andra frågor.
+- Ordbron: sex synliga brodelar med olika roller och en avslutande testvandring som gör språkprogressen fysisk.
+- Brobyggarna: synlig materialbudget, flera fria ritlösningar och upp till tre stjärnor för en enkel och materialsnål bro.
+- Verifierat med 46 automatiska tester, klick-/ritkontroll av de nya mekanikerna och 122 riktiga Chrome-laddningar: 61 spel på mobil och desktop.
+
 ## Utvecklingskö — alla spel
 
 Statusnyckel: `KLAR 1` = första stora förbättringspasset klart. `GLOBALT` = nytt pixel-/arkadskal och unik thumbnail klart. `NÄSTA` = prioriterad mekanisk förbättring.
@@ -67,11 +76,11 @@ Statusnyckel: `KLAR 1` = första stora förbättringspasset klart. `GLOBALT` = n
 | Tornverkstan | Ren timingmekanik | Lokala tredagarsutmaningar utan straff och fler tornmiljöer | KLAR 1 |
 | Tålamodstornet | Timing kopplad till tålamod | Fler rytmprofiler och valbar längre fokusrunda | KLAR 1 |
 | Färgfusion | Begriplig merge-progression | Nya brädformer och balans av prismaladdning från verkliga rundor | KLAR 1 |
-| Fruktfångaren | Språk och rörelse i samma loop | Felvänlig adaptiv ordpool och kombo för säkert hörande | GLOBALT |
-| Bistroblixten | Tempo och ordningsbyggande | Kundpersonligheter, kvalitetsbonus och mindre läsning per beslut | GLOBALT |
-| Accentjakten | Kort och skarp stavningsövning | Felmönster som återkommer smart och tydlig accentförklaring | GLOBALT |
-| Ordbron | Varje svar bygger något synligt | Brodelar med olika funktion och slutlig testvandring | GLOBALT |
-| Brobyggarna | Kreativ ritfysik | Flera giltiga lösningar, materialbudget och stjärnor för enkelhet | GLOBALT |
+| Fruktfångaren | Språk och rörelse i samma loop | Fler temapooler och balans från verkliga felmönster | KLAR 1 |
+| Bistroblixten | Tempo och ordningsbyggande | Återkommande gäster och längre servicekedjor | KLAR 1 |
+| Accentjakten | Kort och skarp stavningsövning | Fler accentfamiljer och lokal kunskapskarta | KLAR 1 |
+| Ordbron | Varje svar bygger något synligt | Fler broprofiler och blandade ordklasser | KLAR 1 |
+| Brobyggarna | Kreativ ritfysik | Fler hinderfamiljer och lokal galleriöversikt | KLAR 1 |
 | Träffa rätt | Rita–släpp ger fin aha-känsla | Lösningsmedaljer, nya hinder och omedelbar omstart | GLOBALT |
 | Poppa ballongerna | Ordning och fysik i en resa | Färre döda väntesekunder, trickskott och tydliga banmål | GLOBALT |
 | Rädda ägget | Spänning genom fallhastighet | Skademätare, materialtyper och flera räddningsstrategier | GLOBALT |

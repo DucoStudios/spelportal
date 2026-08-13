@@ -329,6 +329,58 @@ test("Färgfusion visar nästa bricka och förtjänade prismakrafter", () => {
   assert.ok(engine.includes('finish("Du skapade regnbågsstjärnan!")'));
 });
 
+test("Fruktfångaren återkommer adaptivt till svåra ord och visar hörselkombo", () => {
+  const engine = readFileSync("games/kids-mix.js", "utf8");
+  const html = readFileSync("games/fruktfangaren.html", "utf8");
+  assert.ok(html.includes("<title>Fruktfångaren · Spelportalen</title>"));
+  assert.ok(html.includes('id="extraVal"'));
+  assert.ok(engine.includes("const mastery = new Map(config.pool.map"));
+  assert.ok(engine.includes("bSkill.misses * 3 - bSkill.hits"));
+  assert.ok(engine.includes("SÄKER HÖRSEL ×${combo}"));
+  assert.ok(engine.includes("Missade ord återkommer oftare tills de sitter"));
+});
+
+test("Bistroblixten visar gästbehov och graderar servicekvalitet", () => {
+  const engine = readFileSync("games/kids-mix.js", "utf8");
+  const html = readFileSync("games/bistroblixten.html", "utf8");
+  assert.ok(html.includes("<title>Bistroblixten · Spelportalen</title>"));
+  assert.ok(engine.includes('const guests = ['));
+  assert.ok(engine.includes('class="bistro-guest"'));
+  assert.ok(engine.includes("mistakes === 0 && elapsed < 8000 ? 3"));
+  assert.ok(engine.includes("kvalitet före stress"));
+});
+
+test("Accentjakten förklarar accenter och återför missade ord", () => {
+  const engine = readFileSync("games/kids-mix.js", "utf8");
+  const html = readFileSync("games/accentjakten.html", "utf8");
+  assert.ok(html.includes("<title>Accentjakten · Spelportalen</title>"));
+  assert.ok(engine.includes("const reviewQueue = []"));
+  assert.ok(engine.includes("due: rounds + 3"));
+  assert.ok(engine.includes("Ordet kommer tillbaka snart"));
+  assert.ok(engine.includes("ë är tréma och visar att o och e uttalas var för sig"));
+});
+
+test("Ordbron bygger sex funktionsdelar och avslutas med testvandring", () => {
+  const engine = readFileSync("games/kids-mix.js", "utf8");
+  const html = readFileSync("games/ordbron.html", "utf8");
+  assert.ok(html.includes("<title>Ordbron · Spelportalen</title>"));
+  assert.ok(engine.includes('{ icon: "🪨", name: "GRUNDSTEN" }'));
+  assert.ok(engine.includes('class="word-bridge"'));
+  assert.ok(engine.includes('bridge.classList.add("is-crossing")'));
+  assert.ok(engine.includes('finish("Bron klarade testvandringen!")'));
+});
+
+test("Brobyggarna mäter material och belönar flera effektiva ritlösningar", () => {
+  const engine = readFileSync("games/kids-mix.js", "utf8");
+  const html = readFileSync("games/brobyggarna.html", "utf8");
+  assert.ok(html.includes("<title>Brobyggarna · Spelportalen</title>"));
+  assert.ok(html.includes("<span>Bana</span>"));
+  assert.ok(engine.includes('class="draw-material"'));
+  assert.ok(engine.includes("const materialRatios = [1.65, 1.8, 1.95, 2.05, 2.15]"));
+  assert.ok(engine.includes("efficiency <= .68 ? 3"));
+  assert.ok(engine.includes("materialstjärnor"));
+});
+
 test("alla franska lyssningsspel använder samma förbättrade röstmotor", () => {
   const speechEngine = readFileSync("french-speech.js", "utf8");
   assert.ok(speechEngine.includes("function voiceScore(voice)"));

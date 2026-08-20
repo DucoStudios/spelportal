@@ -123,9 +123,17 @@ test("gemensam spel-UX ger tydligt fokus och respekterar minskad rörelse", () =
 test("portalens rotlager är mörkt även vid överscroll och siduppdatering", () => {
   const polish = readFileSync("games/game-polish.css", "utf8");
   assert.match(index, /html, body \{[\s\S]*background-color: var\(--bg\);/);
-  assert.match(index, /html \{ color-scheme: dark; \}/);
+  assert.match(index, /html \{[\s\S]*color-scheme: dark;/);
   assert.match(polish, /html:has\(body\[data-game-id\]\) \{[\s\S]*background-color: var\(--bg, #170f2e\);/);
   assert.ok(polish.includes("color-scheme: dark"));
+});
+
+test("portalens spelkatalog har ett explicit vertikalt scrollkontrakt", () => {
+  assert.match(index, /html \{[\s\S]*overflow-y: scroll;/);
+  assert.match(index, /body \{[\s\S]*overflow-y: visible;/);
+  assert.ok(index.includes("overscroll-behavior-y: auto"));
+  assert.ok(index.includes("touch-action: pan-y"));
+  assert.doesNotMatch(index, /<body[^>]+overscroll-behavior-y/);
 });
 
 test("arkadspelens mobilkontroller är riktiga knappar med tillgängliga namn", () => {

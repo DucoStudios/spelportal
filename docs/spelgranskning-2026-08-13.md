@@ -160,3 +160,7 @@ Statusnyckel: `KLAR 1` = första stora förbättringspasset klart. `GLOBALT` = n
 6. Därefter arcade/reflex-gruppen, språkgruppen, ekonomi/företagande, hälsa/relationer och bibelspelen i tabellordning.
 
 Varje spelpass avslutas med statisk kontroll, hela testsuiten samt riktig Chrome-kontroll på mobil och desktop. Beteende bör fintrimmas från anonym feedback när feedback-endpointen har kopplats in.
+
+## Driftfix 2026-08-20 — desktopscroll i spelkatalogen
+
+Portalens rotlager har ett explicit vertikalt scrollkontrakt: dokumentet äger y-scrollen, `body` får växa naturligt och touchytan tillåter `pan-y`. Den tidigare kombinationen av generell overscroll-låsning och inline-containment är borttagen eftersom den kunde låsa hela spelkatalogen i desktopwebbläsare. Smoke-testet skickar nu ett riktigt touchsvep på mobil och ett mushjulsevent på desktop och verifierar att katalogen rör sig i båda formaten.

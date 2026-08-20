@@ -109,6 +109,23 @@ for (const viewport of viewports) {
   assert.ok(portal.painted, `portalen/${viewport.name}: en eller flera pixelscener ritades inte`);
   assert.ok(portal.fits, `portalen/${viewport.name}: horisontell overflow`);
   assert.deepEqual(exceptions, [], `portalen/${viewport.name}: körfel ${exceptions.join(", ")}`);
+  assert.ok(await evaluate("document.documentElement.scrollHeight > innerHeight * 2"), `portalen/${viewport.name}: katalogen skapar ingen vertikal scrollyta`);
+  const scrollX = Math.round(viewport.width / 2);
+  const scrollY = Math.round(viewport.height / 2);
+  if (viewport.mobile) {
+    await call("Input.synthesizeScrollGesture", { x: scrollX, y: scrollY, yDistance: -720, speed: 1200, gestureSourceType: "touch" });
+  } else {
+    await call("Input.dispatchMouseEvent", { type: "mouseMoved", x: scrollX, y: scrollY });
+    await call("Input.dispatchMouseEvent", { type: "mouseWheel", x: scrollX, y: scrollY, deltaX: 0, deltaY: 720 });
+  }
+  await pause(180);
+  const scrollState = await evaluate(`({
+    y: scrollY,
+    htmlOverflowY: getComputedStyle(document.documentElement).overflowY,
+    bodyOverflowY: getComputedStyle(document.body).overflowY
+  })`);
+  assert.ok(scrollState.y > 0, `portalen/${viewport.name}: ${viewport.mobile ? "svepgesten" : "mushjulet"} kan inte scrolla katalogen (${JSON.stringify(scrollState)})`);
+  await evaluate("scrollTo(0, 0)");
   const portalShot = await call("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
   writeFileSync(`${outputDir}/portal-${viewport.name}.png`, Buffer.from(portalShot.data, "base64"));
 

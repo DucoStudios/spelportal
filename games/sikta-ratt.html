@@ -143,8 +143,9 @@
   }
 
   .hud {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.4rem;
     width: 100%;
     max-width: 406px;
     margin-bottom: 0.9rem;
@@ -153,10 +154,10 @@
     background: var(--panel);
     border: 2px solid var(--outline);
     border-radius: 8px;
-    padding: 0.4rem 0.8rem;
+    padding: 0.4rem 0.25rem;
     box-shadow: 3px 3px 0 var(--outline);
     text-align: center;
-    min-width: 72px;
+    min-width: 0;
   }
   .hud-chip .label {
     font-family: 'Bungee', sans-serif;
@@ -174,6 +175,7 @@
   }
   .hud-chip.time .value.time-low { color: var(--pink); }
   .hud-chip.combo .value { color: var(--yellow); }
+  .hud-chip.wind .value { color: var(--cyan); font-size: 1rem; }
 
   .board-wrap { position: relative; }
 
@@ -219,6 +221,8 @@
     transform: translate(-50%, -50%);
     transition: top 0.35s cubic-bezier(.34,1.56,.64,1), left 0.35s cubic-bezier(.34,1.56,.64,1);
   }
+  .ghost-hit { position: absolute; width: 10px; height: 10px; border: 2px dashed var(--ink); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 3; filter: drop-shadow(1px 1px 0 var(--outline)); }
+  .ghost-hit.hidden { display: none; }
 
   .arrow {
     position: absolute;
@@ -366,7 +370,8 @@
   <div class="hud">
     <div class="hud-chip"><span class="label">POÄNG</span><span class="value" id="scoreVal">0</span></div>
     <div class="hud-chip combo"><span class="label">FÖLJD</span><span class="value" id="comboVal">0</span></div>
-    <div class="hud-chip time"><span class="label">TID</span><span class="value" id="timeVal">90</span></div>
+    <div class="hud-chip wind"><span class="label">VIND</span><span class="value" id="windVal">—</span></div>
+    <div class="hud-chip time"><span class="label">TID</span><span class="value" id="timeVal">60</span></div>
   </div>
 
   <div class="board-wrap">
@@ -374,10 +379,11 @@
     <div id="board">
       <div class="anchor" id="anchor"></div>
       <div class="target" id="target"></div>
+      <div class="ghost-hit hidden" id="ghostHit" aria-hidden="true"></div>
 
       <div class="overlay" id="startOverlay">
         <h2>REDO?</h2>
-        <p>90 sekunder. Dra från den gula punkten och släpp för att skjuta.</p>
+        <p>60 sekunder. Läs vinden, dra från den gula punkten och slå ditt genomskinliga precisionsspöke.</p>
         <button class="cta" id="startBtn">Kör igång</button>
       </div>
       <div class="overlay hidden" id="endOverlay">
@@ -394,7 +400,7 @@
 
 <script>
 (function () {
-  const ROUND_SECONDS = 90;
+  const ROUND_SECONDS = 60;
   const ANCHOR = { x: 203, y: 300 };
   const GRAVITY = 1150;
   const POWER_SCALE = 7.6;
@@ -407,7 +413,9 @@
   const targetEl = document.getElementById('target');
   const scoreVal = document.getElementById('scoreVal');
   const comboVal = document.getElementById('comboVal');
+  const windVal = document.getElementById('windVal');
   const timeVal = document.getElementById('timeVal');
+  const ghostHit = document.getElementById('ghostHit');
   const startOverlay = document.getElementById('startOverlay');
   const endOverlay = document.getElementById('endOverlay');
   const startBtn = document.getElementById('startBtn');
@@ -427,6 +435,11 @@
   let timeLeft = ROUND_SECONDS;
   let timerHandle = null;
   let target = { x: 300, y: 130, radius: 70 };
+  let wind = 0;
+  let bestPrecision = (() => {
+    try { return JSON.parse(localStorage.getItem('sikta-ratt-best-precision') || 'null'); }
+    catch (_) { return null; }
+  })();
 
   let audioCtx = null;
   function ctx() {
@@ -457,6 +470,7 @@
   function updateHud() {
     scoreVal.textContent = score;
     comboVal.textContent = combo;
+    windVal.textContent = Math.abs(wind) < 8 ? 'LUGN' : (wind > 0 ? '→ ' : '← ') + Math.round(Math.abs(wind));
     timeVal.textContent = timeLeft;
     timeVal.classList.toggle('time-low', timeLeft <= 15);
   }
@@ -473,15 +487,30 @@
       'var(--pink) 14% 34%, var(--outline) 34% 36%, ' +
       'var(--cyan) 36% 60%, var(--outline) 60% 62%, ' +
       'var(--orange) 62% 100%)';
+    renderGhost();
+  }
+
+  function renderGhost() {
+    if (!bestPrecision) {
+      ghostHit.classList.add('hidden');
+      return;
+    }
+    ghostHit.classList.remove('hidden');
+    ghostHit.style.left = (target.x + bestPrecision.dx * target.radius) + 'px';
+    ghostHit.style.top = (target.y + bestPrecision.dy * target.radius) + 'px';
   }
 
   function relocateTarget() {
     const progress = 1 - timeLeft / ROUND_SECONDS;
     target.radius = lerp(68, 46, progress);
+    const maxWind = lerp(25, 105, progress);
+    wind = (Math.random() * 2 - 1) * maxWind;
+    if (Math.abs(wind) < 8) wind = 0;
     const margin = target.radius + 8;
     target.x = margin + Math.random() * (BOARD_SIZE - margin * 2);
     target.y = margin + Math.random() * (210 - margin);
     renderTarget();
+    updateHud();
   }
 
   function getPoint(e) {
@@ -558,6 +587,7 @@
       const dt = Math.min(0.032, (now - lastTime) / 1000);
       lastTime = now;
       vy += GRAVITY * dt;
+      vx += wind * dt;
       x += vx * dt;
       y += vy * dt;
 
@@ -568,11 +598,11 @@
 
       const distToTarget = Math.hypot(x - target.x, y - target.y);
       if (distToTarget <= target.radius && vy > 0) {
-        resolveShot(arrowEl, distToTarget);
+        resolveShot(arrowEl, distToTarget, x - target.x, y - target.y);
         return;
       }
       if (x < -30 || x > BOARD_SIZE + 30 || y > BOARD_SIZE + 30) {
-        resolveShot(arrowEl, null);
+        resolveShot(arrowEl, null, 0, 0);
         return;
       }
       requestAnimationFrame(step);
@@ -580,7 +610,7 @@
     requestAnimationFrame(step);
   }
 
-  function resolveShot(arrowEl, dist) {
+  function resolveShot(arrowEl, dist, offsetX, offsetY) {
     arrowInFlight = false;
     arrowEl.remove();
     if (dist === null) {
@@ -591,6 +621,11 @@
     }
     hits++;
     const r = target.radius;
+    const precision = dist / r;
+    if (!bestPrecision || precision < bestPrecision.ratio) {
+      bestPrecision = { ratio: precision, dx: offsetX / r, dy: offsetY / r };
+      localStorage.setItem('sikta-ratt-best-precision', JSON.stringify(bestPrecision));
+    }
     let ring;
     if (dist <= r * 0.12) { ring = 50; bullseyes++; }
     else if (dist <= r * 0.34) ring = 30;
@@ -639,7 +674,10 @@
     running = false;
     playFanfare();
     finalScore.textContent = score;
-    finalStats.textContent = hits + ' av ' + shots + ' träffar, ' + bullseyes + ' fullträffar, bästa följd ' + bestCombo;
+    const previousBest = Number(localStorage.getItem('sikta-ratt-best-score') || 0);
+    const best = Math.max(previousBest, score);
+    localStorage.setItem('sikta-ratt-best-score', String(best));
+    finalStats.textContent = hits + ' av ' + shots + ' träffar · ' + bullseyes + ' fullträffar · rekord ' + best;
     endOverlay.classList.remove('hidden');
   }
 

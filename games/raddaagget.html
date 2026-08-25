@@ -31,8 +31,8 @@
   .back-link { position: relative; z-index: 2; display: block; text-align: center; margin-top: 0.5rem; font-size: 0.72rem; font-weight: 600; color: var(--cyan); text-decoration: none; }
   .back-link:hover { color: var(--ink); }
   .sub { color: var(--ink-soft); font-size: 0.85rem; font-weight: 600; margin: 0 0 1rem; text-align: center; max-width: 380px; }
-  .hud { display: flex; justify-content: space-between; width: 100%; max-width: 320px; margin-bottom: 0.7rem; }
-  .hud-chip { background: var(--panel); border: 2px solid var(--outline); border-radius: 8px; padding: 0.32rem 0.7rem; box-shadow: 3px 3px 0 var(--outline); text-align: center; min-width: 64px; }
+  .hud { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem; width: 100%; max-width: 320px; margin-bottom: 0.7rem; }
+  .hud-chip { background: var(--panel); border: 2px solid var(--outline); border-radius: 8px; padding: 0.32rem 0.2rem; box-shadow: 3px 3px 0 var(--outline); text-align: center; min-width: 0; }
   .hud-chip .label { font-family: 'Bungee', sans-serif; font-size: 0.48rem; letter-spacing: 0.06em; color: var(--cyan); display: block; }
   .hud-chip .value { font-family: 'Open Sans', sans-serif; font-weight: 800; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
 
@@ -51,6 +51,10 @@
   .speed-fill.warn { background: var(--orange); }
   .speed-fill.danger { background: var(--pink); }
   .speed-label { font-size: 0.6rem; font-weight: 700; color: var(--ink-faint); text-align: center; }
+  .materials { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; width: 100%; max-width: 320px; margin: 0.7rem 0 0.1rem; }
+  .material-btn { min-height: 44px; border: 2px solid var(--outline); border-radius: 8px; background: var(--panel); color: var(--ink); box-shadow: 3px 3px 0 var(--outline); font: 800 0.68rem 'Open Sans', sans-serif; cursor: pointer; }
+  .material-btn.active { background: var(--yellow); color: var(--outline); }
+  .material-btn:disabled { opacity: 0.45; }
 
   .controls { display: flex; gap: 0.6rem; margin-top: 0.8rem; }
   .controls button { font-family: 'Open Sans', sans-serif; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; border-radius: 8px; border: 3px solid var(--outline); padding: 0.5rem 1rem; cursor: pointer; box-shadow: 3px 3px 0 var(--outline); }
@@ -111,6 +115,8 @@
   <div class="hud">
     <div class="hud-chip"><span class="label">BANA</span><span class="value" id="levelVal">1/20</span></div>
     <div class="hud-chip"><span class="label">FÖRSÖK</span><span class="value" id="triesVal">0</span></div>
+    <div class="hud-chip"><span class="label">SKAL</span><span class="value" id="shellVal">100%</span></div>
+    <div class="hud-chip"><span class="label">STJÄRNOR</span><span class="value" id="starsVal">0</span></div>
   </div>
 
   <div class="board-wrap">
@@ -119,13 +125,13 @@
 
       <div class="overlay" id="startOverlay">
         <h2>REDO?</h2>
-        <p>Rita en ramp med flera studs så ägget hinner sakta ner innan det når boet.</p>
+        <p>Välj rampmaterial: silke bromsar, gummi balanserar och fjäder studsar. Landa mjukt för tre stjärnor.</p>
         <button class="cta" id="startBtn">Kör igång</button>
       </div>
       <div class="overlay hidden" id="endOverlay">
         <h2>ALLA BON FYLLDA!</h2>
         <div class="result" id="finalTries">0</div>
-        <p>försök totalt för alla 20 banor.</p>
+        <p id="finalStats">försök totalt för alla 20 banor.</p>
         <button class="cta" id="restartBtn">Spela igen</button>
       </div>
     </div>
@@ -133,6 +139,7 @@
 
   <div class="speed-label">FART</div>
   <div class="speed-meter"><div class="speed-fill" id="speedFill"></div></div>
+  <div class="materials" id="materials" aria-label="Välj rampmaterial"></div>
 
   <div class="controls">
     <button class="clear" id="clearBtn">Rita om</button>
@@ -144,9 +151,14 @@
 
 <script>
 (function () {
-  const W = 320, H = 420, RADIUS = 10, GRAVITY = 1300, RESTITUTION = 0.5, NEST_R = 26;
+  const W = 320, H = 420, RADIUS = 10, GRAVITY = 1300, NEST_R = 26;
   const TOTAL_LEVELS = 20;
   const SAFE_SPEED = 340;
+  const MATERIALS = {
+    silk: { label: '🫧 SILKE', restitution: 0.22, damping: 0.82, color: '#2FE6D6' },
+    rubber: { label: '🟡 GUMMI', restitution: 0.48, damping: 0.95, color: '#FFD23F' },
+    spring: { label: '⚡ FJÄDER', restitution: 0.72, damping: 0.99, color: '#FF2E93' }
+  };
 
   function mulberry32(seed) {
     return function () {
@@ -174,25 +186,47 @@
   const polyEl = document.getElementById('linePoly');
   const levelVal = document.getElementById('levelVal');
   const triesVal = document.getElementById('triesVal');
+  const shellVal = document.getElementById('shellVal');
+  const starsVal = document.getElementById('starsVal');
   const startOverlay = document.getElementById('startOverlay');
   const endOverlay = document.getElementById('endOverlay');
   const startBtn = document.getElementById('startBtn');
   const restartBtn = document.getElementById('restartBtn');
   const finalTries = document.getElementById('finalTries');
+  const finalStats = document.getElementById('finalStats');
   const clearBtn = document.getElementById('clearBtn');
   const goBtn = document.getElementById('goBtn');
   const speedFill = document.getElementById('speedFill');
+  const materialsEl = document.getElementById('materials');
 
   svgEl.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
   svgEl.setAttribute('width', W);
   svgEl.setAttribute('height', H);
 
-  let levelIndex = 0, tries = 0, totalTries = 0;
+  let levelIndex = 0, tries = 0, totalTries = 0, totalStars = 0;
   let points = [];
   let drawing = false;
   let simActive = false;
   let ball = null, ballEl = null, nestEl = null;
   let rafHandle = null;
+  let activeMaterial = 'rubber';
+
+  function renderMaterials() {
+    materialsEl.innerHTML = '';
+    Object.entries(MATERIALS).forEach(([key, material]) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'material-btn' + (key === activeMaterial ? ' active' : '');
+      button.textContent = material.label;
+      button.disabled = simActive;
+      button.addEventListener('click', () => {
+        activeMaterial = key;
+        polyEl.setAttribute('stroke', MATERIALS[activeMaterial].color);
+        renderMaterials();
+      });
+      materialsEl.appendChild(button);
+    });
+  }
 
   let audioCtx = null;
   function ctx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
@@ -225,6 +259,9 @@
     polyEl.setAttribute('points', '');
     goBtn.disabled = true;
     speedFill.style.width = '0%';
+    shellVal.textContent = '100%';
+    shellVal.style.color = 'var(--ink)';
+    renderMaterials();
 
     boardEl.querySelectorAll('.egg, .nest').forEach(el => el.remove());
 
@@ -249,6 +286,8 @@
     ballEl.classList.remove('cracked');
     speedFill.style.width = '0%';
     speedFill.classList.remove('warn', 'danger');
+    shellVal.textContent = '100%';
+    shellVal.style.color = 'var(--ink)';
   }
   function positionBall() {
     ballEl.style.left = (ball.x - RADIUS) + 'px';
@@ -268,6 +307,7 @@
     return { x: a.x + abx * t, y: a.y + aby * t };
   }
   function resolveAgainstLine() {
+    const material = MATERIALS[activeMaterial];
     const segs = segmentsFromPoints(points);
     for (const [a, b] of segs) {
       const cp = closestPointOnSegment(ball, a, b);
@@ -278,8 +318,10 @@
         ball.x = cp.x + nx * RADIUS;
         ball.y = cp.y + ny * RADIUS;
         const vDotN = ball.vx * nx + ball.vy * ny;
-        ball.vx -= (1 + RESTITUTION) * vDotN * nx;
-        ball.vy -= (1 + RESTITUTION) * vDotN * ny;
+        ball.vx -= (1 + material.restitution) * vDotN * nx;
+        ball.vy -= (1 + material.restitution) * vDotN * ny;
+        ball.vx *= material.damping;
+        ball.vy *= material.damping;
         playBounce();
       }
     }
@@ -308,7 +350,7 @@
     if (Math.hypot(ball.x - lvl.nest.x, ball.y - lvl.nest.y) < NEST_R) {
       simActive = false;
       cancelAnimationFrame(rafHandle);
-      if (speed <= SAFE_SPEED) onLevelWin();
+      if (speed <= SAFE_SPEED) onLevelWin(speed);
       else onCrack();
       return;
     }
@@ -339,16 +381,29 @@
 
   function onCrack() {
     ballEl.classList.add('cracked');
+    shellVal.textContent = '0%';
+    shellVal.style.color = 'var(--pink)';
     playCrack();
     goBtn.disabled = false;
+    renderMaterials();
   }
 
-  function onLevelWin() {
-    totalTries += tries + 1;
+  function onLevelWin(speed) {
+    const stars = speed <= SAFE_SPEED * 0.42 ? 3 : speed <= SAFE_SPEED * 0.72 ? 2 : 1;
+    const shell = Math.max(1, Math.round((1 - speed / SAFE_SPEED) * 100));
+    shellVal.textContent = shell + '%';
+    shellVal.style.color = stars === 3 ? 'var(--cyan)' : 'var(--yellow)';
+    totalTries += tries;
+    totalStars += stars;
+    starsVal.textContent = totalStars;
     playWin();
     levelIndex++;
     if (levelIndex >= TOTAL_LEVELS) {
       finalTries.textContent = totalTries;
+      const previousBest = Number(localStorage.getItem('raddaagget-best-stars') || 0);
+      const best = Math.max(previousBest, totalStars);
+      localStorage.setItem('raddaagget-best-stars', String(best));
+      finalStats.textContent = totalStars + ' av ' + (TOTAL_LEVELS * 3) + ' stjärnor · rekord ' + best;
       endOverlay.classList.remove('hidden');
     } else {
       setTimeout(setupLevel, 700);
@@ -392,13 +447,15 @@
     triesVal.textContent = tries;
     resetBall();
     simActive = true;
+    renderMaterials();
     lastTs = performance.now();
     simStartTs = lastTs;
     rafHandle = requestAnimationFrame(loop);
   });
 
   function startGame() {
-    levelIndex = 0; totalTries = 0;
+    levelIndex = 0; totalTries = 0; totalStars = 0;
+    starsVal.textContent = '0';
     startOverlay.classList.add('hidden');
     endOverlay.classList.add('hidden');
     setupLevel();

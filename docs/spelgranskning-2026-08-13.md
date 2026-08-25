@@ -56,6 +56,15 @@ Underlag: [Apple — Designing for games](https://developer.apple.com/design/hum
 - Brobyggarna: synlig materialbudget, flera fria ritlösningar och upp till tre stjärnor för en enkel och materialsnål bro.
 - Verifierat med 46 automatiska tester, klick-/ritkontroll av de nya mekanikerna och 122 riktiga Chrome-laddningar: 61 spel på mobil och desktop.
 
+## Genomfört i sjätte passet
+
+- Träffa rätt: begränsad materialbudget, effektivitetspoäng, banmedaljer och lokalt stjärnrekord.
+- Poppa ballongerna: synligt nästa mål, kortare dödtid, trickskott via studs och lokalt stjärnrekord.
+- Rädda ägget: tre rampmaterial med egen fysik, skalmätare, landningskvalitet och flera giltiga räddningsstrategier.
+- Sikta rätt: växlande vind, 60-sekundersrunda, lokalt precisionsspöke och sparat poängrekord.
+- Kulbanan: levande vägprognos före test, ångra, snabbare simulering och lösningsmedaljer efter materialåtgång.
+- Verifierat med 52 automatiska tester, riktiga interaktioner och 122 Chrome-laddningar: 61 spel på mobil och desktop.
+
 ## Utvecklingskö — alla spel
 
 Statusnyckel: `KLAR 1` = första stora förbättringspasset klart. `GLOBALT` = nytt pixel-/arkadskal och unik thumbnail klart. `NÄSTA` = prioriterad mekanisk förbättring.
@@ -81,11 +90,11 @@ Statusnyckel: `KLAR 1` = första stora förbättringspasset klart. `GLOBALT` = n
 | Accentjakten | Kort och skarp stavningsövning | Fler accentfamiljer och lokal kunskapskarta | KLAR 1 |
 | Ordbron | Varje svar bygger något synligt | Fler broprofiler och blandade ordklasser | KLAR 1 |
 | Brobyggarna | Kreativ ritfysik | Fler hinderfamiljer och lokal galleriöversikt | KLAR 1 |
-| Träffa rätt | Rita–släpp ger fin aha-känsla | Lösningsmedaljer, nya hinder och omedelbar omstart | GLOBALT |
-| Poppa ballongerna | Ordning och fysik i en resa | Färre döda väntesekunder, trickskott och tydliga banmål | GLOBALT |
-| Rädda ägget | Spänning genom fallhastighet | Skademätare, materialtyper och flera räddningsstrategier | GLOBALT |
-| Sikta rätt | Bra slangbågekänsla | Vind, precisionzoner, ghost av personbästa och korta banserier | GLOBALT |
-| Kulbanan | Byggande före simulering | Lösningsfrihet, färre trial-and-error-stopp och skaparläge | GLOBALT |
+| Träffa rätt | Rita–släpp ger fin aha-känsla | Nya hinderfamiljer och balans från verkliga lösningar | KLAR 1 |
+| Poppa ballongerna | Ordning och fysik i en resa | Fler trickskottsprofiler och balans från verkliga rundor | KLAR 1 |
+| Rädda ägget | Spänning genom fallhastighet | Fler bon och finbalansering av materialens fysik | KLAR 1 |
+| Sikta rätt | Bra slangbågekänsla | Korta banserier och fler vindprofiler | KLAR 1 |
+| Kulbanan | Byggande före simulering | Skaparläge och lokal galleriöversikt | KLAR 1 |
 | Kulrullaren | Stark 3D-känsla på webben | Kortare banprofiler och finbalansering av medaljtider | KLAR 1 |
 | Rör på dig! | Automatiska intervaller och paus fungerar | Rörelsepaket, intensitetsval och avslutande kroppskoll | GLOBALT |
 

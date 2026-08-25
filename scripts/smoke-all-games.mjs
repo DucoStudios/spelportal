@@ -16,7 +16,7 @@ const screenshotCases = new Set([
   "klossfall-mobile",
   "kulrullaren-mobile", "memory-plattorna-mobile", "memory-plattorna-desktop",
   "saftstand-erbjudandet-mobile", "ordmastaren-mobile", "poppa-ballongerna-mobile", "schack-mobile",
-  "malarboken-mobile", "brobyggarna-mobile", "ormen-mobile",
+  "malarboken-mobile", "brobyggarna-mobile", "ormen-mobile", "traffa-ratt-mobile", "raddaagget-mobile", "sikta-ratt-mobile", "kulbanan-mobile",
   "superhjalte-spranget-mobile", "flykten-mobile", "reaktionsraketen-mobile", "dansstopp-mobile",
   "balansbanan-mobile", "molnhoppet-mobile", "tornverkstan-mobile", "talamodstornet-mobile", "fargfusion-mobile",
   "fruktfangaren-mobile", "bistroblixten-mobile", "accentjakten-mobile", "ordbron-mobile"
@@ -258,6 +258,40 @@ for (const viewport of viewports) {
         assert.ok(learningMechanic.ok, `${id}/${viewport.name}: den nya lärmekaniken svarar inte (${learningMechanic.reason || learningMechanic.extra})`);
         await pause(80);
         assert.deepEqual(exceptions, [], `${id}/${viewport.name}: körfel i den nya lärmekaniken ${exceptions.join(", ")}`);
+      }
+      if (["traffa-ratt", "poppa-ballongerna", "raddaagget", "sikta-ratt", "kulbanan"].includes(id)) {
+        const physicsMechanic = await evaluate(`(() => {
+          if ('${id}' === 'traffa-ratt') {
+            const board = document.querySelector('#board');
+            const rect = board.getBoundingClientRect();
+            board.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 4, clientX: rect.left + 60, clientY: rect.top + 80 }));
+            board.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 4, clientX: rect.left + 190, clientY: rect.top + 220 }));
+            window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 4 }));
+            return { ok: document.querySelector('#materialVal')?.textContent !== '100%' && !document.querySelector('#goBtn')?.disabled };
+          }
+          if ('${id}' === 'poppa-ballongerna') {
+            return { ok: document.querySelector('#nextVal')?.textContent === '1' && document.querySelector('#starsVal')?.textContent === '0' };
+          }
+          if ('${id}' === 'raddaagget') {
+            const material = document.querySelector('.material-btn');
+            material?.click();
+            return { ok: document.querySelector('.material-btn.active')?.textContent.includes('SILKE') && document.querySelector('#linePoly')?.getAttribute('stroke') === '#2FE6D6' };
+          }
+          if ('${id}' === 'sikta-ratt') {
+            return { ok: document.querySelector('#timeVal')?.textContent === '60' && document.querySelector('#windVal')?.textContent !== '—' };
+          }
+          const piece = document.querySelector('.piece-btn:not(:disabled)');
+          piece?.click();
+          document.querySelector('.cell:not(.blocker)')?.click();
+          const undo = document.querySelector('#undoBtn');
+          const previewed = document.querySelectorAll('.cell.preview').length;
+          const enabled = !undo?.disabled;
+          undo?.click();
+          return { ok: enabled && previewed > 0 && document.querySelector('#previewVal')?.textContent.length > 0 };
+        })()`);
+        assert.ok(physicsMechanic.ok, `${id}/${viewport.name}: den nya fysikmekaniken svarar inte`);
+        await pause(80);
+        assert.deepEqual(exceptions, [], `${id}/${viewport.name}: körfel i den nya fysikmekaniken ${exceptions.join(", ")}`);
       }
     }
     checks += 1;

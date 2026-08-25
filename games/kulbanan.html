@@ -32,8 +32,8 @@
   .back-link { position: relative; z-index: 2; display: block; text-align: center; margin-top: 0.5rem; font-size: 0.72rem; font-weight: 600; color: var(--cyan); text-decoration: none; }
   .back-link:hover { color: var(--ink); }
   .sub { color: var(--ink-soft); font-size: 0.85rem; font-weight: 600; margin: 0 0 1rem; text-align: center; max-width: 380px; }
-  .hud { display: flex; justify-content: space-between; width: 100%; max-width: 300px; margin-bottom: 0.7rem; }
-  .hud-chip { background: var(--panel); border: 2px solid var(--outline); border-radius: 8px; padding: 0.3rem 0.6rem; box-shadow: 3px 3px 0 var(--outline); text-align: center; min-width: 64px; }
+  .hud { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem; width: 100%; max-width: 300px; margin-bottom: 0.7rem; }
+  .hud-chip { background: var(--panel); border: 2px solid var(--outline); border-radius: 8px; padding: 0.3rem 0.15rem; box-shadow: 3px 3px 0 var(--outline); text-align: center; min-width: 0; }
   .hud-chip .label { font-family: 'Bungee', sans-serif; font-size: 0.46rem; letter-spacing: 0.06em; color: var(--cyan); display: block; }
   .hud-chip .value { font-family: 'Open Sans', sans-serif; font-weight: 800; font-size: 1rem; font-variant-numeric: tabular-nums; }
 
@@ -52,6 +52,8 @@
   .cell { position: absolute; box-sizing: border-box; border: 1px solid color-mix(in srgb, var(--grid-line) 60%, transparent); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; }
   .cell.blocker { background: repeating-linear-gradient(45deg, var(--outline), var(--outline) 4px, #2a1f45 4px, #2a1f45 8px); cursor: default; }
   .cell.start { box-shadow: inset 0 0 0 2px var(--yellow); }
+  .cell.preview { background: color-mix(in srgb, var(--cyan) 18%, transparent); }
+  .cell.preview-fail { background: color-mix(in srgb, var(--pink) 36%, transparent); }
   .cell .piece-icon { pointer-events: none; }
   .ball { position: absolute; width: 24px; height: 24px; border-radius: 50%; background: var(--yellow); border: 2px solid var(--outline); box-shadow: 2px 2px 0 var(--outline); transition: left 0.32s ease, top 0.32s ease; z-index: 3; }
   .goal-flag { position: absolute; font-size: 1.3rem; pointer-events: none; }
@@ -93,6 +95,8 @@
   <div class="hud">
     <div class="hud-chip"><span class="label">BANA</span><span class="value" id="levelVal">1/10</span></div>
     <div class="hud-chip"><span class="label">FÖRSÖK</span><span class="value" id="triesVal">0</span></div>
+    <div class="hud-chip"><span class="label">STJÄRNOR</span><span class="value" id="starsVal">0</span></div>
+    <div class="hud-chip"><span class="label">PROGNOS</span><span class="value" id="previewVal">BYGG</span></div>
   </div>
 
   <div class="palette" id="palette"></div>
@@ -101,18 +105,19 @@
     <div id="board"></div>
     <div class="overlay" id="startOverlay">
       <h2>REDO?</h2>
-      <p>Lägg ramper som styr bollen vänster eller höger tills den når flaggan. Väggar blockerar — gå runt dem.</p>
+      <p>Lägg ramper tills den turkosa prognosvägen når flaggan. Ångra direkt och hitta din egen materialsnåla lösning.</p>
       <button class="cta" id="startBtn">Bygg din första bana</button>
     </div>
     <div class="overlay hidden" id="allDoneOverlay">
       <h2>ALLA BANOR KLARA!</h2>
       <div class="result" id="finalTries">0</div>
-      <p>försök totalt för alla tio banorna.</p>
+      <p id="finalStats">försök totalt för alla tio banorna.</p>
       <button class="cta" id="restartBtn">Spela igen</button>
     </div>
   </div>
 
   <div class="controls-row">
+    <button id="undoBtn">Ångra</button>
     <button id="clearBtn">Rensa banan</button>
     <button class="primary" id="testBtn">Testa banan</button>
   </div>
@@ -130,36 +135,41 @@
   };
 
   const LEVELS = [
-    { rows: 6, start: 1, goal: 3, blockers: [], budget: { right: 3, left: 1, bounce: 1 } },
-    { rows: 6, start: 4, goal: 2, blockers: [], budget: { right: 1, left: 3, bounce: 1 } },
-    { rows: 6, start: 0, goal: 4, blockers: [], budget: { right: 5, left: 1, bounce: 1 } },
-    { rows: 7, start: 2, goal: 4, blockers: [{ r: 2, c: 3 }], budget: { right: 3, left: 2, bounce: 1 } },
-    { rows: 7, start: 5, goal: 1, blockers: [{ r: 3, c: 2 }], budget: { left: 5, right: 2, bounce: 1 } },
-    { rows: 8, start: 1, goal: 4, blockers: [{ r: 2, c: 2 }, { r: 5, c: 4 }], budget: { right: 4, left: 2, bounce: 2 } },
-    { rows: 8, start: 4, goal: 0, blockers: [{ r: 3, c: 2 }, { r: 6, c: 0 }], budget: { left: 5, right: 2, bounce: 2 } },
-    { rows: 9, start: 0, goal: 5, blockers: [{ r: 2, c: 1 }, { r: 5, c: 3 }, { r: 7, c: 4 }], budget: { right: 6, left: 2, bounce: 2 } },
-    { rows: 9, start: 5, goal: 0, blockers: [{ r: 2, c: 4 }, { r: 5, c: 2 }, { r: 7, c: 1 }], budget: { left: 6, right: 2, bounce: 2 } },
-    { rows: 9, start: 2, goal: 3, blockers: [{ r: 1, c: 2 }, { r: 3, c: 3 }, { r: 5, c: 2 }, { r: 7, c: 3 }], budget: { right: 4, left: 3, bounce: 2 } }
+    { rows: 6, start: 1, goal: 3, par: 2, blockers: [], budget: { right: 3, left: 1, bounce: 1 } },
+    { rows: 6, start: 4, goal: 2, par: 2, blockers: [], budget: { right: 1, left: 3, bounce: 1 } },
+    { rows: 6, start: 0, goal: 4, par: 4, blockers: [], budget: { right: 5, left: 1, bounce: 1 } },
+    { rows: 7, start: 2, goal: 4, par: 2, blockers: [{ r: 2, c: 3 }], budget: { right: 3, left: 2, bounce: 1 } },
+    { rows: 7, start: 5, goal: 1, par: 4, blockers: [{ r: 3, c: 2 }], budget: { left: 5, right: 2, bounce: 1 } },
+    { rows: 8, start: 1, goal: 4, par: 3, blockers: [{ r: 2, c: 2 }, { r: 5, c: 4 }], budget: { right: 4, left: 2, bounce: 2 } },
+    { rows: 8, start: 4, goal: 0, par: 4, blockers: [{ r: 3, c: 2 }, { r: 6, c: 0 }], budget: { left: 5, right: 2, bounce: 2 } },
+    { rows: 9, start: 0, goal: 5, par: 5, blockers: [{ r: 2, c: 1 }, { r: 5, c: 3 }, { r: 7, c: 4 }], budget: { right: 6, left: 2, bounce: 2 } },
+    { rows: 9, start: 5, goal: 0, par: 5, blockers: [{ r: 2, c: 4 }, { r: 5, c: 2 }, { r: 7, c: 1 }], budget: { left: 6, right: 2, bounce: 2 } },
+    { rows: 9, start: 2, goal: 3, par: 5, blockers: [{ r: 1, c: 2 }, { r: 3, c: 3 }, { r: 5, c: 2 }, { r: 7, c: 3 }], budget: { right: 4, left: 3, bounce: 2 } }
   ];
 
   const boardEl = document.getElementById('board');
   const paletteEl = document.getElementById('palette');
   const levelVal = document.getElementById('levelVal');
   const triesVal = document.getElementById('triesVal');
+  const starsVal = document.getElementById('starsVal');
+  const previewVal = document.getElementById('previewVal');
   const startOverlay = document.getElementById('startOverlay');
   const allDoneOverlay = document.getElementById('allDoneOverlay');
   const startBtn = document.getElementById('startBtn');
   const restartBtn = document.getElementById('restartBtn');
   const finalTries = document.getElementById('finalTries');
+  const finalStats = document.getElementById('finalStats');
+  const undoBtn = document.getElementById('undoBtn');
   const clearBtn = document.getElementById('clearBtn');
   const testBtn = document.getElementById('testBtn');
 
-  let levelIndex = 0, tries = 0, totalTries = 0;
+  let levelIndex = 0, tries = 0, totalTries = 0, totalStars = 0;
   let grid = [];
   let supply = {};
   let activeTool = 'right';
   let testing = false;
   let ballEl = null;
+  let history = [];
 
   let audioCtx = null;
   function ctx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
@@ -205,6 +215,7 @@
     supply = Object.assign({ right: 0, left: 0, bounce: 0 }, lvl.budget);
     activeTool = supply.right > 0 ? 'right' : (supply.left > 0 ? 'left' : 'bounce');
     testing = false;
+    history = [];
 
     grid = Array.from({ length: lvl.rows }, () => Array(COLS).fill(null));
     lvl.blockers.forEach(b => { grid[b.r][b.c] = 'blocker'; });
@@ -247,10 +258,27 @@
     renderPalette();
     testBtn.disabled = false;
     clearBtn.disabled = false;
+    undoBtn.disabled = true;
+    updatePreview();
   }
 
   function cellEls() { return Array.from(boardEl.querySelectorAll('.cell')); }
   function cellIndex(r, c) { return r * COLS + c; }
+
+  function saveSnapshot() {
+    history.push({ grid: grid.map(row => row.slice()), supply: { ...supply } });
+    undoBtn.disabled = false;
+  }
+
+  function renderPlacedPieces() {
+    cellEls().forEach((el, i) => {
+      const r = Math.floor(i / COLS), c = i % COLS;
+      const piece = grid[r][c];
+      el.innerHTML = piece && piece !== 'blocker' ? '<span class="piece-icon">' + PIECES[piece].icon + '</span>' : '';
+    });
+    renderPalette();
+    updatePreview();
+  }
 
   function onCellClick(r, c) {
     if (testing) return;
@@ -261,15 +289,18 @@
     if (activeTool === 'erase') {
       const existing = grid[r][c];
       if (existing && existing !== 'blocker') {
+        saveSnapshot();
         supply[existing]++;
         grid[r][c] = null;
         cellEl.innerHTML = '';
         playPlace();
         renderPalette();
+        updatePreview();
       }
       return;
     }
     if (supply[activeTool] <= 0) return;
+    saveSnapshot();
     const existing = grid[r][c];
     if (existing && existing !== 'blocker') supply[existing]++;
     supply[activeTool]--;
@@ -277,10 +308,21 @@
     cellEl.innerHTML = '<span class="piece-icon">' + PIECES[activeTool].icon + '</span>';
     playPlace();
     renderPalette();
+    updatePreview();
   }
+
+  undoBtn.addEventListener('click', () => {
+    if (testing || history.length === 0) return;
+    const snapshot = history.pop();
+    grid = snapshot.grid;
+    supply = snapshot.supply;
+    undoBtn.disabled = history.length === 0;
+    renderPlacedPieces();
+  });
 
   clearBtn.addEventListener('click', () => {
     if (testing) return;
+    if (grid.some(row => row.some(piece => piece && piece !== 'blocker'))) saveSnapshot();
     const lvl = LEVELS[levelIndex];
     for (let r = 0; r < lvl.rows; r++) {
       for (let c = 0; c < COLS; c++) {
@@ -298,22 +340,14 @@
     ballEl.style.left = (lvl.start * CELL + CELL / 2 - 12) + 'px';
     ballEl.style.top = (CELL / 2 - 12) + 'px';
     renderPalette();
+    updatePreview();
   });
 
-  function runTest() {
-    if (testing) return;
-    testing = true;
-    tries++;
-    triesVal.textContent = tries;
-    renderPalette();
-    testBtn.disabled = true;
-    clearBtn.disabled = true;
-
+  function calculatePath() {
     const lvl = LEVELS[levelIndex];
     let col = lvl.start;
     const path = [{ r: 0, c: col }];
     let failedAt = null;
-
     for (let r = 0; r < lvl.rows; r++) {
       const piece = grid[r][col];
       let nextCol = col;
@@ -325,15 +359,39 @@
       path.push({ r: Math.min(r + 1, lvl.rows - 1), c: col });
       if (r + 1 >= lvl.rows) break;
     }
+    return { path, failedAt, won: !failedAt && col === lvl.goal };
+  }
 
-    const won = !failedAt && col === lvl.goal;
+  function updatePreview() {
+    if (!grid.length || testing) return;
+    const prediction = calculatePath();
+    cellEls().forEach(el => el.classList.remove('preview', 'preview-fail'));
+    prediction.path.forEach(point => cellEls()[cellIndex(point.r, point.c)]?.classList.add('preview'));
+    if (prediction.failedAt) cellEls()[cellIndex(prediction.failedAt.r, prediction.failedAt.c)]?.classList.add('preview-fail');
+    previewVal.textContent = prediction.won ? 'MÅL' : prediction.failedAt ? 'STOPP' : 'BYGG';
+    previewVal.style.color = prediction.won ? 'var(--cyan)' : prediction.failedAt ? 'var(--pink)' : 'var(--ink)';
+  }
+
+  function runTest() {
+    if (testing) return;
+    testing = true;
+    tries++;
+    triesVal.textContent = tries;
+    renderPalette();
+    testBtn.disabled = true;
+    clearBtn.disabled = true;
+    undoBtn.disabled = true;
+
+    const { path, won } = calculatePath();
     let step = 0;
     function animateStep() {
       if (step >= path.length) {
         testing = false;
         testBtn.disabled = false;
         clearBtn.disabled = false;
+        undoBtn.disabled = history.length === 0;
         renderPalette();
+        updatePreview();
         if (won) {
           playWin();
           setTimeout(nextLevel, 500);
@@ -347,17 +405,28 @@
       ballEl.style.top = (p.r * CELL + CELL / 2 - 12) + 'px';
       if (grid[p.r] && grid[p.r][p.c] === 'bounce') playBounce(); else playStep();
       step++;
-      setTimeout(animateStep, 340);
+      setTimeout(animateStep, 210);
     }
     animateStep();
   }
   testBtn.addEventListener('click', runTest);
 
   function nextLevel() {
+    const lvl = LEVELS[levelIndex];
+    const available = Object.values(lvl.budget).reduce((sum, value) => sum + value, 0);
+    const remaining = Object.values(supply).reduce((sum, value) => sum + value, 0);
+    const used = available - remaining;
+    const stars = tries === 1 && used <= lvl.par ? 3 : tries <= 2 ? 2 : 1;
     totalTries += tries;
+    totalStars += stars;
+    starsVal.textContent = totalStars;
     levelIndex++;
     if (levelIndex >= LEVELS.length) {
       finalTries.textContent = totalTries;
+      const previousBest = Number(localStorage.getItem('kulbanan-best-stars') || 0);
+      const best = Math.max(previousBest, totalStars);
+      localStorage.setItem('kulbanan-best-stars', String(best));
+      finalStats.textContent = totalStars + ' av ' + (LEVELS.length * 3) + ' stjärnor · rekord ' + best;
       allDoneOverlay.classList.remove('hidden');
     } else {
       setupLevel();
@@ -365,7 +434,8 @@
   }
 
   function startGame() {
-    levelIndex = 0; totalTries = 0;
+    levelIndex = 0; totalTries = 0; totalStars = 0;
+    starsVal.textContent = '0';
     startOverlay.classList.add('hidden');
     allDoneOverlay.classList.add('hidden');
     setupLevel();

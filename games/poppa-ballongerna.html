@@ -31,8 +31,8 @@
   .back-link { position: relative; z-index: 2; display: block; text-align: center; margin-top: 0.5rem; font-size: 0.72rem; font-weight: 600; color: var(--cyan); text-decoration: none; }
   .back-link:hover { color: var(--ink); }
   .sub { color: var(--ink-soft); font-size: 0.85rem; font-weight: 600; margin: 0 0 1rem; text-align: center; max-width: 380px; }
-  .hud { display: flex; justify-content: space-between; width: 100%; max-width: 320px; margin-bottom: 0.7rem; }
-  .hud-chip { background: var(--panel); border: 2px solid var(--outline); border-radius: 8px; padding: 0.32rem 0.7rem; box-shadow: 3px 3px 0 var(--outline); text-align: center; min-width: 64px; }
+  .hud { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem; width: 100%; max-width: 320px; margin-bottom: 0.7rem; }
+  .hud-chip { background: var(--panel); border: 2px solid var(--outline); border-radius: 8px; padding: 0.32rem 0.2rem; box-shadow: 3px 3px 0 var(--outline); text-align: center; min-width: 0; }
   .hud-chip .label { font-family: 'Bungee', sans-serif; font-size: 0.48rem; letter-spacing: 0.06em; color: var(--cyan); display: block; }
   .hud-chip .value { font-family: 'Open Sans', sans-serif; font-weight: 800; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
 
@@ -84,6 +84,7 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   }
   .fixed-back:active { transform: scale(0.92); }
+  @media (max-width: 420px) { h1 { font-size: 1.42rem; } }
 </style>
 <link rel="stylesheet" href="game-polish.css">
 <script src="../interaction-guard.js" defer></script>
@@ -109,6 +110,8 @@
   <div class="hud">
     <div class="hud-chip"><span class="label">BANA</span><span class="value" id="levelVal">1/20</span></div>
     <div class="hud-chip"><span class="label">FÖRSÖK</span><span class="value" id="triesVal">0</span></div>
+    <div class="hud-chip"><span class="label">NÄSTA</span><span class="value" id="nextVal">1</span></div>
+    <div class="hud-chip"><span class="label">STJÄRNOR</span><span class="value" id="starsVal">0</span></div>
   </div>
 
   <div class="board-wrap">
@@ -117,13 +120,13 @@
 
       <div class="overlay" id="startOverlay">
         <h2>REDO?</h2>
-        <p>Dra en linje som får bollen att träffa ballong 1, sen 2, sen 3 — i ordning.</p>
+        <p>Dra en linje som träffar ballongerna i ordning. En enda resa och minst två studsar ger ett trickskott.</p>
         <button class="cta" id="startBtn">Kör igång</button>
       </div>
       <div class="overlay hidden" id="endOverlay">
         <h2>ALLA BANOR KLARA!</h2>
         <div class="result" id="finalTries">0</div>
-        <p>försök totalt för alla 20 banor.</p>
+        <p id="finalStats">försök totalt för alla 20 banor.</p>
         <button class="cta" id="restartBtn">Spela igen</button>
       </div>
     </div>
@@ -178,11 +181,14 @@
   const polyEl = document.getElementById('linePoly');
   const levelVal = document.getElementById('levelVal');
   const triesVal = document.getElementById('triesVal');
+  const nextVal = document.getElementById('nextVal');
+  const starsVal = document.getElementById('starsVal');
   const startOverlay = document.getElementById('startOverlay');
   const endOverlay = document.getElementById('endOverlay');
   const startBtn = document.getElementById('startBtn');
   const restartBtn = document.getElementById('restartBtn');
   const finalTries = document.getElementById('finalTries');
+  const finalStats = document.getElementById('finalStats');
   const clearBtn = document.getElementById('clearBtn');
   const goBtn = document.getElementById('goBtn');
 
@@ -190,11 +196,11 @@
   svgEl.setAttribute('width', W);
   svgEl.setAttribute('height', H);
 
-  let levelIndex = 0, tries = 0, totalTries = 0;
+  let levelIndex = 0, tries = 0, totalTries = 0, totalStars = 0, trickShots = 0;
   let points = [];
   let drawing = false;
   let simActive = false;
-  let ball = null, ballEl = null, balloonEls = [], nextIdx = 0;
+  let ball = null, ballEl = null, balloonEls = [], nextIdx = 0, bounceCount = 0, lastBounceTs = 0;
   let rafHandle = null;
 
   let audioCtx = null;
@@ -225,6 +231,7 @@
     tries = 0; nextIdx = 0;
     triesVal.textContent = tries;
     levelVal.textContent = (levelIndex + 1) + '/' + TOTAL_LEVELS;
+    nextVal.textContent = '1';
     points = [];
     polyEl.setAttribute('points', '');
     goBtn.disabled = true;
@@ -253,6 +260,9 @@
     positionBall();
     simActive = false;
     nextIdx = 0;
+    bounceCount = 0;
+    lastBounceTs = 0;
+    nextVal.textContent = '1';
     balloonEls.forEach((el, i) => { el.classList.remove('popped'); el.classList.toggle('active', i === 0); });
   }
   function positionBall() {
@@ -285,6 +295,11 @@
         const vDotN = ball.vx * nx + ball.vy * ny;
         ball.vx -= (1 + RESTITUTION) * vDotN * nx;
         ball.vy -= (1 + RESTITUTION) * vDotN * ny;
+        const bounceTs = performance.now();
+        if (bounceTs - lastBounceTs > 120) {
+          bounceCount++;
+          lastBounceTs = bounceTs;
+        }
         playBounce();
       }
     }
@@ -307,6 +322,7 @@
         balloonEls[nextIdx].classList.remove('active');
         playPop(nextIdx);
         nextIdx++;
+        nextVal.textContent = nextIdx < lvl.balloons.length ? String(nextIdx + 1) : 'KLAR';
         if (nextIdx < lvl.balloons.length) balloonEls[nextIdx].classList.add('active');
         if (nextIdx >= lvl.balloons.length) {
           simActive = false;
@@ -326,7 +342,7 @@
     }
   }
 
-  const SIM_TIMEOUT_MS = 7000;
+  const SIM_TIMEOUT_MS = 4800;
   let lastTs = 0;
   let simStartTs = 0;
   function loop(ts) {
@@ -345,11 +361,20 @@
   }
 
   function onLevelWin() {
-    totalTries += tries + 1;
+    const trick = tries === 1 && bounceCount >= 2;
+    const stars = trick ? 3 : tries <= 2 ? 2 : 1;
+    totalTries += tries;
+    totalStars += stars;
+    if (trick) trickShots++;
+    starsVal.textContent = totalStars;
     playWin();
     levelIndex++;
     if (levelIndex >= TOTAL_LEVELS) {
       finalTries.textContent = totalTries;
+      const previousBest = Number(localStorage.getItem('poppa-ballongerna-best-stars') || 0);
+      const best = Math.max(previousBest, totalStars);
+      localStorage.setItem('poppa-ballongerna-best-stars', String(best));
+      finalStats.textContent = totalStars + ' av ' + (TOTAL_LEVELS * 3) + ' stjärnor · ' + trickShots + ' trickskott · rekord ' + best;
       endOverlay.classList.remove('hidden');
     } else {
       setTimeout(setupLevel, 700);
@@ -399,7 +424,8 @@
   });
 
   function startGame() {
-    levelIndex = 0; totalTries = 0;
+    levelIndex = 0; totalTries = 0; totalStars = 0; trickShots = 0;
+    starsVal.textContent = '0';
     startOverlay.classList.add('hidden');
     endOverlay.classList.add('hidden');
     setupLevel();

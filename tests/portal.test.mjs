@@ -389,6 +389,51 @@ test("Brobyggarna mäter material och belönar flera effektiva ritlösningar", (
   assert.ok(engine.includes("materialstjärnor"));
 });
 
+test("Träffa rätt belönar materialsnåla lösningar och sparar stjärnrekord", () => {
+  const html = readFileSync("games/traffa-ratt.html", "utf8");
+  for (const id of ["materialVal", "starsVal", "finalStats"]) assert.ok(html.includes(`id="${id}"`));
+  assert.ok(html.includes("function materialBudget()"));
+  assert.ok(html.includes("function lineLength()"));
+  assert.ok(html.includes("traffa-ratt-best-stars"));
+  assert.ok(html.includes("nextLength > materialBudget()"));
+});
+
+test("Poppa ballongerna kortar väntan och belönar trickskott", () => {
+  const html = readFileSync("games/poppa-ballongerna.html", "utf8");
+  for (const id of ["nextVal", "starsVal", "finalStats"]) assert.ok(html.includes(`id="${id}"`));
+  assert.ok(html.includes("const SIM_TIMEOUT_MS = 4800"));
+  assert.ok(html.includes("bounceCount >= 2"));
+  assert.ok(html.includes("poppa-ballongerna-best-stars"));
+});
+
+test("Rädda ägget har tre materialstrategier och landningskvalitet", () => {
+  const html = readFileSync("games/raddaagget.html", "utf8");
+  for (const material of ["silk", "rubber", "spring"]) assert.ok(html.includes(`${material}: {`));
+  for (const id of ["materials", "shellVal", "starsVal"]) assert.ok(html.includes(`id="${id}"`));
+  assert.ok(html.includes("material.restitution"));
+  assert.ok(html.includes("onLevelWin(speed)"));
+  assert.ok(html.includes("raddaagget-best-stars"));
+});
+
+test("Sikta rätt har vind, precisionsspöke och lokala rekord", () => {
+  const html = readFileSync("games/sikta-ratt.html", "utf8");
+  for (const id of ["windVal", "ghostHit"]) assert.ok(html.includes(`id="${id}"`));
+  assert.ok(html.includes("const ROUND_SECONDS = 60"));
+  assert.ok(html.includes("vx += wind * dt"));
+  assert.ok(html.includes("sikta-ratt-best-precision"));
+  assert.ok(html.includes("sikta-ratt-best-score"));
+});
+
+test("Kulbanan visar prognos, kan ångra och graderar fria lösningar", () => {
+  const html = readFileSync("games/kulbanan.html", "utf8");
+  for (const id of ["undoBtn", "previewVal", "starsVal"]) assert.ok(html.includes(`id="${id}"`));
+  assert.ok(html.includes("function calculatePath()"));
+  assert.ok(html.includes("function updatePreview()"));
+  assert.ok(html.includes("function saveSnapshot()"));
+  assert.ok(html.includes("kulbanan-best-stars"));
+  assert.equal((html.match(/par: \d/g) || []).length, 10);
+});
+
 test("alla franska lyssningsspel använder samma förbättrade röstmotor", () => {
   const speechEngine = readFileSync("french-speech.js", "utf8");
   assert.ok(speechEngine.includes("function voiceScore(voice)"));

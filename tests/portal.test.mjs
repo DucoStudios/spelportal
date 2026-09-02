@@ -198,8 +198,11 @@ test("Blockrutan har referensens 8×8-loop med tre fasta brickor, drag och rad-/
   assert.ok(html.includes("board[r].every(v => v)"));
   assert.ok(html.includes("board.every(row => row[c])"));
   assert.ok(html.includes("active.every(p => !anyPlacementExists(p))"));
+  assert.ok(html.includes("function onCancel(ev){ finishDrag(ev, true); }"));
+  assert.ok(html.includes("if (inputLocked || !piece || !canPlace"));
   assert.doesNotMatch(html, /rotatePiece|rotationBtn|rotera brickan/i);
-  for (const id of ["scoreVal", "bestVal", "settingsBtn", "board", "tray"]) assert.ok(html.includes(`id="${id}"`), `Blockrutan saknar ${id}`);
+  for (const id of ["scoreVal", "linesVal", "comboVal", "bestVal", "board", "tray"]) assert.ok(html.includes(`id="${id}"`), `Blockrutan saknar ${id}`);
+  assert.doesNotMatch(html, /class="crown"|aria-label="Rekord"[^>]*>\s*<svg/);
 });
 
 test("Klossfall har rättvis 7-kloss-påse, nästa kloss, kombo och lokalt rekord", () => {

@@ -212,14 +212,32 @@ for (const viewport of viewports) {
             ok: Number(document.querySelector('#scoreVal')?.textContent) > 0,
             cells: document.querySelectorAll('.cell').length,
             pieces: document.querySelectorAll('.tray-piece').length,
-            settings: Boolean(document.querySelector('#settingsBtn')),
+            portalHud: ['scoreVal','linesVal','comboVal','bestVal'].every(hudId => Boolean(document.getElementById(hudId))),
             filled: document.querySelectorAll('.cell.filled').length
           };
         })()`);
         assert.ok(blockMove.ok, `${id}/${viewport.name}: en riktig dragplacering gav ingen poäng (${blockMove.reason || JSON.stringify(blockMove)})`);
         assert.equal(blockMove.cells, 64, `${id}/${viewport.name}: spelbrädet är inte 8×8`);
         assert.equal(blockMove.pieces, 2, `${id}/${viewport.name}: använd bricka försvann inte ur setet`);
-        assert.ok(blockMove.settings && blockMove.filled > 0, `${id}/${viewport.name}: referensens spel-UI eller placerade block saknas`);
+        assert.ok(blockMove.portalHud && blockMove.filled > 0, `${id}/${viewport.name}: portalens HUD eller placerade block saknas`);
+        const cancelledDrag = await evaluate(`(() => {
+          const piece = document.querySelector('.tray-piece');
+          if (!piece) return { ok: false, reason: 'ingen bricka kvar att avbryta' };
+          const beforeScore = document.querySelector('#scoreVal')?.textContent;
+          const beforePieces = document.querySelectorAll('.tray-piece').length;
+          const rect = piece.getBoundingClientRect();
+          const pointerId = 18;
+          piece.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId, clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2, pointerType: 'touch' }));
+          document.dispatchEvent(new PointerEvent('pointercancel', { bubbles: true, pointerId, pointerType: 'touch' }));
+          return {
+            ok: document.querySelector('#scoreVal')?.textContent === beforeScore,
+            pieces: document.querySelectorAll('.tray-piece').length,
+            beforePieces,
+            ghostGone: !document.querySelector('.drag-ghost')
+          };
+        })()`);
+        assert.ok(cancelledDrag.ok && cancelledDrag.ghostGone, `${id}/${viewport.name}: avbrutet touchdrag placerade brickan eller lämnade ett dragspöke`);
+        assert.equal(cancelledDrag.pieces, cancelledDrag.beforePieces, `${id}/${viewport.name}: avbrutet touchdrag förbrukade en bricka`);
       }
       const shot = await call("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
       writeFileSync(`${outputDir}/${id}-${viewport.name}.png`, Buffer.from(shot.data, "base64"));

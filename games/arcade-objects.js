@@ -4,7 +4,7 @@
   const SUPPORTED_GAME_IDS = [
     "accentjakten", "alfabetet-fargerna", "andens-frukttradgard", "andningsdykaren",
     "balansbanan", "barmhartighetsresan", "bibelhjalten", "bibelresan-66",
-    "bistroblixten", "blockvarlden", "bokstavsbilen", "brobyggarna",
+    "bistroblixten", "blockrutan", "blockvarlden", "bokstavsbilen", "brobyggarna",
     "bygg-pa-klippan", "byggkost-eller-sallanmat", "dansstopp", "ekorrhjulet",
     "fargfusion", "flykten", "fruktfangaren", "gap-monstren", "gardsriket",
     "gavokedjan", "hjalparjakten", "ideverkstan", "klossfall", "kroppens-tempel",
@@ -56,6 +56,7 @@
     "alfabetet-fargerna": { world: ".game-area", tile: ".pick-btn, .mode-btn", sprite: ".letter, .color", feedback: ".feedback" },
     "bibelhjalten": { world: ".story-card", tile: ".choice-btn", sprite: ".scene-icon", feedback: ".feedback" },
     "bibelresan-66": { world: ".bible-stage, .map, .journey", tile: ".choice, .answer-btn, .book-card", sprite: ".traveler, .hero, .marker", target: ".stage-node, .destination", feedback: ".bible-status, .feedback" },
+    "blockrutan": { world: "#board, .board-wrap", tile: ".tray-piece, .cell.filled", sprite: ".drag-ghost", target: ".cell.ghost-ok", feedback: ".hud-chip" },
     "blockvarlden": { world: "#gameCanvas, .game-wrap", tile: ".hotbar .slot", sprite: ".npc-toast", target: ".interact-prompt", feedback: ".toast" },
     "bokstavsbilen": { world: ".road, .game-area", tile: ".answer-btn", sprite: ".falling, .car", target: ".lane-line", feedback: ".feedback" },
     "byggkost-eller-sallanmat": { world: ".game-area", tile: ".food", target: ".zone", feedback: ".feedback" },

@@ -12,6 +12,7 @@ const viewports = [
 ];
 const screenshotCases = new Set([
   "blockvarlden-desktop", "gardsriket-desktop", "kulrullaren-desktop",
+  "blockrutan-mobile", "blockrutan-desktop",
   "kubkrossaren-mobile",
   "klossfall-mobile",
   "kulrullaren-mobile", "memory-plattorna-mobile", "memory-plattorna-desktop",
@@ -187,6 +188,38 @@ for (const viewport of viewports) {
         assert.ok(crusherUi.toggleVisible && crusherUi.panelOpen, `${id}/${viewport.name}: bollväljaren kan inte öppnas`);
         assert.equal(crusherUi.options, 4, `${id}/${viewport.name}: fel antal bolltyper`);
         assert.ok(crusherUi.explained, `${id}/${viewport.name}: bollförklaringar saknas`);
+      }
+      if (id === "blockrutan") {
+        const blockMove = await evaluate(`(() => {
+          const piece = document.querySelector('.tray-piece');
+          const firstCell = document.querySelector('.cell');
+          if (!piece || !firstCell) return { ok: false, reason: 'bricka eller spelcell saknas' };
+          const pieceRect = piece.getBoundingClientRect();
+          const cellRect = firstCell.getBoundingClientRect();
+          const pointerId = 17;
+          piece.dispatchEvent(new PointerEvent('pointerdown', {
+            bubbles: true, pointerId, clientX: pieceRect.left + pieceRect.width / 2,
+            clientY: pieceRect.top + pieceRect.height / 2, pointerType: 'touch'
+          }));
+          const ghostRect = document.querySelector('.drag-ghost')?.getBoundingClientRect();
+          if (!ghostRect) return { ok: false, reason: 'dragspöket skapades inte' };
+          const lift = Math.max(72, cellRect.width * 1.65);
+          const targetX = cellRect.left + ghostRect.width / 2;
+          const targetY = cellRect.top + ghostRect.height / 2 + lift;
+          document.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId, clientX: targetX, clientY: targetY, pointerType: 'touch' }));
+          document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId, clientX: targetX, clientY: targetY, pointerType: 'touch' }));
+          return {
+            ok: Number(document.querySelector('#scoreVal')?.textContent) > 0,
+            cells: document.querySelectorAll('.cell').length,
+            pieces: document.querySelectorAll('.tray-piece').length,
+            settings: Boolean(document.querySelector('#settingsBtn')),
+            filled: document.querySelectorAll('.cell.filled').length
+          };
+        })()`);
+        assert.ok(blockMove.ok, `${id}/${viewport.name}: en riktig dragplacering gav ingen poäng (${blockMove.reason || JSON.stringify(blockMove)})`);
+        assert.equal(blockMove.cells, 64, `${id}/${viewport.name}: spelbrädet är inte 8×8`);
+        assert.equal(blockMove.pieces, 2, `${id}/${viewport.name}: använd bricka försvann inte ur setet`);
+        assert.ok(blockMove.settings && blockMove.filled > 0, `${id}/${viewport.name}: referensens spel-UI eller placerade block saknas`);
       }
       const shot = await call("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
       writeFileSync(`${outputDir}/${id}-${viewport.name}.png`, Buffer.from(shot.data, "base64"));

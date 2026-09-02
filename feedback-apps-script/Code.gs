@@ -13,7 +13,7 @@ const GAMES = Object.freeze({
   "traffa-ratt": "Träffa rätt", "flykten": "Flykten",
   "alfabetet-fargerna": "Alfabetet & Färgerna", "malarboken": "Målarboken",
   "ordresan": "Ordresan", "ordgatan": "Ordgåtan", "poppa-ballongerna": "Poppa ballongerna",
-  "raddaagget": "Rädda ägget", "blockvarlden": "Blockvärlden", "schack": "Schack",
+  "raddaagget": "Rädda ägget", "blockrutan": "Blockrutan", "blockvarlden": "Blockvärlden", "schack": "Schack",
   "ekorrhjulet": "Ekorrhjulet", "kroppens-tempel": "Kroppens Tempel",
   "ror-pa-dig": "Rör på dig!", "byggkost-eller-sallanmat": "Byggkost eller Sällanmat",
   "vishetens-vag": "Vishetens Väg", "kulbanan": "Kulbanan", "kulrullaren": "Kulrullaren",

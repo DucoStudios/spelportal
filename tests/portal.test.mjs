@@ -188,6 +188,20 @@ test("Blockkrossaren förklarar bollroller, har poäng-HUD och döljbar bollväl
   assert.ok(index.includes("title: 'Blockkrossaren'"));
 });
 
+test("Blockrutan har referensens 8×8-loop med tre fasta brickor, drag och rad-/kolumnrensning", () => {
+  const html = readFileSync("games/blockrutan.html", "utf8");
+  assert.ok(html.includes("const SIZE = 8"));
+  assert.ok(html.includes("return [randomShape(colors[0]), randomShape(colors[1]), randomShape(colors[2])]"));
+  assert.ok(html.includes("tray = makeTray()"));
+  assert.ok(html.includes("el.addEventListener('pointerdown', onPieceDown)"));
+  assert.ok(html.includes("if (tray.every(p => p === null))"));
+  assert.ok(html.includes("board[r].every(v => v)"));
+  assert.ok(html.includes("board.every(row => row[c])"));
+  assert.ok(html.includes("active.every(p => !anyPlacementExists(p))"));
+  assert.doesNotMatch(html, /rotatePiece|rotationBtn|rotera brickan/i);
+  for (const id of ["scoreVal", "bestVal", "settingsBtn", "board", "tray"]) assert.ok(html.includes(`id="${id}"`), `Blockrutan saknar ${id}`);
+});
+
 test("Klossfall har rättvis 7-kloss-påse, nästa kloss, kombo och lokalt rekord", () => {
   const html = readFileSync("games/klossfall.html", "utf8");
   assert.ok(html.includes("const BEST_KEY = 'klossfall-best-v2'"));

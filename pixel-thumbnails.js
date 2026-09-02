@@ -162,6 +162,9 @@
         person(c,22,44,p.a); person(c,98,44,p.b,-1); speech(c,32,10,26,16,'#fff6fb'); speech(c,66,16,26,16,p.warm); heart(c,61,43,p.a); break;
       case 'bibelresan-66':
         rect(c,18,13,38,37,p.b); rect(c,22,17,14,29,'#fff6fb'); rect(c,38,17,14,29,'#fff6fb'); text(c,'66',37,31,p.warm,12); line(c,63,44,78,29,p.a,3); line(c,78,29,95,36,p.a,3); line(c,95,36,108,18,p.a,3); [63,78,95,108].forEach((x,i)=>ball(c,x,[44,29,36,18][i],i===3?p.warm:p.a,3)); break;
+      case 'blockrutan':
+        for (let r=0;r<5;r++) for (let x=0;x<5;x++) { const on = (r+x)%2===0 || r===2; if (on) brick(c,15+x*19,9+r*10,17,8,r===2?p.warm:(x%2?p.a:p.b)); }
+        text(c,'8×8',60,60,'#fff6fb',7,'center'); break;
       default: brick(c,35,18,50,28,p.a,'PLAY');
     }
     rect(c,0,0,W,3,p.a); rect(c,0,H-3,W,3,p.b);

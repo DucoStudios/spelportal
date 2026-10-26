@@ -230,6 +230,7 @@
     opacity: .13; background: repeating-linear-gradient(0deg, transparent 0 3px, #120a24 3px 4px);
   }
   .thumb-canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .thumb-img { display: block; width: 100%; height: 100%; object-fit: cover; }
   .card-body { padding: 0.85rem 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.4rem; flex: 1; }
   .card-title {
     font-family: 'Bungee', sans-serif;
@@ -454,7 +455,7 @@
     a.dataset.gameId = gameId;
     a.innerHTML =
       '<div class="card-art" style="--thumb-a:' + colorA + ';--thumb-b:' + colorB + ';--thumb-warm:' + colorWarm + '">' +
-        '<canvas class="thumb-canvas" aria-hidden="true"></canvas>' +
+        '<img class="thumb-img" src="thumbs/' + gameId + '.webp?v=1" alt="" loading="lazy" decoding="async">' +
       '</div>' +
       '<div class="card-body">' +
         '<div class="card-title">' + g.title + '</div>' +
@@ -462,7 +463,14 @@
         '<span class="card-tag ' + g.tag + '">' + g.tag.toUpperCase() + '</span>' +
       '</div>';
     grid.appendChild(a);
-    window.PixelThumbnails.draw(a.querySelector('.thumb-canvas'), gameId, [colorA, colorB, colorWarm]);
+    // Codex-bilden visar vad spelet går ut på; saknas den ritas den gamla pixelbilden
+    a.querySelector('.thumb-img').addEventListener('error', e => {
+      const canvas = document.createElement('canvas');
+      canvas.className = 'thumb-canvas';
+      canvas.setAttribute('aria-hidden', 'true');
+      e.target.replaceWith(canvas);
+      window.PixelThumbnails.draw(canvas, gameId, [colorA, colorB, colorWarm]);
+    }, { once: true });
   });
 </script>
 </body>

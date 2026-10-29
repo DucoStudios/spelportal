@@ -2,7 +2,7 @@
 // HTML hämtas från nätet först så att uppdateringar syns direkt, med cachen som reserv
 // offline. Bilder, skript och stilar visas från cachen och uppdateras i bakgrunden.
 // Höj VERSION för att tvinga ny cache.
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = `spelportal-${VERSION}`;
 const SHELL = ["./", "index.html", "manifest.json", "icon-180.png", "icon-512.png", "interaction-guard.js", "pixel-thumbnails.js", "game-feedback.css", "game-feedback.js", "feedback-config.js"];
 

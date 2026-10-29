@@ -88,9 +88,28 @@
     document.head.appendChild(config);
   }
 
+
+  // Hemskärmsappen har ingen webbläsarknapp. Spelens egna tillbakaknappar kan ligga
+  // under startrutor och "game over", så här läggs en alltid synlig hemknapp överst.
+  function setupStandaloneHome() {
+    const standalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+    if (!standalone || !document.body?.dataset.gameId || document.querySelector('.standalone-home')) return;
+    const currentScript = [...document.scripts].find(script => /interaction-guard\.js(?:\?|$)/.test(script.src));
+    if (!currentScript?.src) return;
+    const style = document.createElement('style');
+    style.textContent = '.standalone-home{position:fixed;z-index:2147483000;top:max(10px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.35);border-radius:50%;background:rgba(15,10,30,.82);color:#fff;font:700 1.3rem/1 sans-serif;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:0 2px 8px rgba(0,0,0,.4);touch-action:manipulation}';
+    document.head.appendChild(style);
+    const home = document.createElement('a');
+    home.className = 'standalone-home';
+    home.href = new URL('index.html', new URL('.', currentScript.src)).href;
+    home.setAttribute('aria-label', 'Alla spel');
+    home.textContent = '\u2190';
+    document.body.appendChild(home);
+  }
   function setupSharedGameUX() {
     setupOverlayFocus();
     loadGameFeedback();
+    setupStandaloneHome();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setupSharedGameUX, { once: true });
